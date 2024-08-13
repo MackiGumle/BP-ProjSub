@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\BP-ProjSub.Server.props" />
+</Project>

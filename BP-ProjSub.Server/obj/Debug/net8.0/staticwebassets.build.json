@@ -1,0 +1,23 @@
+{
+  "Version": 1,
+  "Hash": "g4bgaqlzga3GKG6LWRhDa8nJSxNglOoptl1UyI40VoQ=",
+  "Source": "BP-ProjSub.Server",
+  "BasePath": "_content/BP-ProjSub.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "D:\\Projects\\Skola\\BAKALARKA\\BP-ProjSub\\bp-projsub.client\\bp-projsub.client.esproj",
+      "Version": 2,
+      "Source": "bp-projsub.client",
+      "GetPublishAssetsTargets": "GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
