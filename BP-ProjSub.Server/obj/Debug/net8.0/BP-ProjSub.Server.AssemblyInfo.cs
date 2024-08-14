@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BP-ProjSub.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bcb156efc2dfd9fc171b1ea7cd51702b7a224256")]
 [assembly: System.Reflection.AssemblyProductAttribute("BP-ProjSub.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BP-ProjSub.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
