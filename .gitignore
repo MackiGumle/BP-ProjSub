@@ -1,2 +1,11 @@
-# Editor directories and files
+# folders
 .*/*
+bin/*
+obj/*
+
+
+# files
+*.dll
+*.exe
+*.cahe
+

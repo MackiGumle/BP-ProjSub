@@ -69,3 +69,4 @@ D:\Skola\BP-ProjSub\BP-ProjSub.Server\obj\Debug\net8.0\refint\BP-ProjSub.Server.
 D:\Skola\BP-ProjSub\BP-ProjSub.Server\obj\Debug\net8.0\BP-ProjSub.Server.pdb
 D:\Skola\BP-ProjSub\BP-ProjSub.Server\obj\Debug\net8.0\BP-ProjSub.Server.genruntimeconfig.cache
 D:\Skola\BP-ProjSub\BP-ProjSub.Server\obj\Debug\net8.0\ref\BP-ProjSub.Server.dll
+d:\Projects\Skola\BAKALARKA\BP-ProjSub\BP-ProjSub.Server\obj\Debug\net8.0\BP-ProjSub.Server.sourcelink.json

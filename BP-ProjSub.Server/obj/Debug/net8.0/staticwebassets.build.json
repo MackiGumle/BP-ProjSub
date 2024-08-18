@@ -1,13 +1,13 @@
 {
   "Version": 1,
-  "Hash": "iQog6lQYVUbydTEIZ3setCP0FDD8lLUvG4yrQfCkL84=",
+  "Hash": "kC2LQiRoLNNZxlqjsJxpIaxl6fn3Oge2jYgnSHrzXjQ=",
   "Source": "BP-ProjSub.Server",
   "BasePath": "_content/BP-ProjSub.Server",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [
     {
-      "Identity": "d:\\Skola\\BP-ProjSub\\bp-projsub.client\\bp-projsub.client.esproj",
+      "Identity": "d:\\Projects\\Skola\\BAKALARKA\\BP-ProjSub\\bp-projsub.client\\bp-projsub.client.esproj",
       "Version": 2,
       "Source": "bp-projsub.client",
       "GetPublishAssetsTargets": "GetCurrentProjectPublishStaticWebAssetItems",

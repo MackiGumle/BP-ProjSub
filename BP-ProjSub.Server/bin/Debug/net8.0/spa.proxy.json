@@ -3,7 +3,7 @@
 "ServerUrl": "https://localhost:5173",
 "RedirectUrl": "",
 "LaunchCommand": "npm run dev",
-"WorkingDirectory": "d:\\Skola\\BP-ProjSub\\BP-ProjSub.Server\\..\\bp-projsub.client",
+"WorkingDirectory": "d:\\Projects\\Skola\\BAKALARKA\\BP-ProjSub\\BP-ProjSub.Server\\..\\bp-projsub.client",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }

@@ -1,11 +1,31 @@
-import React from 'react';
+import LoginForm from "@/components/forms/LoginForm";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
-interface Props { }
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label";
 
-const LoginPage = (props: Props) => {
+
+export default function LoginPage() {
     return (
-        <h1>Login Page</h1>
+
+        <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>Create project</CardTitle>
+        <CardDescription>Deploy your new project in one-click.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <LoginForm />
+        
+      </CardContent>
+    </Card>
+
     );
 }
-
-export default LoginPage;
