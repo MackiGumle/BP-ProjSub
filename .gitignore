@@ -1,11 +1,11 @@
 # folders
-.*/*
-bin/*
-obj/*
+**.*/*
+**bin/*
+**obj/*
 
 
 # files
-*.dll
-*.exe
-*.cahe
+**/*.dll
+**/*.exe
+**/*.cahe
 
