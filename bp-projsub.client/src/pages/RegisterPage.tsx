@@ -1,4 +1,3 @@
-import LoginForm from "@/components/forms/LoginForm";
 import {
     Card,
     CardContent,
@@ -8,20 +7,21 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import Hyperlink from "@/components/custom-ui/HyperLink";
+import RegisterForm from "@/components/forms/RegisterForm";
 
 
-export default function LoginPage() {
+export default function RegisterPage() {
     return (
         <div className="flex justify-center">
             <Card className="w-[350px]">
                 <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>Don't have an account?
-                        <Hyperlink link="/register" text="Register here." />
+                    <CardTitle>Register</CardTitle>
+                    <CardDescription>Already have an account?
+                        <Hyperlink link="/login" text="Login here." />
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LoginForm />
+                    <RegisterForm />
                 </CardContent>
             </Card>
         </div>

@@ -14,27 +14,34 @@ import {
 import { Input } from "@/components/ui/input"
 
 const formSchema = z.object({
+  name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
+  surname: z.string().min(3, { message: "Surname must be at least 3 characters long" }),
   email: z.string().email({
     message: "Invalid email"
   }),
   password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
-})
+  confirmPassword: z.string().min(8, { message: "Password must be at least 8 characters long"
+  }),
+}).refine((data) => data.password === data.confirmPassword, { message: "Passwords do not match" })
 
 
-export default function LoginForm() {
-  
+export default function RegisterForm() {
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
+      surname: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   })
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
-    const response = await fetch("/api/login", {
+    const response = await fetch("/api/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,6 +61,32 @@ export default function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md flex flex-col gap-4">
         <FormField
           control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="">Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="surname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="">Surname</FormLabel>
+              <FormControl>
+                <Input placeholder="Surname" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -63,7 +96,6 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
             </FormItem>
-
           )}
         />
         <FormField
@@ -77,10 +109,21 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
             </FormItem>
-
           )}
         />
-
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
+              <FormControl>
+                <Input placeholder="Confirm Password" type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <Button type="submit">Login</Button>
       </form>
     </Form>
