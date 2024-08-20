@@ -23,8 +23,8 @@ CREATE TABLE Person
      Id INTEGER NOT NULL IDENTITY(1,1) , 
      Name VARCHAR (25) , 
      Surname VARCHAR (25) , 
-     Email VARCHAR (254) , 
-     Password VARCHAR (64) 
+     Email VARCHAR (254) NOT NULL , 
+     Password VARCHAR (64) NOT NULL
     )
 GO
 
