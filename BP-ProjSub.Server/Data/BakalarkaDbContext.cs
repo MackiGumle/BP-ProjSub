@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using BP_ProjSub.Server.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BP_ProjSub.Server.Data;
 
-public partial class BakalarkaDbContext : DbContext
+public partial class BakalarkaDbContext : IdentityDbContext<Person>
 {
     public BakalarkaDbContext()
     {
@@ -46,16 +47,16 @@ public partial class BakalarkaDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.DueDate).HasColumnType("datetime");
             entity.Property(e => e.SubjectId).HasColumnName("Subject_Id");
             entity.Property(e => e.TeacherPersonId).HasColumnName("Teacher_Person_Id");
             entity.Property(e => e.Title)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.Type)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
 
             entity.HasOne(d => d.Subject).WithMany(p => p.Assignments)
                 .HasForeignKey(d => d.SubjectId)
@@ -77,15 +78,6 @@ public partial class BakalarkaDbContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(254)
                 .IsUnicode(false);
-            entity.Property(e => e.Name)
-                .HasMaxLength(25)
-                .IsUnicode(false);
-            entity.Property(e => e.Password)
-                .HasMaxLength(64)
-                .IsUnicode(false);
-            entity.Property(e => e.Surname)
-                .HasMaxLength(25)
-                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Rating>(entity =>
@@ -99,7 +91,7 @@ public partial class BakalarkaDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Note)
                 .HasMaxLength(500)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.Rating1)
                 .HasColumnType("numeric(28, 0)")
                 .HasColumnName("Rating");
@@ -128,14 +120,14 @@ public partial class BakalarkaDbContext : DbContext
                 .HasColumnName("Person_Id");
             entity.Property(e => e.Faculty)
                 .HasMaxLength(40)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.StudyForm)
                 .HasMaxLength(25)
-                .IsUnicode(false)
+                .IsUnicode(true)
                 .HasColumnName("Study_form");
             entity.Property(e => e.StudyType)
                 .HasMaxLength(25)
-                .IsUnicode(false)
+                .IsUnicode(true)
                 .HasColumnName("Study_type");
 
             entity.HasOne(d => d.Person).WithOne(p => p.Student)
@@ -151,13 +143,13 @@ public partial class BakalarkaDbContext : DbContext
 
             entity.Property(e => e.Description)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.Language)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.Name)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
 
             entity.HasMany(d => d.Students).WithMany(p => p.Subjects)
                 .UsingEntity<Dictionary<string, object>>(
@@ -189,7 +181,7 @@ public partial class BakalarkaDbContext : DbContext
             entity.Property(e => e.FileData).HasMaxLength(1);
             entity.Property(e => e.FileName)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
             entity.Property(e => e.StudentPersonId).HasColumnName("Student_Person_Id");
             entity.Property(e => e.SubmissionDate)
                 .HasDefaultValueSql("(getdate())")
@@ -217,7 +209,7 @@ public partial class BakalarkaDbContext : DbContext
                 .HasColumnName("Person_Id");
             entity.Property(e => e.Office)
                 .HasMaxLength(25)
-                .IsUnicode(false);
+                .IsUnicode(true);
 
             entity.HasOne(d => d.Person).WithOne(p => p.Teacher)
                 .HasForeignKey<Teacher>(d => d.PersonId)

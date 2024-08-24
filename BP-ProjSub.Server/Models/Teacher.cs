@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 
 namespace BP_ProjSub.Server.Models;
 
@@ -7,7 +8,7 @@ public partial class Teacher
 {
     public string? Office { get; set; }
 
-    public int PersonId { get; set; }
+    public required string PersonId { get; set; }
 
     public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
