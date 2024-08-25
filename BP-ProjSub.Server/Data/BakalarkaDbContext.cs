@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BP_ProjSub.Server.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -176,6 +177,14 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Submission_Person_FK");
         });
+
+        List<IdentityRole> roles = new List<IdentityRole>
+        {
+            new IdentityRole { Name = "Admin", NormalizedName = "ADMIN" },
+            new IdentityRole { Name = "Teacher", NormalizedName = "TEACHER" },
+            new IdentityRole { Name = "Student", NormalizedName = "STUDENT" }
+        };
+        modelBuilder.Entity<IdentityRole>().HasData(roles);
 
         // IdentityDbContext udajne potrebuje toto: https://stackoverflow.com/questions/34000091/the-entity-type-microsoft-aspnet-identity-entityframework-identityuserloginstr
         base.OnModelCreating(modelBuilder);

@@ -1,4 +1,3 @@
-
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BP_ProjSub.Server.Services;
 
 namespace BP_ProjSub.Server
 {
@@ -22,15 +22,17 @@ namespace BP_ProjSub.Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-
             builder.Services.AddDbContext<BakalarkaDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddIdentity<Person, IdentityRole>(options =>
             {
-                options.SignIn.RequireConfirmedAccount = true;
+                // options.SignIn.RequireConfirmedAccount = true;
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
             })
                 .AddEntityFrameworkStores<BakalarkaDbContext>();
 
@@ -44,12 +46,12 @@ namespace BP_ProjSub.Server
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                     };
                 });
             builder.Services.AddAuthorization();
-
+            builder.Services.AddScoped<TokenService>();
 
             var app = builder.Build();
 

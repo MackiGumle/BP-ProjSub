@@ -1,0 +1,94 @@
+using BP_ProjSub.Server.Models;
+using BP_ProjSub.Server.Models.Auth;
+using BP_ProjSub.Server.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BP_ProjSub.Server.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly UserManager<Person> _userManager;
+        private readonly TokenService _tokenService;
+        private readonly SignInManager<Person> _signInManager;
+
+        public AuthController(UserManager<Person> userManager, TokenService tokenService, SignInManager<Person> signInManager)
+        {
+            _userManager = userManager;
+            _tokenService = tokenService;
+            _signInManager = signInManager;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var user = new Person
+                {
+                    UserName = model.Name + model.Surname,
+                    Email = model.Email
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+                    return Ok("User created successfully");
+                }
+
+                return BadRequest(result.Errors);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user == null)
+                {
+                    return Unauthorized("Invalid credentials1");
+                }
+
+                var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+
+                if (!result.Succeeded)
+                {
+                    return Unauthorized("Invalid credentials");
+                }
+
+                return Ok(new
+                {
+                    Username = user.UserName,
+                    Email = user.Email,
+                    Token = _tokenService.CreateToken(user)
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+    }
+}
