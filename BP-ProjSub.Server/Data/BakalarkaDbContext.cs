@@ -23,13 +23,9 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     public virtual DbSet<Rating> Ratings { get; set; }
 
-    public virtual DbSet<Student> Students { get; set; }
-
     public virtual DbSet<Subject> Subjects { get; set; }
 
     public virtual DbSet<Submission> Submissions { get; set; }
-
-    public virtual DbSet<Teacher> Teachers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:BakalarkaDB");
@@ -47,26 +43,26 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
                 .HasColumnType("datetime");
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
-                .IsUnicode(true);
+                .IsUnicode(false);
             entity.Property(e => e.DueDate).HasColumnType("datetime");
+            entity.Property(e => e.PersonId).HasColumnName("Person_Id");
             entity.Property(e => e.SubjectId).HasColumnName("Subject_Id");
-            entity.Property(e => e.TeacherPersonId).HasColumnName("Teacher_Person_Id");
             entity.Property(e => e.Title)
                 .HasMaxLength(25)
-                .IsUnicode(true);
+                .IsUnicode(false);
             entity.Property(e => e.Type)
                 .HasMaxLength(25)
-                .IsUnicode(true);
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Person).WithMany(p => p.Assignments)
+                .HasForeignKey(d => d.PersonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("Assignment_Person_FK");
 
             entity.HasOne(d => d.Subject).WithMany(p => p.Assignments)
                 .HasForeignKey(d => d.SubjectId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Assignment_Subject_FK");
-
-            entity.HasOne(d => d.TeacherPerson).WithMany(p => p.Assignments)
-                .HasForeignKey(d => d.TeacherPersonId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Assignment_Teacher_FK");
         });
 
         modelBuilder.Entity<Person>(entity =>
@@ -78,6 +74,34 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
             entity.Property(e => e.Email)
                 .HasMaxLength(254)
                 .IsUnicode(false);
+            // entity.Property(e => e.Name)
+            //     .HasMaxLength(25)
+            //     .IsUnicode(false);
+            // entity.Property(e => e.Password)
+            //     .HasMaxLength(64)
+            //     .IsUnicode(false);
+            // entity.Property(e => e.Surname)
+            //     .HasMaxLength(25)
+            //     .IsUnicode(false);
+
+            entity.HasMany(d => d.Subjects).WithMany(p => p.People)
+                .UsingEntity<Dictionary<string, object>>(
+                    "PersonSubject",
+                    r => r.HasOne<Subject>().WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("PersonSubject_Subject_FK"),
+                    l => l.HasOne<Person>().WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("PersonSubject_Person_FK"),
+                    j =>
+                    {
+                        j.HasKey("PersonId", "SubjectId").HasName("PersonSubject_PK");
+                        j.ToTable("PersonSubject");
+                        j.IndexerProperty<int>("PersonId").HasColumnName("Person_Id");
+                        j.IndexerProperty<int>("SubjectId").HasColumnName("Subject_Id");
+                    });
         });
 
         modelBuilder.Entity<Rating>(entity =>
@@ -91,48 +115,22 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
                 .HasColumnType("datetime");
             entity.Property(e => e.Note)
                 .HasMaxLength(500)
-                .IsUnicode(true);
+                .IsUnicode(false);
+            entity.Property(e => e.PersonId).HasColumnName("Person_Id");
             entity.Property(e => e.Rating1)
                 .HasColumnType("numeric(28, 0)")
                 .HasColumnName("Rating");
             entity.Property(e => e.SubmissionId).HasColumnName("Submission_Id");
-            entity.Property(e => e.TeacherPersonId).HasColumnName("Teacher_Person_Id");
+
+            entity.HasOne(d => d.Person).WithMany(p => p.Ratings)
+                .HasForeignKey(d => d.PersonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("Rating_Person_FK");
 
             entity.HasOne(d => d.Submission).WithMany(p => p.Ratings)
                 .HasForeignKey(d => d.SubmissionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Rating_Submission_FK");
-
-            entity.HasOne(d => d.TeacherPerson).WithMany(p => p.Ratings)
-                .HasForeignKey(d => d.TeacherPersonId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Rating_Teacher_FK");
-        });
-
-        modelBuilder.Entity<Student>(entity =>
-        {
-            entity.HasKey(e => e.PersonId).HasName("Student_PK");
-
-            entity.ToTable("Student");
-
-            entity.Property(e => e.PersonId)
-                .ValueGeneratedNever()
-                .HasColumnName("Person_Id");
-            entity.Property(e => e.Faculty)
-                .HasMaxLength(40)
-                .IsUnicode(true);
-            entity.Property(e => e.StudyForm)
-                .HasMaxLength(25)
-                .IsUnicode(true)
-                .HasColumnName("Study_form");
-            entity.Property(e => e.StudyType)
-                .HasMaxLength(25)
-                .IsUnicode(true)
-                .HasColumnName("Study_type");
-
-            entity.HasOne(d => d.Person).WithOne(p => p.Student)
-                .HasForeignKey<Student>(d => d.PersonId)
-                .HasConstraintName("Student_Person_FK");
         });
 
         modelBuilder.Entity<Subject>(entity =>
@@ -143,32 +141,13 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
             entity.Property(e => e.Description)
                 .HasMaxLength(25)
-                .IsUnicode(true);
+                .IsUnicode(false);
             entity.Property(e => e.Language)
                 .HasMaxLength(25)
-                .IsUnicode(true);
+                .IsUnicode(false);
             entity.Property(e => e.Name)
                 .HasMaxLength(25)
-                .IsUnicode(true);
-
-            entity.HasMany(d => d.Students).WithMany(p => p.Subjects)
-                .UsingEntity<Dictionary<string, object>>(
-                    "SubjectStudent",
-                    r => r.HasOne<Student>().WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("Relation_13_Student_FK"),
-                    l => l.HasOne<Subject>().WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("Relation_13_Subject_FK"),
-                    j =>
-                    {
-                        j.HasKey("SubjectId", "StudentId").HasName("Relation_13_PK");
-                        j.ToTable("SubjectStudent");
-                        j.IndexerProperty<int>("SubjectId").HasColumnName("Subject_Id");
-                        j.IndexerProperty<int>("StudentId").HasColumnName("Student_Id");
-                    });
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Submission>(entity =>
@@ -181,8 +160,8 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
             entity.Property(e => e.FileData).HasMaxLength(1);
             entity.Property(e => e.FileName)
                 .HasMaxLength(25)
-                .IsUnicode(true);
-            entity.Property(e => e.StudentPersonId).HasColumnName("Student_Person_Id");
+                .IsUnicode(false);
+            entity.Property(e => e.PersonId).HasColumnName("Person_Id");
             entity.Property(e => e.SubmissionDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -192,49 +171,14 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Submission_Assignment_FK");
 
-            entity.HasOne(d => d.StudentPerson).WithMany(p => p.Submissions)
-                .HasForeignKey(d => d.StudentPersonId)
+            entity.HasOne(d => d.Person).WithMany(p => p.Submissions)
+                .HasForeignKey(d => d.PersonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Submission_Student_FK");
+                .HasConstraintName("Submission_Person_FK");
         });
 
-        modelBuilder.Entity<Teacher>(entity =>
-        {
-            entity.HasKey(e => e.PersonId).HasName("Teacher_PK");
-
-            entity.ToTable("Teacher");
-
-            entity.Property(e => e.PersonId)
-                .ValueGeneratedNever()
-                .HasColumnName("Person_Id");
-            entity.Property(e => e.Office)
-                .HasMaxLength(25)
-                .IsUnicode(true);
-
-            entity.HasOne(d => d.Person).WithOne(p => p.Teacher)
-                .HasForeignKey<Teacher>(d => d.PersonId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("Teacher_Person_FK");
-
-            entity.HasMany(d => d.Subjects).WithMany(p => p.TeacherPeople)
-                .UsingEntity<Dictionary<string, object>>(
-                    "Teach",
-                    r => r.HasOne<Subject>().WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("Relation_6_Subject_FK"),
-                    l => l.HasOne<Teacher>().WithMany()
-                        .HasForeignKey("TeacherPersonId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("Relation_6_Teacher_FK"),
-                    j =>
-                    {
-                        j.HasKey("TeacherPersonId", "SubjectId").HasName("Relation_6_PK");
-                        j.ToTable("Teaches");
-                        j.IndexerProperty<int>("TeacherPersonId").HasColumnName("Teacher_Person_Id");
-                        j.IndexerProperty<int>("SubjectId").HasColumnName("Subject_Id");
-                    });
-        });
+        // IdentityDbContext udajne potrebuje toto: https://stackoverflow.com/questions/34000091/the-entity-type-microsoft-aspnet-identity-entityframework-identityuserloginstr
+        base.OnModelCreating(modelBuilder);
 
         OnModelCreatingPartial(modelBuilder);
     }

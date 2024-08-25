@@ -7,7 +7,7 @@ public partial class Subject
 {
     public int Id { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
@@ -15,7 +15,5 @@ public partial class Subject
 
     public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
-    public virtual ICollection<Student> Students { get; set; } = new List<Student>();
-
-    public virtual ICollection<Teacher> TeacherPeople { get; set; } = new List<Teacher>();
+    public virtual ICollection<Person> People { get; set; } = new List<Person>();
 }

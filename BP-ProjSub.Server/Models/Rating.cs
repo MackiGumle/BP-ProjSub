@@ -7,15 +7,15 @@ public partial class Rating
 {
     public DateTime Time { get; set; }
 
-    public decimal? Rating1 { get; set; }
+    public decimal Rating1 { get; set; }
 
     public string? Note { get; set; }
 
-    public int TeacherPersonId { get; set; }
-
     public int SubmissionId { get; set; }
 
-    public virtual Submission Submission { get; set; } = null!;
+    public string PersonId { get; set; }
 
-    public virtual Teacher TeacherPerson { get; set; } = null!;
+    public virtual Person Person { get; set; } = null!;
+
+    public virtual Submission Submission { get; set; } = null!;
 }

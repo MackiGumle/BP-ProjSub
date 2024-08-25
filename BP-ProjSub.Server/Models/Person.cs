@@ -6,11 +6,21 @@ namespace BP_ProjSub.Server.Models;
 
 public partial class Person : IdentityUser
 {
-    public string? FirstName { get; set; }
+    // public int Id { get; set; }
 
-    public string? LastName { get; set; }
+    // public string Name { get; set; } = null!;
 
-    public virtual Student? Student { get; set; }
+    // public string Surname { get; set; } = null!;
 
-    public virtual Teacher? Teacher { get; set; }
+    // public string Email { get; set; } = null!;
+
+    // public string Password { get; set; } = null!;
+
+    public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
+
+    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+
+    public virtual ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+
+    public virtual ICollection<Subject> Subjects { get; set; } = new List<Subject>();
 }

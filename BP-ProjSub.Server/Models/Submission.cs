@@ -7,19 +7,19 @@ public partial class Submission
 {
     public int Id { get; set; }
 
-    public DateTime? SubmissionDate { get; set; }
+    public DateTime SubmissionDate { get; set; }
 
-    public string? FileName { get; set; }
+    public string FileName { get; set; } = null!;
 
-    public byte[]? FileData { get; set; }
-
-    public int StudentPersonId { get; set; }
+    public byte[] FileData { get; set; } = null!;
 
     public int AssignmentId { get; set; }
 
+    public string PersonId { get; set; }
+
     public virtual Assignment Assignment { get; set; } = null!;
 
-    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+    public virtual Person Person { get; set; } = null!;
 
-    public virtual Student StudentPerson { get; set; } = null!;
+    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }
