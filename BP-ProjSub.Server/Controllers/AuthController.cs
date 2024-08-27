@@ -43,7 +43,13 @@ namespace BP_ProjSub.Server.Controllers
                 if (result.Succeeded)
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-                    return Ok("User created successfully");
+
+                    return Ok(new
+                    {
+                        Username = user.UserName,
+                        Email = user.Email,
+                        Token = _tokenService.CreateToken(user)
+                    });
                 }
 
                 return BadRequest(result.Errors);
