@@ -12,17 +12,19 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/context/UserContext"
 
 const formSchema = z.object({
   email: z.string().email({
     message: "Invalid email"
   }),
-  password: z.string().min(1, { message: "Invalid password" }),
+  password: z.string().min(1, { message: "Password is empty" }),
 })
 
 
 export default function LoginForm() {
-  
+  const {login} = useAuth();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,21 +36,23 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
+    // const response = await fetch("/api/login", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(values),
+    // });
 
-    if (response.ok) {
-      console.log("Success")
-    } else {
-      console.error("Error")
-    }
-
+    // if (response.ok) {
+    //   console.log("Success")
+    // } else {
+    //   console.error("Error")
+    // }
+    login(values.email, values.password);
   }
+    
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md flex flex-col gap-4">

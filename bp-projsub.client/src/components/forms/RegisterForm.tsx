@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/context/UserContext"
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
@@ -25,6 +26,7 @@ const formSchema = z.object({
 
 
 export default function RegisterForm() {
+  const {register} = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -40,20 +42,20 @@ export default function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
-    const response = await fetch("/api/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
+    // const response = await fetch("/api/register", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(values),
+    // });
 
-    if (response.ok) {
-      console.log("Success")
-    } else {
-      console.error("Error")
-    }
-
+    // if (response.ok) {
+    //   console.log("Success")
+    // } else {
+    //   console.error("Error")
+    // }
+    register(values.email, values.name, values.surname, values.password);
   }
   return (
     <Form {...form}>

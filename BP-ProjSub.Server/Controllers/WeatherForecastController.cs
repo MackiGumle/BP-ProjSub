@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BP_ProjSub.Server.Controllers
 {
+    // Student role is required to access this controller using Identity
+    // [Authorize(Roles = "Student")]
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase

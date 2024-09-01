@@ -44,11 +44,13 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, "Student");
 
-                    return Ok(new
+                    return Ok(new LoggedInModel
                     {
+                        Id = user.Id,
                         Username = user.UserName,
                         Email = user.Email,
-                        Token = _tokenService.CreateToken(user)
+                        Token =  _tokenService.CreateToken(user),
+                        Roles = await _userManager.GetRolesAsync(user)
                     });
                 }
 
@@ -74,7 +76,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 if (user == null)
                 {
-                    return Unauthorized("Invalid credentials1");
+                    return Unauthorized("Invalid credentials");
                 }
 
                 var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
@@ -84,11 +86,13 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized("Invalid credentials");
                 }
 
-                return Ok(new
+                return Ok(new LoggedInModel
                 {
+                    Id = user.Id,
                     Username = user.UserName,
                     Email = user.Email,
-                    Token = _tokenService.CreateToken(user)
+                    Token = _tokenService.CreateToken(user),
+                    Roles = await _userManager.GetRolesAsync(user)
                 });
             }
             catch (Exception e)
