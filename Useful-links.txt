@@ -1,0 +1,4 @@
+AddIdentity vs AddIdentityCore - https://stackoverflow.com/questions/55361533/addidentity-vs-addidentitycore
+ASP CORE JWT auth - https://wildermuth.com/2018/04/10/Using-JwtBearer-Authentication-in-an-API-only-ASP-NET-Core-Project/
+Endpoint unreachable when using [Authorize] - https://stackoverflow.com/questions/52038054/web-api-core-returns-404-when-adding-authorize-attribute
+Vite proxy - https://vitejs.dev/config/server-options#server-proxy

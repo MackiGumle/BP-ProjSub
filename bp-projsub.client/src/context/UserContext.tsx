@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../appsettings.ts";
+
 
 export type UserProfile = {
     id: string;
@@ -39,19 +39,13 @@ export const UserProvider = ({ children }: Props) => {
     const [roles, setRoles] = useState<string[] | null>(null);
     const [isReady, setIsReady] = useState(false);
 
-    // useEffect(() => {
-    //     const user = localStorage.getItem("user");
-    //     const token = localStorage.getItem("token");
-    //     if (user && token) {
-    //         setUser(JSON.parse(user));
-    //         setToken(token);
-    //         axios.defaults.headers.common["Authorization"] = "Bearer " + token;
-    //     }
-    // }, []);
-
     useEffect(() => {
-        if (user && token) {
-            axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+        const storage_user = localStorage.getItem("user");
+        const storage_token = localStorage.getItem("token");
+        if (storage_user && storage_token) {
+            setUser(JSON.parse(storage_user));
+            setToken(storage_token);
+            axios.defaults.headers.common["Authorization"] = "Bearer " + storage_token;
         }
         setIsReady(true);
     }, []);
@@ -65,15 +59,14 @@ export const UserProvider = ({ children }: Props) => {
                 password,
             });
             
-            // const {id, username, email, token, roles} = response.data;
             const data = response.data;
 
             setUser({id: data.id, username: data.username, email: data.email});
-            setToken(token);
-            setRoles(roles);
-            // localStorage.setItem("user", JSON.stringify(user));
-            // localStorage.setItem("token", token);
-            navigate("/");
+            setToken(data.token);
+            setRoles(data.roles);
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("token", token ?? "");
+            navigate("/home");
         } catch (error) {
             console.error(error);
         }
@@ -86,18 +79,19 @@ export const UserProvider = ({ children }: Props) => {
                 password,
             });
 
-            // const { user, token, roles } = response.data;
             const data = response.data;
-            
-            setUser({id: data.id, username: data.username, email: data.email});
-            setToken(token);
-            setRoles(roles);
-            // localStorage.setItem("user", JSON.stringify(user));
-            // localStorage.setItem("token", token);
+            const data_user = {id: data.id, username: data.username, email: data.email};
+
+            setUser(data_user);
+            setToken(data.token);
+            setRoles(data.roles);
+
+            localStorage.setItem("user", JSON.stringify(data_user));
+            localStorage.setItem("token", data.token ?? "");
 
             if (response.status === 200) {
                 console.log("Success: logged in");
-                navigate("/");
+                navigate("/home");
             }
         } catch (error) {
             console.error(error);
@@ -107,8 +101,8 @@ export const UserProvider = ({ children }: Props) => {
     const logout = () => {
         setUser(null);
         setToken(null);
-        // localStorage.removeItem("user");
-        // localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
         delete axios.defaults.headers.common["Authorization"];
         navigate("/login");
     };

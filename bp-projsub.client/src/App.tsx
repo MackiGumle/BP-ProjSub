@@ -17,7 +17,7 @@ function App() {
     const [forecasts, setForecasts] = useState<Forecast[] | null>(null);
 
     useEffect(() => {
-        populateWeatherData();
+        // populateWeatherData();
     }, []);
 
     return (

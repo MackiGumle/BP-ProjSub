@@ -2,6 +2,7 @@ import { useAuth, UserProfile } from "@/context/UserContext";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
+import axios from "axios";
 
 export default function NavBar() {
     const { isLoggedIn, user, logout, token } = useAuth();
@@ -12,7 +13,10 @@ export default function NavBar() {
                 <Link to="/">Navbar</Link>
                 <div>
                     {isLoggedIn() ? (
-                        <><Button onClick={logout} className="mr-4">Logout</Button><span>{user?.username}</span></>
+                        <>
+                            <Button onClick={logout} className="mr-4">Logout</Button>
+                            <span>{user?.username}</span>
+                        </>
                     ) : (
                         <div className="flex justify-between">
                             <Link className="mr-4" to="/login">Login</Link>

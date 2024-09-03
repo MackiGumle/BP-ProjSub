@@ -49,7 +49,7 @@ namespace BP_ProjSub.Server.Controllers
                         Id = user.Id,
                         Username = user.UserName,
                         Email = user.Email,
-                        Token =  _tokenService.CreateToken(user),
+                        Token = _tokenService.CreateToken(user, new List<string> { "Student" }),
                         Roles = await _userManager.GetRolesAsync(user)
                     });
                 }
@@ -86,12 +86,14 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized("Invalid credentials");
                 }
 
+                var roles = await _userManager.GetRolesAsync(user);
+
                 return Ok(new LoggedInModel
                 {
                     Id = user.Id,
                     Username = user.UserName,
                     Email = user.Email,
-                    Token = _tokenService.CreateToken(user),
+                    Token = _tokenService.CreateToken(user, roles as List<string>),
                     Roles = await _userManager.GetRolesAsync(user)
                 });
             }
