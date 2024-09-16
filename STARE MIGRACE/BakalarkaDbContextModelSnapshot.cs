@@ -52,12 +52,12 @@ namespace BP_ProjSub.Server.Migrations
                     b.Property<long?>("MaxPoints")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("PersonId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TeacherPersonId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -68,11 +68,11 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonId");
-
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Assignment", (string)null);
+                    b.HasIndex("TeacherPersonId");
+
+                    b.ToTable("Assignments");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Person", b =>
@@ -153,14 +153,14 @@ namespace BP_ProjSub.Server.Migrations
                         .HasColumnType("varchar(500)");
 
                     b.Property<string>("PersonId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("SubmissionId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Value")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Time")
                         .HasName("Rating_PK");
@@ -202,7 +202,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subject", (string)null);
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Submission", b =>
@@ -228,10 +228,11 @@ namespace BP_ProjSub.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("StudentPersonId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateTime>("SubmissionDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("(getdate())");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -239,7 +240,9 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("Submission", (string)null);
+                    b.HasIndex("StudentPersonId");
+
+                    b.ToTable("Submissions");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
@@ -249,7 +252,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("PersonId");
 
-                    b.ToTable("Teacher", (string)null);
+                    b.ToTable("Teachers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -281,19 +284,19 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ce9bf8ac-ad0b-4db0-a867-64d7b877d21c",
+                            Id = "ccaffb10-3ca9-4061-bcca-ee623c3e3975",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "5345c0ac-5a12-44e9-b5dc-01b5393ae0fd",
+                            Id = "57b3e8ba-79b4-4572-901a-33eaf2d9649d",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "66734ecd-38f5-4f5e-98a5-7d3a8e9fcfce",
+                            Id = "443e8aae-b7da-4ba6-ba5a-330fe87ed64d",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -448,15 +451,15 @@ namespace BP_ProjSub.Server.Migrations
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Assignment", b =>
                 {
-                    b.HasOne("BP_ProjSub.Server.Models.Teacher", "Teacher")
-                        .WithMany("AssignmentsCreated")
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BP_ProjSub.Server.Models.Subject", "Subject")
                         .WithMany("Assignments")
                         .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BP_ProjSub.Server.Models.Teacher", "Teacher")
+                        .WithMany("AssignmentsCreated")
+                        .HasForeignKey("TeacherPersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -467,9 +470,11 @@ namespace BP_ProjSub.Server.Migrations
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Rating", b =>
                 {
-                    b.HasOne("BP_ProjSub.Server.Models.Teacher", "Teacher")
-                        .WithMany("Ratings")
-                        .HasForeignKey("PersonId");
+                    b.HasOne("BP_ProjSub.Server.Models.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("BP_ProjSub.Server.Models.Submission", "Submission")
                         .WithMany("Ratings")
@@ -477,9 +482,9 @@ namespace BP_ProjSub.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Submission");
+                    b.Navigation("Person");
 
-                    b.Navigation("Teacher");
+                    b.Navigation("Submission");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Student", b =>
@@ -501,15 +506,19 @@ namespace BP_ProjSub.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BP_ProjSub.Server.Models.Student", "Student")
-                        .WithMany("Submissions")
+                    b.HasOne("BP_ProjSub.Server.Models.Person", "Person")
+                        .WithMany()
                         .HasForeignKey("PersonId")
-                        .IsRequired()
-                        .HasConstraintName("Submission_Person_FK");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BP_ProjSub.Server.Models.Student", null)
+                        .WithMany("Submissions")
+                        .HasForeignKey("StudentPersonId");
 
                     b.Navigation("Assignment");
 
-                    b.Navigation("Student");
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
@@ -636,8 +645,6 @@ namespace BP_ProjSub.Server.Migrations
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
                 {
                     b.Navigation("AssignmentsCreated");
-
-                    b.Navigation("Ratings");
                 });
 #pragma warning restore 612, 618
         }

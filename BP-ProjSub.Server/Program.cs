@@ -55,7 +55,7 @@ namespace BP_ProjSub.Server
 
             builder.Services.AddIdentity<Person, IdentityRole>(options =>
             {
-                // options.SignIn.RequireConfirmedAccount = true;
+                options.SignIn.RequireConfirmedAccount = true;
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;

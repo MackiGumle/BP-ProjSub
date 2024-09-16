@@ -15,5 +15,7 @@ public partial class Subject
 
     public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
-    public virtual ICollection<Person> People { get; set; } = new List<Person>();
+    public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
+    
+    public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 }

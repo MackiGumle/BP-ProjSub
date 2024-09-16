@@ -1,6 +1,7 @@
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Models.Auth;
 using BP_ProjSub.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +23,9 @@ namespace BP_ProjSub.Server.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        [HttpPost("registerTeacher")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Register([FromBody] CreateAccountDto model)
         {
             try
             {
@@ -38,13 +40,13 @@ namespace BP_ProjSub.Server.Controllers
                     Email = model.Email
                 };
 
-                var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await _userManager.CreateAsync(user, "Password123!");
 
                 if (result.Succeeded)
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, "Student");
 
-                    return Ok(new LoggedInModel
+                    return Ok(new LoggedInDto
                     {
                         Id = user.Id,
                         Username = user.UserName,
@@ -63,7 +65,7 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             try
             {
@@ -88,7 +90,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var roles = await _userManager.GetRolesAsync(user);
 
-                return Ok(new LoggedInModel
+                return Ok(new LoggedInDto
                 {
                     Id = user.Id,
                     Username = user.UserName,

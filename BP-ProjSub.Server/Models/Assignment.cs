@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BP_ProjSub.Server.Models;
 
@@ -23,8 +25,10 @@ public partial class Assignment
 
     public string PersonId { get; set; }
 
-    public virtual Person Person { get; set; } = null!;
+    [ForeignKey("PersonId")]
+    public virtual Teacher Teacher { get; set; } = null!;
 
+    [ForeignKey("SubjectId")]
     public virtual Subject Subject { get; set; } = null!;
 
     public virtual ICollection<Submission> Submissions { get; set; } = new List<Submission>();

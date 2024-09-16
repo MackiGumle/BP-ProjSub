@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BP_ProjSub.Server.Models.Auth;
 
-public class LoginModel
+public class LoginDto
 {
     [Required]
     [EmailAddress]
