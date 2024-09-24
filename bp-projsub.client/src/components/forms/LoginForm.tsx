@@ -23,7 +23,7 @@ const formSchema = z.object({
 
 
 export default function LoginForm() {
-  const {login} = useAuth();
+  const { login } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -35,23 +35,15 @@ export default function LoginForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // const response = await fetch("/api/login", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(values),
-    // });
+    try {
+      login(values.email, values.password);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
 
-    // if (response.ok) {
-    //   console.log("Success")
-    // } else {
-    //   console.error("Error")
-    // }
-    login(values.email, values.password);
+    // login(values.email, values.password);
   }
-    
+
 
   return (
     <Form {...form}>

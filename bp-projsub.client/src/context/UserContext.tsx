@@ -7,6 +7,7 @@ export type UserProfile = {
     id: string;
     username: string;
     email: string;
+    roles: string[];
 };
 
 type LoginResponse = {
@@ -20,12 +21,12 @@ type LoginResponse = {
 type UserContextType = {
     user: UserProfile | null;
     token: string | null;
-    roles: string[] | null;
 
-    register: (email: string, name: string, surname: string, password: string) => void;
+    // register: (email: string, name: string, surname: string, password: string) => void;
     login: (username: string, password: string) => void;
     logout: () => void;
     isLoggedIn: () => boolean;
+    hasRole: (role: string) => boolean;
 };
 
 type Props = { children: React.ReactNode };
@@ -36,7 +37,7 @@ export const UserProvider = ({ children }: Props) => {
     const navigate = useNavigate();
     const [token, setToken] = useState<string | null>(null);
     const [user, setUser] = useState<UserProfile | null>(null);
-    const [roles, setRoles] = useState<string[] | null>(null);
+    //const [roles, setRoles] = useState<string[] | null>(null);
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -50,53 +51,51 @@ export const UserProvider = ({ children }: Props) => {
         setIsReady(true);
     }, []);
 
-    const register = async (email: string, name: string, surname: string, password: string) => {
-        try {
-            const response = await axios.post<LoginResponse>("Auth/register", {
-                email,
-                name,
-                surname,
-                password,
-            });
+    // const register = async (email: string, name: string, surname: string, password: string) => {
+    //     try {
+    //         const response = await axios.post<LoginResponse>("Auth/register", {
+    //             email,
+    //             name,
+    //             surname,
+    //             password,
+    //         });
             
-            const data = response.data;
+    //         const data = response.data;
 
-            setUser({id: data.id, username: data.username, email: data.email});
-            setToken(data.token);
-            setRoles(data.roles);
-            localStorage.setItem("user", JSON.stringify(user));
-            localStorage.setItem("token", token ?? "");
-            navigate("/home");
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    //         setUser({id: data.id, username: data.username, email: data.email});
+    //         setToken(data.token);
+    //         setRoles(data.roles);
+    //         localStorage.setItem("user", JSON.stringify(user));
+    //         localStorage.setItem("token", token ?? "");
+    //         navigate("/home");
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // };
 
     const login = async (email: string, password: string) => {
         try {
-            const response = await axios.post<LoginResponse>("api/Auth/login", {
-                email,
-                password,
+          await axios.post<LoginResponse>("api/Auth/login", { email, password })
+            .then(response => {
+              const { id, username, email: userEmail, token, roles } = response.data;
+              
+              setUser({ id, username, email: userEmail, roles });
+              setToken(token);
+            //   setRoles(roles);
+      
+              localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
+              localStorage.setItem("token", token ?? "");
+      
+              console.log("Success: logged in");
+              navigate("/");
+            })
+            .catch(error => {
+              console.error("Login failed:", error);
             });
-
-            const data = response.data;
-            const data_user = {id: data.id, username: data.username, email: data.email};
-
-            setUser(data_user);
-            setToken(data.token);
-            setRoles(data.roles);
-
-            localStorage.setItem("user", JSON.stringify(data_user));
-            localStorage.setItem("token", data.token ?? "");
-
-            if (response.status === 200) {
-                console.log("Success: logged in");
-                navigate("/home");
-            }
         } catch (error) {
-            console.error(error);
+          console.error("An unexpected error occurred:", error);
         }
-    };
+      };
 
     const logout = () => {
         setUser(null);
@@ -104,15 +103,19 @@ export const UserProvider = ({ children }: Props) => {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         delete axios.defaults.headers.common["Authorization"];
-        navigate("/login");
+        navigate("/login", {replace: true});
     };
 
     const isLoggedIn = (): boolean => {
-        return !!user;
+        return !!token;
+    };
+
+    const hasRole = (role: string): boolean => {
+        return user?.roles?.includes(role) ?? false;
     };
 
     return (
-        <UserContext.Provider value={{ user, token, roles, register, login, logout, isLoggedIn }}>
+        <UserContext.Provider value={{ user, token, login, logout, isLoggedIn, hasRole }}>
             {isReady ? children : null}
         </UserContext.Provider>
     );

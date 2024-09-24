@@ -23,6 +23,7 @@ namespace BP_ProjSub.Server.Controllers
             _signInManager = signInManager;
         }
 
+        // This endpoint should be removed
         [HttpPost("registerTeacher")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Register([FromBody] CreateAccountDto model)

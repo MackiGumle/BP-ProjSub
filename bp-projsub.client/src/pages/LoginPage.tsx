@@ -8,16 +8,18 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import Hyperlink from "@/components/custom-ui/HyperLink";
+import { useAuth } from "@/context/UserContext";
 
 
 export default function LoginPage() {
     return (
         <div className="flex justify-center">
-            <Card className="w-[350px]">
+            <Card className="w-[350px] mt-6">
                 <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>Don't have an account?
-                        <Hyperlink link="/register" text="Register here." />
+                    <CardTitle className="mb-2">Login</CardTitle>
+                    <hr></hr>
+                    <CardDescription>
+
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

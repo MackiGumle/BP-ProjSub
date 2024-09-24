@@ -16,6 +16,7 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
     public BakalarkaDbContext(DbContextOptions<BakalarkaDbContext> options)
         : base(options)
     {
+
     }
 
     public virtual DbSet<Assignment> Assignments { get; set; }
@@ -93,6 +94,24 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
             new IdentityRole { Name = "Student", NormalizedName = "STUDENT" }
         };
         modelBuilder.Entity<IdentityRole>().HasData(roles);
+
+        var admin = new Person
+        {
+            UserName = "Admin",
+            Email = "admin@example.com",
+            NormalizedUserName = "ADMIN",
+            NormalizedEmail = "ADMIN@EXAMPLE.COM",
+            PasswordHash = new PasswordHasher<Person>().HashPassword(null, "P@ssw0rd"),
+            EmailConfirmed = true,
+        };
+
+        modelBuilder.Entity<Person>().HasData(admin);
+        modelBuilder.Entity<IdentityUserRole<string>>().HasData(new IdentityUserRole<string>
+        {
+            RoleId = roles[0].Id,
+            UserId = admin.Id
+        });
+
 
         // IdentityDbContext udajne potrebuje toto: https://stackoverflow.com/questions/34000091/the-entity-type-microsoft-aspnet-identity-entityframework-identityuserloginstr
         base.OnModelCreating(modelBuilder);

@@ -6,6 +6,7 @@ namespace BP_ProjSub.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Student")]
     public class ProtectedWeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -21,7 +22,6 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         // [Authorize(JwtBearerDefaults.AuthenticationScheme)]
-        [Authorize(Roles = "Student")]
         [HttpGet(Name = "GetProtectedWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {

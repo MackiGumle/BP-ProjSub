@@ -85,8 +85,7 @@ namespace BP_ProjSub.Server
             });
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<TokenService>();
-
-
+            
 
             var app = builder.Build();
 
