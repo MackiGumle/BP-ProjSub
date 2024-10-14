@@ -1,4 +1,5 @@
 using BP_ProjSub.Server.Models;
+using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -12,10 +13,12 @@ namespace BP_ProjSub.Server.Controllers
     public class AdminController : ControllerBase
     {
         private readonly UserManager<Person> _userManager;
+        private readonly EmailService _emailService;
 
-        public AdminController(UserManager<Person> userManager)
+        public AdminController(UserManager<Person> userManager, EmailService emailService)
         {
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         [HttpPost("createAccount")]
@@ -39,6 +42,16 @@ namespace BP_ProjSub.Server.Controllers
                 if (result.Succeeded)
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                    if (!roleResult.Succeeded)
+                    {
+                        return BadRequest(roleResult.Errors);
+                    }
+
+                    var emailResult = await _emailService.SendAccountActivation(user.Email, "ProjSub Account Activation", "Your account has been created", "<h1>Your account has been created</h1>");
+                    if (emailResult.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        return StatusCode(StatusCodes.Status500InternalServerError, emailResult.Body.ReadAsStringAsync().Result);
+                    }
 
                     return Ok();
                 }

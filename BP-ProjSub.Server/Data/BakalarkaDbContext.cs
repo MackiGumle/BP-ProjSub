@@ -9,14 +9,17 @@ namespace BP_ProjSub.Server.Data;
 
 public partial class BakalarkaDbContext : IdentityDbContext<Person>
 {
-    public BakalarkaDbContext()
+    private readonly IConfiguration _config;
+
+    public BakalarkaDbContext(IConfiguration config)
     {
+        _config = config;
     }
 
-    public BakalarkaDbContext(DbContextOptions<BakalarkaDbContext> options)
+    public BakalarkaDbContext(DbContextOptions<BakalarkaDbContext> options, IConfiguration config)
         : base(options)
     {
-
+        _config = config;
     }
 
     public virtual DbSet<Assignment> Assignments { get; set; }
@@ -35,6 +38,7 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:BakalarkaDB");
+        // => optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

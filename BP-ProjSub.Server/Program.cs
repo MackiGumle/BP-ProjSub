@@ -17,7 +17,6 @@ namespace BP_ProjSub.Server
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -49,10 +48,11 @@ namespace BP_ProjSub.Server
                 });
             });
 
-
+            // DB connection
             builder.Services.AddDbContext<BakalarkaDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Identity service configuration
             builder.Services.AddIdentity<Person, IdentityRole>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = true;
@@ -64,6 +64,7 @@ namespace BP_ProjSub.Server
             })
                 .AddEntityFrameworkStores<BakalarkaDbContext>();
 
+            // JWT configuration
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,9 +84,11 @@ namespace BP_ProjSub.Server
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
+
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<TokenService>();
-            
+            builder.Services.AddSingleton<EmailService>();
+
 
             var app = builder.Build();
 

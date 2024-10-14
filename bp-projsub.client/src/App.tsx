@@ -9,9 +9,10 @@ function App() {
         <UserProvider>
             <div className="w-full h-full">
                 <NavBar />
-                APP 
+                ---App---
                 {/* <div className="bg-zinc-800 text-white p-4 mb-4 w-full">Navbar</div> */}
                 <Outlet />
+                ---/App---
                 
             </div>
         </UserProvider>
