@@ -38,7 +38,7 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:BakalarkaDB");
-        // => optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
+        // => optionsBuilder.UseSqlServer("BakalarkaDB");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

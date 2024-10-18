@@ -47,8 +47,8 @@ namespace BP_ProjSub.Server.Controllers
                         return BadRequest(roleResult.Errors);
                     }
 
-                    var emailResult = await _emailService.SendAccountActivation(user.Email, "ProjSub Account Activation", "Your account has been created", "<h1>Your account has been created</h1>");
-                    if (emailResult.StatusCode != System.Net.HttpStatusCode.OK)
+                    var emailResult = await _emailService.SendAccountActivation(user.Email, "token");
+                    if (!emailResult.IsSuccessStatusCode)
                     {
                         return StatusCode(StatusCodes.Status500InternalServerError, emailResult.Body.ReadAsStringAsync().Result);
                     }

@@ -15,7 +15,12 @@ namespace BP_ProjSub.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            // builder.Configuration.Sources.Clear();
+            // builder.Configuration.AddEnvironmentVariables();
+            // var ApiKey = builder.Configuration["ApiKeys:SendGrid"]; 
+            // var conn = builder.Configuration["ConnectionStrings:BakalarkaDB"]; 
+            // var defconn = builder.Configuration.GetConnectionString("BakalarkaDB"); 
+    
             // Add services to the container.
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
