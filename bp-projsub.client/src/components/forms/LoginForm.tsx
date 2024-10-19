@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/UserContext"
+import { useEffect, useState } from "react"
 
 const formSchema = z.object({
   email: z.string().email({
@@ -23,7 +24,7 @@ const formSchema = z.object({
 
 
 export default function LoginForm() {
-  const {login} = useAuth();
+  const { login } = useAuth();  
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -35,23 +36,13 @@ export default function LoginForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // const response = await fetch("/api/login", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(values),
-    // });
-
-    // if (response.ok) {
-    //   console.log("Success")
-    // } else {
-    //   console.error("Error")
-    // }
-    login(values.email, values.password);
+    try {
+      login(values.email, values.password);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   }
-    
+
 
   return (
     <Form {...form}>
@@ -84,7 +75,7 @@ export default function LoginForm() {
 
           )}
         />
-
+        <FormMessage>Form message</FormMessage>
         <Button type="submit">Login</Button>
       </form>
     </Form>

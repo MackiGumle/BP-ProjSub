@@ -2,7 +2,7 @@ using System;
 
 namespace BP_ProjSub.Server.Models.Auth;
 
-public class LoggedInModel
+public class LoggedInDto
 {
     public required string Id { get; set; }
     public required string Username { get; set; }

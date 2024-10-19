@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/UserContext";
 import axios from "axios";
 import { useState } from "react";
 import { set } from "react-hook-form";
+import { UnauthorizedPage } from "./errorPages/UnauthorizedPage";
+import { AdminPage } from "./admin/AdminPage";
 
 
 type Forecast = {
@@ -12,6 +15,8 @@ type Forecast = {
 
 const HomePage = () => {
     const [forecast, setForecast] = useState<Forecast[]>([]);
+    const { user } = useAuth();
+
 
     function getForecast() {
         axios.get('api/weatherforecast')
@@ -34,11 +39,25 @@ const HomePage = () => {
                 console.error(error);
             });
     }
+
+    if (user === null) {
+        return (
+            <UnauthorizedPage />
+        );
+    }
+
+    if (user.roles.includes("Admin")) {
+        return (
+            <AdminPage />
+        );
+    }
+
     return (
         <>
             <h1>Home Page</h1>
             <Button onClick={getForecast}>get forecast</Button>
             <Button onClick={getProtectedForecast}>get protected forecast</Button>
+
             {/* <ul>
                 {
                 forecast.map((f, i) => (

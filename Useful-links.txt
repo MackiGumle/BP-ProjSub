@@ -2,3 +2,5 @@ AddIdentity vs AddIdentityCore - https://stackoverflow.com/questions/55361533/ad
 ASP CORE JWT auth - https://wildermuth.com/2018/04/10/Using-JwtBearer-Authentication-in-an-API-only-ASP-NET-Core-Project/
 Endpoint unreachable when using [Authorize] - https://stackoverflow.com/questions/52038054/web-api-core-returns-404-when-adding-authorize-attribute
 Vite proxy - https://vitejs.dev/config/server-options#server-proxy
+Inheritance with EF - https://stackoverflow.com/questions/58848481/net-core-identity-multiple-user-types#58866513
+EF data annotations - https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-annotations

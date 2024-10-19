@@ -15,9 +15,13 @@ namespace BP_ProjSub.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            // builder.Configuration.Sources.Clear();
+            // builder.Configuration.AddEnvironmentVariables();
+            // var ApiKey = builder.Configuration["ApiKeys:SendGrid"]; 
+            // var conn = builder.Configuration["ConnectionStrings:BakalarkaDB"]; 
+            // var defconn = builder.Configuration.GetConnectionString("BakalarkaDB"); 
 
             // Add services to the container.
-
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -49,21 +53,23 @@ namespace BP_ProjSub.Server
                 });
             });
 
-
+            // DB connection
             builder.Services.AddDbContext<BakalarkaDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Identity service configuration
             builder.Services.AddIdentity<Person, IdentityRole>(options =>
             {
-                // options.SignIn.RequireConfirmedAccount = true;
+                options.SignIn.RequireConfirmedAccount = true;
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
-            })
+            }).AddDefaultTokenProviders()
                 .AddEntityFrameworkStores<BakalarkaDbContext>();
 
+            // JWT configuration
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,9 +89,14 @@ namespace BP_ProjSub.Server
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
-            builder.Services.AddAuthorization();
-            builder.Services.AddScoped<TokenService>();
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AccountActivation", policy => policy.RequireClaim("AccountActivation"));
+            });
+
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddSingleton<EmailService>();
 
 
             var app = builder.Build();

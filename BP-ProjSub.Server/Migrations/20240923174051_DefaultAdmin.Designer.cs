@@ -4,6 +4,7 @@ using BP_ProjSub.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BP_ProjSub.Server.Migrations
 {
     [DbContext(typeof(BakalarkaDbContext))]
-    partial class BakalarkaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240923174051_DefaultAdmin")]
+    partial class DefaultAdmin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -142,17 +145,17 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "62d9f896-a700-46f5-acf5-b42953b79c8d",
+                            Id = "88fc0b4e-2d43-4179-ba19-9b58b75e6375",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "b397006e-8487-4ade-8257-7b6c1f197681",
+                            ConcurrencyStamp = "b2f7db39-11af-4f4e-8f99-9e46140a8d27",
                             Email = "admin@example.com",
-                            EmailConfirmed = true,
+                            EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPZZ7a5EWZ1jdG2coyhyvrNsBbsL3O6LFA8aT1Ev/b8uD7eaS8wfLZmia5Cl2BuqZg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHtI5/2Mr8sAadnv80Omjmh27lBqd3j2mfpQNlRgyWm3uI6/8dhT7xOjSgcVfgG6VA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "f3050010-78e5-410b-9ce0-4fa833e7beae",
+                            SecurityStamp = "13135bb4-daef-40cc-b6b6-f892f71cfef1",
                             TwoFactorEnabled = false,
                             UserName = "Admin"
                         });
@@ -299,19 +302,19 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc",
+                            Id = "a97b9618-88c8-4aed-8bb6-996ff15b3e79",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "e57aed6a-ef40-4b9b-91c1-8928e114f11d",
+                            Id = "76fe5145-7b2c-4bc2-b8ee-c27ef344f476",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "32a8b951-9926-4def-8e77-3248e75443ac",
+                            Id = "117a6df4-4d0f-48b1-a596-a7d431a43ae1",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -406,8 +409,8 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "62d9f896-a700-46f5-acf5-b42953b79c8d",
-                            RoleId = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc"
+                            UserId = "88fc0b4e-2d43-4179-ba19-9b58b75e6375",
+                            RoleId = "a97b9618-88c8-4aed-8bb6-996ff15b3e79"
                         });
                 });
 

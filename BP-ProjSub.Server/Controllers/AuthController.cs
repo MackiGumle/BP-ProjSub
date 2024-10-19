@@ -1,6 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Models.Auth;
 using BP_ProjSub.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,8 +24,10 @@ namespace BP_ProjSub.Server.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        // This endpoint should be removed
+        [HttpPost("registerTeacher")]
+        [Authorize(Roles = "Admin")]
+        private async Task<IActionResult> Register([FromBody] CreateAccountDto model)
         {
             try
             {
@@ -38,13 +42,13 @@ namespace BP_ProjSub.Server.Controllers
                     Email = model.Email
                 };
 
-                var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await _userManager.CreateAsync(user, "Password123!");
 
                 if (result.Succeeded)
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, "Student");
 
-                    return Ok(new LoggedInModel
+                    return Ok(new LoggedInDto
                     {
                         Id = user.Id,
                         Username = user.UserName,
@@ -63,7 +67,7 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             try
             {
@@ -88,7 +92,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var roles = await _userManager.GetRolesAsync(user);
 
-                return Ok(new LoggedInModel
+                return Ok(new LoggedInDto
                 {
                     Id = user.Id,
                     Username = user.UserName,
@@ -96,6 +100,51 @@ namespace BP_ProjSub.Server.Controllers
                     Token = _tokenService.CreateToken(user, roles as List<string>),
                     Roles = await _userManager.GetRolesAsync(user)
                 });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpPost("ActivateAccount")]
+        [Authorize(Policy = "AccountActivation")]
+        public async Task<IActionResult> ActivateAccount([FromHeader] string Authorization)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var authToken = tokenHandler.ReadToken(Authorization.Replace("Bearer ", string.Empty)) as JwtSecurityToken;
+
+                var email = authToken?.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Email)?.Value ?? string.Empty;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Token does not contain email");
+                }
+
+                var user = await _userManager.FindByEmailAsync(email);
+
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+
+                var emailConfirmationToken = authToken?.Claims.FirstOrDefault(claim => claim.Type == "AccountActivation")?.Value;
+
+                if (string.IsNullOrEmpty(emailConfirmationToken))
+                {
+                    return BadRequest("Invalid email confirmation token");
+                }
+
+                var result = await _userManager.ConfirmEmailAsync(user, emailConfirmationToken);
+
+                if (result.Succeeded)
+                {
+                    return Ok();
+                }
+
+                return BadRequest(result.Errors);
             }
             catch (Exception e)
             {

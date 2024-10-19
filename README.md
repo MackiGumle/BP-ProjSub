@@ -2,7 +2,7 @@
 - [ ] React front-end
 - [ ] <strike> ASP .NET CORE (MVC) </strike> / ASP .NET CORE API
 - [x] Azure SQL Database 
-
+- [ ] Hosting na Azure app service
 ---
 
 #### TODO:
@@ -14,11 +14,20 @@
   - [x] - Nainstalovat Shadcn-ui do Vite ( https://ui.shadcn.com/docs/installation/vite )
   - [x] - Routing pomocí React Router ( https://reactrouter.com/en/main/start/tutorial )
   - [x] - Login/Register Formuláře
-  - [ ] - Zamezit uživateli přístup na stránky pokud nemá potřebné role
-  - [ ] - Správa uživatelů ???
+  - [x] - Zamezit uživateli přístup na stránky pokud nemá potřebné role
+  - [ ] - UI pro uživatele s aktivovaným účtem bez hesla (set password?)
+  - [ ] - Request na nový token ~10min před expirací
+  - [ ] - UI pro učitele na přidávání předmětů 
+  - [ ] - UI pro učitele na přidávání studentů (rovnou do předmětu?) 
+  - [ ] - UI pro studenty k zobrazování předmětů, zadání a odevzdání 
 - Back-end
   - Přihlašování
     - [x] - Zprovoznit .NET Identity 
     - [x] - API pro přidělení JSON Web Tokenu podle přihlášeného uživatele
-    - [ ] - Správa uživatelů (Učitel, Student, Admin?) ???
+    - [ ] - API pro získání nového tokenu (refresh platnosti)
+    - [ ] - Správa předmětů a zadání: CRUD operace
+    - [ ] - Správa studentů pro učitele: přidávání studentů do předmětu
 
+#### Required env. variables:
+- ApiKeys__SendGrid
+- ConnectionStrings__BakalarkaDB

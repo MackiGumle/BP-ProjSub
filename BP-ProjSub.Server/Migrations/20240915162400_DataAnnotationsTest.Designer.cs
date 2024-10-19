@@ -4,6 +4,7 @@ using BP_ProjSub.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BP_ProjSub.Server.Migrations
 {
     [DbContext(typeof(BakalarkaDbContext))]
-    partial class BakalarkaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240915162400_DataAnnotationsTest")]
+    partial class DataAnnotationsTest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,24 +141,6 @@ namespace BP_ProjSub.Server.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "62d9f896-a700-46f5-acf5-b42953b79c8d",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "b397006e-8487-4ade-8257-7b6c1f197681",
-                            Email = "admin@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPZZ7a5EWZ1jdG2coyhyvrNsBbsL3O6LFA8aT1Ev/b8uD7eaS8wfLZmia5Cl2BuqZg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "f3050010-78e5-410b-9ce0-4fa833e7beae",
-                            TwoFactorEnabled = false,
-                            UserName = "Admin"
-                        });
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Rating", b =>
@@ -299,19 +284,19 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc",
+                            Id = "ce9bf8ac-ad0b-4db0-a867-64d7b877d21c",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "e57aed6a-ef40-4b9b-91c1-8928e114f11d",
+                            Id = "5345c0ac-5a12-44e9-b5dc-01b5393ae0fd",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "32a8b951-9926-4def-8e77-3248e75443ac",
+                            Id = "66734ecd-38f5-4f5e-98a5-7d3a8e9fcfce",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -402,13 +387,6 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = "62d9f896-a700-46f5-acf5-b42953b79c8d",
-                            RoleId = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>

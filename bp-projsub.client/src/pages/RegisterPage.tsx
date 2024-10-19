@@ -7,7 +7,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import Hyperlink from "@/components/custom-ui/HyperLink";
-import RegisterForm from "@/components/forms/RegisterForm";
+import CreateAccountForm from "@/components/forms/admin/createAccountForm";
 
 
 export default function RegisterPage() {
@@ -21,7 +21,7 @@ export default function RegisterPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RegisterForm />
+                    <CreateAccountForm />
                 </CardContent>
             </Card>
         </div>

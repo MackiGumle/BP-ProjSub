@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -11,8 +10,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/UserContext"
+import axios from "axios"
+
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
@@ -20,13 +28,15 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Invalid email"
   }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, { message: "Passwords do not match", path: ["confirmPassword"] })
+  role: z.string().min(1, { message: "Role is empty" }),
+  // password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
+  // confirmPassword: z.string(),
+})
+//.refine((data) => data.password === data.confirmPassword, { message: "Passwords do not match", path: ["confirmPassword"] })
 
 
-export default function RegisterForm() {
-  const {register} = useAuth();
+export default function CreateAccountForm() {
+  const { user } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -34,32 +44,26 @@ export default function RegisterForm() {
       name: "",
       surname: "",
       email: "",
-      password: "",
-      confirmPassword: "",
+      role: "Teacher",
+      // password: "",
+      // confirmPassword: "",
     },
   })
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // const response = await fetch("/api/register", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(values),
-    // });
-
-    // if (response.ok) {
-    //   console.log("Success")
-    // } else {
-    //   console.error("Error")
-    // }
-    register(values.email, values.name, values.surname, values.password);
+    await axios.post("api/Admin/createAccount", values).then(response => {
+      console.log(response);
+    }
+    ).catch(error => {
+      console.error(error);
+    });
   }
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md flex flex-col gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <FormField
           control={form.control}
           name="name"
@@ -101,6 +105,27 @@ export default function RegisterForm() {
         />
         <FormField
           control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="">Role</FormLabel>
+              <FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent {...field}>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="Teacher">Teacher</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* <FormField
+          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
@@ -124,8 +149,8 @@ export default function RegisterForm() {
               <FormMessage />
             </FormItem>
           )}
-        />
-        <Button type="submit">Login</Button>
+        /> */}
+        <Button type="submit">Create</Button>
       </form>
     </Form>
   )
