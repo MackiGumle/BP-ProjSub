@@ -1,3 +1,4 @@
+using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +13,17 @@ namespace BP_ProjSub.Server.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
+        private readonly BakalarkaDbContext _dbContext;
         private readonly UserManager<Person> _userManager;
         private readonly EmailService _emailService;
+        private readonly TokenService _tokenService;
 
-        public AdminController(UserManager<Person> userManager, EmailService emailService)
+        public AdminController(UserManager<Person> userManager, EmailService emailService, TokenService tokenService, BakalarkaDbContext dbContext)
         {
             _userManager = userManager;
             _emailService = emailService;
+            _tokenService = tokenService;
+            _dbContext = dbContext;
         }
 
         [HttpPost("createAccount")]
@@ -47,7 +52,10 @@ namespace BP_ProjSub.Server.Controllers
                         return BadRequest(roleResult.Errors);
                     }
 
-                    var emailResult = await _emailService.SendAccountActivation(user.Email, "token");
+                    var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var authToken = _tokenService.CreateAccountActivationToken(user, emailConfirmationToken);
+
+                    var emailResult = await _emailService.SendAccountActivation(user.Email, authToken);
                     if (!emailResult.IsSuccessStatusCode)
                     {
                         return StatusCode(StatusCodes.Status500InternalServerError, emailResult.Body.ReadAsStringAsync().Result);

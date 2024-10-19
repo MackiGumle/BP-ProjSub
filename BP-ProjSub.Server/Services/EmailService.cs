@@ -9,6 +9,7 @@ public class EmailService
 {
     private SendGridClient _client;
     private readonly string _apiKey;
+    private readonly TokenService _tokenService;
 
     public EmailService(IConfiguration config)
     {
@@ -18,13 +19,13 @@ public class EmailService
 
     public async Task<Response> SendAccountActivation(string recipient, string token)
     {
-        var client = new SendGridClient(_apiKey);
+        // var client = new SendGridClient(_apiKey);
         var from = new EmailAddress("projsubsender@gmail.com", "ProjSub");
         var subject = "Sending with SendGrid is Fun";
         var to = new EmailAddress(recipient);
         var plainTextContent = "and easy to do anywhere, even with C#";
-        var htmlContent = "<strong>and easy to do anywhere, even with C#</strong>";
+        var htmlContent = $"<h1>{token}</h1><strong>and easy to do anywhere, even with C#</strong>";
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-        return await client.SendEmailAsync(msg);
+        return await _client.SendEmailAsync(msg);
     }
 }

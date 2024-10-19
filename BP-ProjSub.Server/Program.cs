@@ -20,7 +20,7 @@ namespace BP_ProjSub.Server
             // var ApiKey = builder.Configuration["ApiKeys:SendGrid"]; 
             // var conn = builder.Configuration["ConnectionStrings:BakalarkaDB"]; 
             // var defconn = builder.Configuration.GetConnectionString("BakalarkaDB"); 
-    
+
             // Add services to the container.
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -66,7 +66,7 @@ namespace BP_ProjSub.Server
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
-            })
+            }).AddDefaultTokenProviders()
                 .AddEntityFrameworkStores<BakalarkaDbContext>();
 
             // JWT configuration
@@ -90,7 +90,11 @@ namespace BP_ProjSub.Server
                 };
             });
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AccountActivation", policy => policy.RequireClaim("AccountActivation"));
+            });
+
             builder.Services.AddScoped<TokenService>();
             builder.Services.AddSingleton<EmailService>();
 

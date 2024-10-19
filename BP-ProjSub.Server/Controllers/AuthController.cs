@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Models.Auth;
 using BP_ProjSub.Server.Services;
@@ -26,7 +27,7 @@ namespace BP_ProjSub.Server.Controllers
         // This endpoint should be removed
         [HttpPost("registerTeacher")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Register([FromBody] CreateAccountDto model)
+        private async Task<IActionResult> Register([FromBody] CreateAccountDto model)
         {
             try
             {
@@ -99,6 +100,51 @@ namespace BP_ProjSub.Server.Controllers
                     Token = _tokenService.CreateToken(user, roles as List<string>),
                     Roles = await _userManager.GetRolesAsync(user)
                 });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
+        [HttpPost("ActivateAccount")]
+        [Authorize(Policy = "AccountActivation")]
+        public async Task<IActionResult> ActivateAccount([FromHeader] string Authorization)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var authToken = tokenHandler.ReadToken(Authorization.Replace("Bearer ", string.Empty)) as JwtSecurityToken;
+
+                var email = authToken?.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Email)?.Value ?? string.Empty;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Token does not contain email");
+                }
+
+                var user = await _userManager.FindByEmailAsync(email);
+
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+
+                var emailConfirmationToken = authToken?.Claims.FirstOrDefault(claim => claim.Type == "AccountActivation")?.Value;
+
+                if (string.IsNullOrEmpty(emailConfirmationToken))
+                {
+                    return BadRequest("Invalid email confirmation token");
+                }
+
+                var result = await _userManager.ConfirmEmailAsync(user, emailConfirmationToken);
+
+                if (result.Succeeded)
+                {
+                    return Ok();
+                }
+
+                return BadRequest(result.Errors);
             }
             catch (Exception e)
             {

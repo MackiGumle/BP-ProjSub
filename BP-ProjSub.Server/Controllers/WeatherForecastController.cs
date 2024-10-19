@@ -1,4 +1,6 @@
+using BP_ProjSub.Server.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BP_ProjSub.Server.Controllers
@@ -7,6 +9,7 @@ namespace BP_ProjSub.Server.Controllers
     [Route("api/[controller]")]
     public class WeatherForecastController : ControllerBase
     {
+        private readonly UserManager<Person> _userManager;
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -14,9 +17,10 @@ namespace BP_ProjSub.Server.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, UserManager<Person> userManager)
         {
             _logger = logger;
+            _userManager = userManager;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
