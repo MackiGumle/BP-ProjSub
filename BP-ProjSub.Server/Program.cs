@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BP_ProjSub.Server.Services;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Configuration.EnvironmentVariables;
 
 namespace BP_ProjSub.Server
 {
@@ -15,11 +16,12 @@ namespace BP_ProjSub.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // builder.Configuration.Sources.Clear();
-            // builder.Configuration.AddEnvironmentVariables();
-            // var ApiKey = builder.Configuration["ApiKeys:SendGrid"]; 
-            // var conn = builder.Configuration["ConnectionStrings:BakalarkaDB"]; 
-            // var defconn = builder.Configuration.GetConnectionString("BakalarkaDB"); 
+
+            var api = builder.Configuration["ApiKeys:SendGrid"];
+
+
+            var debugView = builder.Configuration.GetDebugView();
+            Console.WriteLine($"[i] Debug view: {debugView}");
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -55,7 +57,7 @@ namespace BP_ProjSub.Server
 
             // DB connection
             builder.Services.AddDbContext<BakalarkaDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration["ConnectionStrings__BakalarkaDB"]));
 
             // Identity service configuration
             builder.Services.AddIdentity<Person, IdentityRole>(options =>

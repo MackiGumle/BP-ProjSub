@@ -42,23 +42,30 @@ namespace BP_ProjSub.Server.Controllers
                     Email = model.Email
                 };
 
-                var result = await _userManager.CreateAsync(user);
+                var userFromDB = await _userManager.FindByEmailAsync(model.Email);
+                if (userFromDB != null)
+                {
+                    return BadRequest($"User with email '{model.Email}' already exists.");
+                }
 
+                // Send email with account activation token
+                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var authToken = _tokenService.CreateAccountActivationToken(user, emailConfirmationToken);
+
+                var emailResult = await _emailService.SendAccountActivation(user.Email, authToken);
+                if (!emailResult.IsSuccessStatusCode)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send activation email.");
+                }
+
+                // Create user
+                var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
                     var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
                     if (!roleResult.Succeeded)
                     {
                         return BadRequest(roleResult.Errors);
-                    }
-
-                    var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    var authToken = _tokenService.CreateAccountActivationToken(user, emailConfirmationToken);
-
-                    var emailResult = await _emailService.SendAccountActivation(user.Email, authToken);
-                    if (!emailResult.IsSuccessStatusCode)
-                    {
-                        return StatusCode(StatusCodes.Status500InternalServerError, emailResult.Body.ReadAsStringAsync().Result);
                     }
 
                     return Ok();

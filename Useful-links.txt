@@ -4,3 +4,6 @@ Endpoint unreachable when using [Authorize] - https://stackoverflow.com/question
 Vite proxy - https://vitejs.dev/config/server-options#server-proxy
 Inheritance with EF - https://stackoverflow.com/questions/58848481/net-core-identity-multiple-user-types#58866513
 EF data annotations - https://learn.microsoft.com/en-us/ef/ef6/modeling/code-first/data-annotations
+
+
+Server=tcp:localhost,1433;Initial Catalog=BakalarkaDB;Persist Security Info=False;User ID=sa;Password=<YourStrong@Passw0rd>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;

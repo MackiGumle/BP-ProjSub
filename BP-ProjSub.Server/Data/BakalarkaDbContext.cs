@@ -37,7 +37,7 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
     public virtual DbSet<Teacher> Teachers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:BakalarkaDB");
+        => optionsBuilder.UseSqlServer(_config["ConnectionStrings:BakalarkaDB"]);
         // => optionsBuilder.UseSqlServer("BakalarkaDB");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
