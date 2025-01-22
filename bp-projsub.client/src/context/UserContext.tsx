@@ -52,49 +52,24 @@ export const UserProvider = ({ children }: Props) => {
     setIsReady(true);
   }, []);
 
-  // const register = async (email: string, name: string, surname: string, password: string) => {
-  //     try {
-  //         const response = await axios.post<LoginResponse>("Auth/register", {
-  //             email,
-  //             name,
-  //             surname,
-  //             password,
-  //         });
-
-  //         const data = response.data;
-
-  //         setUser({id: data.id, username: data.username, email: data.email});
-  //         setToken(data.token);
-  //         setRoles(data.roles);
-  //         localStorage.setItem("user", JSON.stringify(user));
-  //         localStorage.setItem("token", token ?? "");
-  //         navigate("/home");
-  //     } catch (error) {
-  //         console.error(error);
-  //     }
-  // };
-
   const login = async (email: string, password: string) => {
     try {
-      await axios.post<LoginResponse>("api/Auth/login", { email, password })
-        .then(response => {
-          const { id, username, email: userEmail, token, roles } = response.data;
+        const response = await axios.post<LoginResponse>("api/Auth/login", { email, password });
+        const { id, username, email: userEmail, token, roles } = response.data;
 
-          setUser({ id, username, email: userEmail, roles });
-          setToken(token);
-          //   setRoles(roles);
+        setUser({ id, username, email: userEmail, roles });
+        setToken(token);
 
-          localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
-          localStorage.setItem("token", token ?? "");
+        axios.defaults.headers.common["Authorization"] = "Bearer " + token;
 
-          console.log("Success: logged in");
-          navigate("/");
-        })
-        .catch(error => {
-          console.error("Login failed:", error);
-        });
+        localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
+        localStorage.setItem("token", token ?? "");
+
+        console.log("Success: logged in");
+        navigate("/");
+
     } catch (error) {
-      console.error("An unexpected error occurred:", error);
+        console.error("Login failed:", error);
     }
   };
 

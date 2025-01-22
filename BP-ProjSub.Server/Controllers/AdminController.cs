@@ -42,10 +42,34 @@ namespace BP_ProjSub.Server.Controllers
                     Email = model.Email
                 };
 
+                // Check if user already exists and is confirmed
                 var userFromDB = await _userManager.FindByEmailAsync(model.Email);
-                if (userFromDB != null)
+                if (userFromDB != null && userFromDB.EmailConfirmed)
                 {
                     return BadRequest($"User with email '{model.Email}' already exists.");
+                }
+
+                if(userFromDB != null)
+                {
+                    user = userFromDB;
+                }
+
+                // Create user
+                if(userFromDB == null)
+                {
+                    var result = await _userManager.CreateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                        if (!roleResult.Succeeded)
+                        {
+                            return BadRequest(roleResult.Errors);
+                        }
+
+                        return Ok();
+                    }
+
+                    return BadRequest(result.Errors);
                 }
 
                 // Send email with account activation token
@@ -58,20 +82,7 @@ namespace BP_ProjSub.Server.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send activation email.");
                 }
 
-                // Create user
-                var result = await _userManager.CreateAsync(user);
-                if (result.Succeeded)
-                {
-                    var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
-                    if (!roleResult.Succeeded)
-                    {
-                        return BadRequest(roleResult.Errors);
-                    }
-
-                    return Ok();
-                }
-
-                return BadRequest(result.Errors);
+                return Ok();
             }
             catch (Exception e)
             {

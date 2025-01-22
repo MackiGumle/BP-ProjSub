@@ -109,7 +109,7 @@ namespace BP_ProjSub.Server.Controllers
 
         [HttpPost("ActivateAccount")]
         [Authorize(Policy = "AccountActivation")]
-        public async Task<IActionResult> ActivateAccount([FromHeader] string Authorization)
+        public async Task<IActionResult> ActivateAccount([FromHeader] string Authorization, [FromBody] string Password)
         {
             try
             {
@@ -120,31 +120,34 @@ namespace BP_ProjSub.Server.Controllers
 
                 if (string.IsNullOrEmpty(email))
                 {
-                    return BadRequest("Token does not contain email");
+                    return BadRequest(new { message = "Token does not contain email." });
                 }
 
                 var user = await _userManager.FindByEmailAsync(email);
-
                 if (user == null)
                 {
-                    return NotFound("User not found");
+                    return NotFound(new { message = "User not found." });
                 }
 
                 var emailConfirmationToken = authToken?.Claims.FirstOrDefault(claim => claim.Type == "AccountActivation")?.Value;
-
                 if (string.IsNullOrEmpty(emailConfirmationToken))
                 {
-                    return BadRequest("Invalid email confirmation token");
+                    return BadRequest(new { message = "Invalid email confirmation token." });
                 }
 
                 var result = await _userManager.ConfirmEmailAsync(user, emailConfirmationToken);
-
-                if (result.Succeeded)
+                if (!result.Succeeded)
                 {
-                    return Ok();
+                    return BadRequest(new { message = $"Email confirmation failed." });
                 }
 
-                return BadRequest(result.Errors);
+                var passwordResult = await _userManager.AddPasswordAsync(user, Password);
+                if(!passwordResult.Succeeded)
+                {
+                    return BadRequest(new {message = "Password could not be set." });
+                }
+
+                return Ok(new {message = "Account activated successfully." });
             }
             catch (Exception e)
             {
