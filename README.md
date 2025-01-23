@@ -15,9 +15,9 @@
   - [x] - Routing pomocí React Router ( https://reactrouter.com/en/main/start/tutorial )
   - [x] - Login/Register Formuláře
   - [x] - Zamezit uživateli přístup na stránky pokud nemá potřebné role
-  - [ ] - UI pro uživatele s aktivovaným účtem bez hesla (set password?)
+  - [x] - UI pro uživatele s aktivovaným účtem bez hesla (set password?)
   - [ ] - Request na nový token ~10min před expirací
-  - [ ] - UI pro učitele na přidávání předmětů 
+  - [x] - Formulář pro učitele pro přidávání předmětů 
   - [ ] - UI pro učitele na přidávání studentů (rovnou do předmětu?) 
   - [ ] - UI pro studenty k zobrazování předmětů, zadání a odevzdání 
 - Back-end
