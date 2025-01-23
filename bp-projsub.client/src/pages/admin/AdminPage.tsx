@@ -1,4 +1,4 @@
-import CreateAccountForm from "@/components/forms/admin/createAccountForm";
+import CreateAccountForm from "@/components/forms/admin/CreateAccountForm";
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 

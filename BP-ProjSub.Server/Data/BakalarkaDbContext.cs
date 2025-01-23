@@ -36,9 +36,11 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     public virtual DbSet<Teacher> Teachers { get; set; }
 
+    public virtual DbSet<Admin> Admins { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer(_config["ConnectionStrings:BakalarkaDB"]);
-        // => optionsBuilder.UseSqlServer("BakalarkaDB");
+    // => optionsBuilder.UseSqlServer("BakalarkaDB");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,9 +55,14 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
         });
 
         modelBuilder.Entity<Teacher>(entity =>
-       {
-           entity.ToTable("Teacher");
-       });
+        {
+            entity.ToTable("Teacher");
+        });
+
+        modelBuilder.Entity<Admin>(entity =>
+        {
+            entity.ToTable("Admin");
+        });
 
         modelBuilder.Entity<Rating>(entity =>
         {

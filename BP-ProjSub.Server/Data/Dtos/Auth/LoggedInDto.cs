@@ -1,6 +1,6 @@
 using System;
 
-namespace BP_ProjSub.Server.Models.Auth;
+namespace BP_ProjSub.Server.Data.Dtos.Auth;
 
 public class LoggedInDto
 {

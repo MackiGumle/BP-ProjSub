@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace BP_ProjSub.Server.Models.Auth;
+namespace BP_ProjSub.Server.Data.Dtos.Teacher;
 
 public class CreateStudentDto
 {

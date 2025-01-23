@@ -29,7 +29,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("PersonId");
 
-                    b.ToTable("Admin");
+                    b.ToTable("Admin", (string)null);
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Assignment", b =>
@@ -197,7 +197,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("PersonId");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Subject", b =>
@@ -442,7 +442,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasIndex("SubjectsId");
 
-                    b.ToTable("StudentSubject");
+                    b.ToTable("StudentSubject", (string)null);
                 });
 
             modelBuilder.Entity("SubjectTeacher", b =>
@@ -457,7 +457,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasIndex("TeachersPersonId");
 
-                    b.ToTable("SubjectTeacher");
+                    b.ToTable("SubjectTeacher", (string)null);
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Admin", b =>

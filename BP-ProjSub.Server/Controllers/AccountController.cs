@@ -1,10 +1,9 @@
 using System.Security.Claims;
+using BP_ProjSub.Server.Data.Dtos.Account;
 using BP_ProjSub.Server.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace BP_ProjSub.Server.Controllers
 {
@@ -50,9 +49,9 @@ namespace BP_ProjSub.Server.Controllers
 
                 return BadRequest(new {message = result.Errors.Select(e => e.Description + '\n').ToList()});
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
             }
         }
 

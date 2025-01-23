@@ -29,7 +29,7 @@ public class EmailService
         var subject = "ProjSub Account activation";
         var to = new EmailAddress(recipient);
         var plainTextContent = "";
-        var htmlContent = $"<h1><a href=\"{_config["WebsiteUrl"]}/auth/ActivateAccount/{token}\">Activate your account<\a></h1>";
+        var htmlContent = $"<h1><a href=\"{_config["WebsiteUrl"]}/auth/ActivateAccount/{token}\">Activate your account<\\a></h1>";
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
         return await _client.SendEmailAsync(msg);
     }

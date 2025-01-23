@@ -5,6 +5,7 @@ import { useState } from "react";
 import { set } from "react-hook-form";
 import { UnauthorizedPage } from "./errorPages/UnauthorizedPage";
 import { AdminPage } from "./admin/AdminPage";
+import { TeacherPage } from "./teacher/TeacherPage";
 
 
 type Forecast = {
@@ -52,13 +53,26 @@ const HomePage = () => {
         );
     }
 
+    if (user.roles.includes("Teacher")) {
+        return (
+            <TeacherPage />
+        );
+    }
+
+    if (user.roles.includes("Student")) {
+        return (
+            <AdminPage />
+        );
+    }
+
     return (
         <>
-            <h1>Home Page</h1>
+        <UnauthorizedPage />
+            {/* <h1>Home Page</h1>
             <Button onClick={getForecast}>get forecast</Button>
             <Button onClick={getProtectedForecast}>get protected forecast</Button>
 
-            {/* <ul>
+            <ul>
                 {
                 forecast.map((f, i) => (
                     <li key={i}>{f.date} - {f.summary}</li>

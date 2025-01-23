@@ -1,4 +1,5 @@
 using BP_ProjSub.Server.Data;
+using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -46,7 +47,7 @@ namespace BP_ProjSub.Server.Controllers
                 var userFromDB = await _userManager.FindByEmailAsync(model.Email);
                 if (userFromDB != null && userFromDB.EmailConfirmed)
                 {
-                    return BadRequest($"User with email '{model.Email}' already exists.");
+                    return BadRequest(new {message = $"User with email '{model.Email}' already exists."});
                 }
 
                 if(userFromDB != null)
@@ -69,8 +70,34 @@ namespace BP_ProjSub.Server.Controllers
                         return Ok();
                     }
 
-                    return BadRequest(result.Errors);
+                    return BadRequest(new {message = "Failed to create user."});
                 }
+
+                // Create entry in table for specific role
+                switch (model.Role)
+                {
+                    case "Admin":
+                        var admin = new Admin
+                        {
+                            Person = user
+                        };
+
+                        await _dbContext.Admins.AddAsync(admin);
+                        break;
+
+                    case "Teacher":
+                        var teacher = new Teacher
+                        {
+                            Person = user
+                        };
+
+                        await _dbContext.Teachers.AddAsync(teacher);
+                        break;
+                    default:
+                        return BadRequest(new {message = "Invalid role."});
+                }
+
+                await _dbContext.SaveChangesAsync();
 
                 // Send email with account activation token
                 var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -79,14 +106,14 @@ namespace BP_ProjSub.Server.Controllers
                 var emailResult = await _emailService.SendAccountActivation(user.Email, authToken);
                 if (!emailResult.IsSuccessStatusCode)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "Failed to send activation email.");
+                    return StatusCode(StatusCodes.Status500InternalServerError, new{message = "Failed to send activation email."});
                 }
 
-                return Ok();
+                return Ok(new {message = "Account created successfully."});
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
             }
         }
     }

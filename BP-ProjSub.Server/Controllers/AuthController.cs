@@ -1,9 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
+using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Models;
-using BP_ProjSub.Server.Models.Auth;
 using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 

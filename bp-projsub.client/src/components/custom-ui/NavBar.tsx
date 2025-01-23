@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { User } from "lucide-react";
 
 export default function NavBar() {
   const { isLoggedIn, user, logout } = useAuth();
@@ -22,21 +23,21 @@ export default function NavBar() {
         <div className="flex items-center gap-4">
           {isLoggedIn() ? (
             <>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{user?.username}</span>
-                <span className="text-sm text-gray-400">
-                  ({user?.roles?.join(', ')})
-                </span>
-              </div>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-full text-white hover:bg-zinc-700"
+                    className="rounded-full text-black hover:bg-zinc-700 hover:text-white"
                   >
-                    ⚙️
+                    <div className="flex items-center gap-2 px-2">
+                      <span className="font-medium">{user?.username}</span>
+                      <span className="text-sm text-gray-400">
+                        ({user?.roles?.join(', ')})
+                      </span>
+                    </div>
+                   <User />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">

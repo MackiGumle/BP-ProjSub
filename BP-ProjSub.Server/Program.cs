@@ -97,9 +97,11 @@ namespace BP_ProjSub.Server
                 options.AddPolicy("AccountActivation", policy => policy.RequireClaim("AccountActivation"));
             });
 
-            builder.Services.AddScoped<TokenService>();
-            builder.Services.AddSingleton<EmailService>();
 
+            builder.Services.AddTransient<EmailService>();
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<SubjectService>();
+            
 
             var app = builder.Build();
 
