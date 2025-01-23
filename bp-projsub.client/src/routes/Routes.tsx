@@ -7,6 +7,7 @@ import ActivateAccountPage from "@/pages/ActivateAccountPage";
 import { NotFoundPage } from "@/pages/errorPages/NotFoundPage";
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { AccountPage } from "@/pages/AccountPage";
 
 
 export const router = createBrowserRouter([
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
                     { path: "activateaccount/:token", element: <ActivateAccountPage /> },
                 ],
             },
+            { path: "/account", element: <ProtectedRoute> <AccountPage/> </ProtectedRoute> },
 
         ],
     },
