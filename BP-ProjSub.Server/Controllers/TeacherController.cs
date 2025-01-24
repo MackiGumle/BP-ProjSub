@@ -34,34 +34,23 @@ namespace BP_ProjSub.Server.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(new {message = ModelState.ToString()});
-                }
-                
-                var emailClaim = User.FindFirst(ClaimTypes.Email);
-                if (emailClaim == null)
-                {
-                    return Unauthorized(new { message = "Email claim not found in token." });
+                    return BadRequest(new { message = ModelState.ToString() });
                 }
 
-                var user = await _userManager.FindByEmailAsync(emailClaim.Value);
-                if (user == null)
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
                 {
-                    return BadRequest(new { message = "User not found." });
+                    return Unauthorized(new { message = "User ID not found in token." });
                 }
 
-                var teacher = await _dbContext.Teachers
-                    .Include(t => t.Person)
-                    .FirstOrDefaultAsync(t => t.PersonId == user.Id);
-                
-                if (teacher == null)
+                Subject newSubject;
+                try
                 {
-                    return BadRequest(new { message = "Only teachers can create subjects." });
+                    newSubject = await _subjectService.CreateSubjectAsync(model, personId);
                 }
-
-                var newSubject = await _subjectService.CreateSubjectAsync(model.Name, model.Description, teacher.PersonId);
-                if(newSubject == null)
+                catch (Exception ex)
                 {
-                    return BadRequest(new { message = "Failed to create subject." });
+                    return BadRequest(new { message = $"Failed to create subject: {ex.Message}" });
                 }
 
                 return Ok(new SubjectDto
@@ -73,7 +62,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
         }
 
@@ -82,20 +71,20 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
                 {
                     return Unauthorized(new { message = "User not found." });
                 }
 
-                var subjects = await _dbContext.Subjects
-                    .Include(s => s.Teachers)
-                    .Where(s => s.Teachers.Any(t => t.PersonId == userId))
-                    .ToListAsync();
-
-                if (subjects == null)
+                List<Subject> subjects;
+                try
                 {
-                    return BadRequest(new { message = "No subjects found." });
+                    subjects = await _subjectService.GetSubjectsByPersonIdAsync(personId, "Teacher");
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Unauthorized(new { message = ex.Message });
                 }
 
                 List<SubjectDto> subjectDtos = subjects.Select(s => new SubjectDto
@@ -111,8 +100,49 @@ namespace BP_ProjSub.Server.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message = "Error retrieving subjects",
-                    error = ex.Message
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("EditSubject")]
+        public async Task<IActionResult> EditSubject([FromBody] SubjectDto model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                Subject subject;
+                try
+                {
+                    subject = await _subjectService.EditSubjectAsync(model, personId);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Unauthorized(new { message = ex.Message });
+                }
+
+                return Ok(new SubjectDto
+                {
+                    Id = subject.Id,
+                    Name = subject.Name,
+                    Description = subject.Description
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message =  ex.Message
                 });
             }
         }
@@ -145,7 +175,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new 
+                return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     message = ex.Message
                 });
@@ -181,7 +211,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
         }
     }

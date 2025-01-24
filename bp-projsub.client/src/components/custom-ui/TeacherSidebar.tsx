@@ -27,7 +27,7 @@ export default function Page() {
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
 
-              <Breadcrumb>
+              {/* <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbLink href="#">
@@ -40,11 +40,11 @@ export default function Page() {
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
-              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Separator orientation="vertical" className="mr-2 h-4" /> */}
             </div>
 
             <div className="ml-auto flex items-center gap-2">
-              <ThemeToggle />
+              <ThemeToggle size="sm"/>
               <CurrentUserButton />
             </div>
           </header>

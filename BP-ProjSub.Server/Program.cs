@@ -98,7 +98,7 @@ namespace BP_ProjSub.Server
             });
 
 
-            builder.Services.AddTransient<EmailService>();
+            builder.Services.AddSingleton<EmailService>();
             builder.Services.AddScoped<TokenService>();
             builder.Services.AddScoped<SubjectService>();
             

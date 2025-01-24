@@ -15,12 +15,8 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/UserContext"
 import { useSearchParams } from "react-router-dom"
+import SubjectDto from "@/Dtos/SubjectDto"
 
-interface SubjectDto {
-  id: number
-  name: string
-  description?: string
-}
 
 // 
 export function SubjectSwitcher({

@@ -26,26 +26,14 @@ import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
 import { ChevronDown } from "lucide-react"
 import { useSearchParams } from "react-router-dom";
+import AssignmentDto from "@/Dtos/AssignmentDto"
+import { TeacherAssignmentActions } from "@/components/custom-ui/Teacher/AssignmentActions"
+import { ThemeToggle } from "./theme-components/theme-toggle"
 
-interface SubjectDto {
-  id: number
-  name: string
-  description?: string
-}
-
-interface AssignmentDto {
-  id: number
-  type?: string
-  title: string
-  description?: string
-  dateAssigned: string
-  dueDate?: string
-  maxPoints?: number
-}
 
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { hasRole, getRole } = useAuth()
+  const { getRole } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get("q")?.toLowerCase() || "";
 
@@ -54,10 +42,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     Number(searchParams.get("subject")) || null
   )
 
-  // Get open groups from URL
-  const initialOpenGroups = new Set(searchParams.get("open")?.split(",") || [])
+  // Get selected assignment from URL
+  const [selectedAssignmentId, setSelectedAssignmentId] = React.useState<number | null>(
+    Number(searchParams.get("assignment")) || null
+  )
+
+  // Initialize open groups from URL using useMemo to avoid warning
+  const initialOpenGroups = React.useMemo(
+    () => new Set(searchParams.get("open")?.split(",") || []),
+    [searchParams]
+  )
   const [openGroups, setOpenGroups] = React.useState<Set<string>>(initialOpenGroups)
 
+  // Update URL when open groups change
+  React.useEffect(() => {
+    const newParams = new URLSearchParams(searchParams)
+    const currentOpen = searchParams.get("open")?.split(",") || []
+
+    // Only update if there's an actual change
+    if (Array.from(openGroups).join(",") !== currentOpen.join(",")) {
+      if (openGroups.size > 0) {
+        newParams.set("open", Array.from(openGroups).join(","))
+      } else {
+        newParams.delete("open")
+      }
+      setSearchParams(newParams, { replace: true })
+    }
+  }, [openGroups, searchParams, setSearchParams])
+
+   // Toggle group without side effects
+   const toggleGroup = (type: string) => {
+    setOpenGroups(prev => {
+      const newSet = new Set(prev)
+      newSet.has(type) ? newSet.delete(type) : newSet.add(type)
+      return newSet
+    })
+  }
 
   // Update URL when subject changes
   React.useEffect(() => {
@@ -70,24 +90,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     setSearchParams(newParams, { replace: true })
   }, [selectedSubjectId])
 
-  // Update URL when groups change
-  const updateUrlGroups = (groups: Set<string>) => {
+  // Update URL when selected assignment changes
+  React.useEffect(() => {
     const newParams = new URLSearchParams(searchParams)
-    groups.size > 0
-      ? newParams.set("open", Array.from(groups).join(","))
-      : newParams.delete("open")
+    if (selectedAssignmentId) {
+      newParams.set("assignment", String(selectedAssignmentId))
+    } else {
+      newParams.delete("assignment")
+    }
     setSearchParams(newParams, { replace: true })
-  }
-
-  // Toggle group open state and update URL
-  const toggleGroup = (type: string) => {
-    setOpenGroups(prev => {
-      const newSet = new Set(prev)
-      newSet.has(type) ? newSet.delete(type) : newSet.add(type)
-      updateUrlGroups(newSet)
-      return newSet
-    })
-  }
+  }, [selectedAssignmentId])
 
   // Fetch assignments
   const { data: assignments, isLoading, error } = useQuery({
@@ -100,7 +112,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return response.data as AssignmentDto[]
     },
     enabled: !!selectedSubjectId,
-  
   })
 
   // Group assignments by type
@@ -111,7 +122,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     assignments?.filter(assignment => {
       const searchFields = [
         assignment.title,
-        // assignment.description, // description can be large, so it will be excluded from search
         assignment.maxPoints
       ].join(" ").toLowerCase();
 
@@ -171,9 +181,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarGroupContent>
                       <SidebarMenu className="p-0">
                         {typeAssignments.map((assignment) => (
-                          <SidebarMenuItem key={assignment.id} className="group">
-                            <div className="flex items-center justify-between w-full gap-2">
-                              <SidebarMenuButton className="w-full m-2 h-auto" onClick={() => console.log('View assignment', assignment.id)}>
+                          <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
+                            <div className="flex items-center justify-between w-full">
+                              <SidebarMenuButton className="w-full m-1 p-1 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)} isActive={selectedAssignmentId === assignment.id}>
                                 <div className="flex flex-col flex-1 text-left">
                                   <span className="font-medium">{assignment.title}</span>
                                   <span className="text-xs text-muted-foreground">
@@ -187,14 +197,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   )}
                                 </div>
                               </SidebarMenuButton>
-                              {hasRole("Teacher") && (
-                                <SidebarMenuAction
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => console.log('Edit assignment', assignment.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </SidebarMenuAction>
-                              )}
+                              <SidebarMenuAction>
+                                {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
+                                <ThemeToggle /> */}
+                              </SidebarMenuAction>
+                              {/* {hasRole("Teacher") && <TeacherAssignmentActions assignmentId={assignment.id} />} */}
                             </div>
                           </SidebarMenuItem>
                         ))}
@@ -207,7 +214,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   )
 }
