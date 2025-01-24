@@ -64,7 +64,12 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Failed to create subject." });
                 }
 
-                return Ok(newSubject);
+                return Ok(new SubjectDto
+                {
+                    Id = newSubject.Id,
+                    Name = newSubject.Name,
+                    Description = newSubject.Description
+                });
             }
             catch (Exception e)
             {
@@ -108,6 +113,41 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     message = "Error retrieving subjects",
                     error = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetAssignments")]
+        public async Task<IActionResult> GetAssignments([FromQuery] int subjectId)
+        {
+            try
+            {
+                if (subjectId <= 0)
+                {
+                    return BadRequest(new { message = "Invalid subject ID" });
+                }
+
+                var assignments = await _dbContext.Assignments
+                    .Where(a => a.SubjectId == subjectId)
+                    .Include(a => a.Teacher)
+                    .Select(a => new AssignmentDto
+                    {
+                        Id = a.Id,
+                        Type = a.Type,
+                        Title = a.Title,
+                        DateAssigned = a.DateAssigned,
+                        DueDate = a.DueDate,
+                        MaxPoints = a.MaxPoints
+                    })
+                    .ToListAsync();
+
+                return Ok(assignments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new 
+                {
+                    message = ex.Message
                 });
             }
         }

@@ -1,4 +1,4 @@
-import { useAuth, UserProfile } from "@/context/UserContext";
+import { useAuth } from "@/context/UserContext";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import {

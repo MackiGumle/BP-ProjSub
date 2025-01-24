@@ -1,8 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/UserContext";
 import axios from "axios";
 import { useState } from "react";
-import { set } from "react-hook-form";
 import { UnauthorizedPage } from "./errorPages/UnauthorizedPage";
 import { AdminPage } from "./admin/AdminPage";
 import { TeacherPage } from "./teacher/TeacherPage";

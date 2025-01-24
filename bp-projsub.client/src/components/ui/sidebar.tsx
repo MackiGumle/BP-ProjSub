@@ -3,12 +3,14 @@ import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
-import { useIsMobile } from "@/components/hooks/use-mobile"
-import { cn } from "@/components/lib/utils"
+// import { useIsMobile } from "@/components/hooks/use-mobile"
+import { useIsMobile } from "@/hooks/use-mobile"
+// import { cn } from "@/components/lib/utils"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -193,6 +195,8 @@ const Sidebar = React.forwardRef<
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+          <SheetTitle className="hidden"></SheetTitle> {/* https://github.com/shadcn-ui/ui/issues/5746#issuecomment-2480835326 */}
+          <SheetDescription className="hidden"></SheetDescription> {/* https://github.com/shadcn-ui/ui/issues/5746#issuecomment-2480835326 */}
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"

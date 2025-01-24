@@ -26,7 +26,8 @@ type UserContextType = {
   login: (username: string, password: string) => void;
   logout: () => void;
   isLoggedIn: () => boolean;
-  hasRole: (role: string) => boolean;
+  hasRole: (role: string) => boolean; 
+  getRole: () => string; // returns highest role: Admin > Teacher > Student > None
 };
 
 type Props = { children: React.ReactNode };
@@ -54,22 +55,22 @@ export const UserProvider = ({ children }: Props) => {
 
   const login = async (email: string, password: string) => {
     try {
-        const response = await axios.post<LoginResponse>("api/Auth/login", { email, password });
-        const { id, username, email: userEmail, token, roles } = response.data;
+      const response = await axios.post<LoginResponse>("api/Auth/login", { email, password });
+      const { id, username, email: userEmail, token, roles } = response.data;
 
-        setUser({ id, username, email: userEmail, roles });
-        setToken(token);
+      setUser({ id, username, email: userEmail, roles });
+      setToken(token);
 
-        axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+      axios.defaults.headers.common["Authorization"] = "Bearer " + token;
 
-        localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
-        localStorage.setItem("token", token ?? "");
+      localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
+      localStorage.setItem("token", token ?? "");
 
-        console.log("Success: logged in");
-        navigate("/");
+      console.log("Success: logged in");
+      navigate("/");
 
     } catch (error) {
-        console.error("Login failed:", error);
+      console.error("Login failed:", error);
     }
   };
 
@@ -94,8 +95,14 @@ export const UserProvider = ({ children }: Props) => {
     return user?.roles?.includes(role) ?? false;
   };
 
+  // returns highest role: Admin > Teacher > Student > None
+  const getRole = (): string => {
+    if (!isLoggedIn()) return "None";
+    return user?.roles?.includes("Admin") ? "Admin" : user?.roles?.includes("Teacher") ? "Teacher" : "Student";
+  }
+
   return (
-    <UserContext.Provider value={{ user, token, login, logout, isLoggedIn, hasRole }}>
+    <UserContext.Provider value={{ user, token, login, logout, isLoggedIn, hasRole, getRole }}>
       {isReady ? children : null}
     </UserContext.Provider>
   );

@@ -108,7 +108,6 @@ import axios, { AxiosError } from 'axios'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 
 interface Subject {
   id: number

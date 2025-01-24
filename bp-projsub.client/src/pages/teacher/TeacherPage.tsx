@@ -1,12 +1,17 @@
 import { SubjectsList } from "@/components/custom-ui/SubjectList";
+import Page from "@/components/custom-ui/TeacherSidebar";
+
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export function TeacherPage() {
     return (
-        <div>
-            <h1>Teacher Page</h1>
-            <CreateSubjectForm />
-            <SubjectsList />
-        </div>
+        <>
+             {/* <SidebarProvider> */}
+                {/* <CreateSubjectForm /> */}
+                {/* <SubjectsList /> */}
+                <Page />
+            {/* </SidebarProvider> */}
+        </>
     );
 }
