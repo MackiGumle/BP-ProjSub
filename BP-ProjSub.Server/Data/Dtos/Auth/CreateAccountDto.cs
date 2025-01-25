@@ -6,10 +6,7 @@ namespace BP_ProjSub.Server.Data.Dtos.Auth;
 public class CreateAccountDto
 {
     [Required]
-    public string? Name { get; set; }
-
-    [Required]
-    public string? Surname { get; set; }
+    public string? UserName { get; set; }
 
     [Required]
     [EmailAddress]

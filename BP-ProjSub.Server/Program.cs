@@ -100,7 +100,10 @@ namespace BP_ProjSub.Server
 
             builder.Services.AddSingleton<EmailService>();
             builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<AccountService>();
             builder.Services.AddScoped<SubjectService>();
+            builder.Services.AddScoped<StudentService>();
+
             
 
             var app = builder.Build();

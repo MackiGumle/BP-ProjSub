@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import {
   Form,
@@ -16,35 +16,73 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import SubjectDto from "@/Dtos/SubjectDto";
+import CreateSubjectDto from "@/Dtos/CreateSubjectDto";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().max(500, "Description too long").optional(),
+  studentLogins: z.string().optional(),
 });
 
-export function CreateSubjectForm() {
+export function CreateSubjectForm({
+  onSuccess,
+  onCancel
+}: {
+  onSuccess?: (newSubject: SubjectDto) => void
+  onCancel?: () => void
+}) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
+      studentLogins: "",
     },
   });
 
+  const handleCancel = () => {
+    onCancel?.()
+  }
+  const queryClient = useQueryClient()
+
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const response = await axios.post("/api/teacher/CreateSubject", values);
-      return response.data;
+      const pattern: RegExp = /^[A-Za-z]{3}\d{1,5}$/;
+      const processedValues: CreateSubjectDto = {
+        name: values.name,
+        description: values.description || undefined,
+        studentLogins: values.studentLogins
+          ? values.studentLogins
+            .split(',')
+            .map(login => login.trim())
+            .filter(login => {
+              return pattern.test(login)
+              // return login.length > 0 &&
+              //   /^[a-zA-Z0-9]+$/.test(login) &&
+              //   login.length <= 10
+            }) : undefined,
+      };
+
+      const response = await axios.post<SubjectDto>("/api/teacher/CreateSubject", processedValues)
+      return response.data
     },
-    onSuccess: (data: { message: string; subjectId: number }) => {
+    onSuccess: (newSubject) => {
       toast({
         title: "Success!",
-        description: data.message,
+        description: "Subject created successfully",
         variant: "success",
-      });
-      form.reset();
+      })
+      // form.reset()
+
+      queryClient.setQueryData<SubjectDto[]>(['subjects'], (oldSubjects = []) => [
+        ...oldSubjects,
+        newSubject
+      ])
+
+      onSuccess?.(newSubject)
     },
-    onError: (error: AxiosError<{ 
+    onError: (error: AxiosError<{
       message?: string;
       errors?: Record<string, string[]> | Array<{ code: string; description: string }>;
     }>) => {
@@ -90,7 +128,7 @@ export function CreateSubjectForm() {
                   <FormItem>
                     <FormLabel>Subject Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mathematics" {...field} />
+                      <Input placeholder="Enter subject name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,10 +140,28 @@ export function CreateSubjectForm() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (optional)</FormLabel>
+                    <FormLabel>Subject description (optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Course description..."
+                        placeholder="Enter subject description"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="studentLogins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student Logins (optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter comma-separated student logins (e.g., st1, st002)"
                         className="resize-none"
                         {...field}
                       />
@@ -121,13 +177,15 @@ export function CreateSubjectForm() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={mutation.isLoading}
-              >
-                {mutation.isLoading ? "Creating..." : "Create Subject"}
-              </Button>
+              <div className="flex gap-4 mt-6">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={mutation.isLoading}
+                >
+                  {mutation.isLoading ? "Creating..." : "Create Subject"}
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

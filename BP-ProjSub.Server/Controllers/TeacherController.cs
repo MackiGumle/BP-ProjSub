@@ -43,15 +43,35 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized(new { message = "User ID not found in token." });
                 }
 
-                Subject newSubject;
+                var newSubject = new Subject
+                {
+                    Name = model.Name,
+                    Description = model.Description
+                };
+
                 try
                 {
-                    newSubject = await _subjectService.CreateSubjectAsync(model, personId);
+                    newSubject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                 }
                 catch (Exception ex)
                 {
                     return BadRequest(new { message = $"Failed to create subject: {ex.Message}" });
                 }
+
+                try
+                {
+                    // todo: if student is not created yet, create it
+                    var validStudentLogins = model.StudentLogins.Where(AccountService.IsLoginFormatValid).ToList();
+                    if (validStudentLogins.Count > 0)
+                    {
+                        await _subjectService.AddStudentsToSubject(newSubject, validStudentLogins);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { message = $"Failed to add students to subject: {ex.Message}" });
+                }
+
 
                 return Ok(new SubjectDto
                 {
@@ -142,7 +162,7 @@ namespace BP_ProjSub.Server.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message =  ex.Message
+                    message = ex.Message
                 });
             }
         }

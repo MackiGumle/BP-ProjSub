@@ -8,6 +8,7 @@ import { NotFoundPage } from "@/pages/errorPages/NotFoundPage";
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AccountPage } from "@/pages/AccountPage";
+import { TestingPage } from "@/pages/TestingPage";
 
 
 export const router = createBrowserRouter([
@@ -29,6 +30,8 @@ export const router = createBrowserRouter([
                 ],
             },
             { path: "/account", element: <ProtectedRoute> <AccountPage/> </ProtectedRoute> },
+            { path: "/testing", element: <TestingPage /> },
+
 
         ],
     },

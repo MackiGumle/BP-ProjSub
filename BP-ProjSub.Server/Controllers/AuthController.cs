@@ -23,48 +23,6 @@ namespace BP_ProjSub.Server.Controllers
             _signInManager = signInManager;
         }
 
-        // This endpoint should be removed
-        [HttpPost("registerTeacher")]
-        [Authorize(Roles = "Admin")]
-        private async Task<IActionResult> Register([FromBody] CreateAccountDto model)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                var user = new Person
-                {
-                    UserName = model.Name + model.Surname,
-                    Email = model.Email
-                };
-
-                var result = await _userManager.CreateAsync(user, "Password123!");
-
-                if (result.Succeeded)
-                {
-                    var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-
-                    return Ok(new LoggedInDto
-                    {
-                        Id = user.Id,
-                        Username = user.UserName,
-                        Email = user.Email,
-                        Token = _tokenService.CreateToken(user, new List<string> { "Student" }),
-                        Roles = await _userManager.GetRolesAsync(user)
-                    });
-                }
-
-                return BadRequest(result.Errors);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {

@@ -9,6 +9,7 @@ namespace BP_ProjSub.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<Person> _userManager;
@@ -19,7 +20,6 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         [HttpPost("changePassword")]
-        [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
         {
             try
