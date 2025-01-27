@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos.Auth;
@@ -28,14 +29,13 @@ public class AccountService
     }
 
     /// <summary>
-    /// Creates a new account with the given model, adds the user to table coresponding to the role.<br/>
-    /// This is done as a transaction.
+    /// Creates a new account with the given model, adds the user to table coresponding to the role. <br/>
+    /// This should be done as a transaction. <br/>
     /// </summary>
     /// <param name="model"></param>
     /// <returns>The created user</returns>
     public async Task<Person> CreateAccountAsync(CreateAccountDto model)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
             var user = new Person
@@ -98,13 +98,68 @@ public class AccountService
                     throw new InvalidOperationException($"Role {model.Role} is invalid.");
             }
 
-            await _dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
             return user;
         }
         catch
         {
-            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Creates students from the given logins. <br/>
+    /// Student logins must be in the format '^[A-Za-z]{3}\d{1,5}$' <br/>
+    /// logins are case insensitive <br/>
+    /// If login already exists, it will be skipped. <br/>
+    /// </summary>
+    /// <param name="studentLogins">Valid list of logins</param>
+    /// <returns>The created users</returns>
+    public async Task<List<Person>> CreateStudentAccountsFromLoginsAsync(List<string> studentLogins)
+    {
+        if (studentLogins == null || studentLogins.Count == 0)
+        {
+            throw new InvalidOperationException("No student logins provided.");
+        }
+
+        studentLogins = studentLogins.Select(s => s.ToLower()).ToList();
+
+        // No multi role support
+        var existingUsers = _dbContext.Users
+            .Where(u => studentLogins.Contains(u.UserName!))
+            .ToList();
+
+        if (existingUsers != null)
+        {
+            // Remove existing users from the list
+            studentLogins = studentLogins.Except(existingUsers.Select(u => u.UserName!)).ToList();
+        }
+
+        List<Person> newPeople = new List<Person>();
+        try
+        {
+            foreach (var login in studentLogins)
+            {
+                if (!IsLoginFormatValid(login))
+                {
+                    throw new InvalidOperationException($"Login '{login}' is not in the correct format.");
+                }
+
+                var newStudent = new CreateAccountDto
+                {
+                    UserName = login,
+                    Email = $"{login}@vsb.cz",
+                    Role = "Student"
+                };
+
+                // This throws an exception if the login already exists
+                var student = await CreateAccountAsync(newStudent);
+                newPeople.Add(student);
+            }
+
+            return newPeople;
+        }
+        catch
+        {
             throw;
         }
     }

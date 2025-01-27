@@ -1,39 +1,30 @@
-"use client"
-
 import * as React from "react"
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
-
-import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm"
+import { ThemeToggle } from "@/components/theme-components/theme-toggle"
+import { Calendar } from "@/components/ui/calendar"
+import { SimpleTimePicker } from "@/components/ui/simple-time-picker";
+import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
+// import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
 
 
-type Checked = DropdownMenuCheckboxItemProps["checked"]
 
 export function TestingPage() {
-    const [showStatusBar, setShowStatusBar] = React.useState<Checked>(true)
-    const [showActivityBar, setShowActivityBar] = React.useState<Checked>(false)
-    const [showPanel, setShowPanel] = React.useState<Checked>(false)
+    const [date, setDate] = React.useState<Date | undefined>(new Date())
+    const [selected, setSelected] = React.useState<Date>();
+
 
     return (
         <>
-            <CreateSubjectForm />
+{/* <CreateAssignmentDialog /> */}
+<CreateAssignmentForm subjectId={1} />
+        <ThemeToggle />
+            <SimpleTimePicker 
+                value={date || new Date()} 
+                onChange={setDate} 
+            />
+ {/*
+            <CreateAssignmentForm />
+
+
             <Dialog>
                 <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
@@ -78,7 +69,7 @@ export function TestingPage() {
                         <Button type="submit">Confirm</Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
+            </Dialog> */}
         </>
     )
 }

@@ -16,14 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import SubjectDto from "@/Dtos/SubjectDto";
-import CreateSubjectDto from "@/Dtos/CreateSubjectDto";
+import { SubjectDto, CreateSubjectDto } from "@/Dtos/SubjectDto";
+import { subjectSchema } from "@/schemas/subject";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().max(500, "Description too long").optional(),
-  studentLogins: z.string().optional(),
-});
+
 
 export function CreateSubjectForm({
   onSuccess,
@@ -32,8 +28,8 @@ export function CreateSubjectForm({
   onSuccess?: (newSubject: SubjectDto) => void
   onCancel?: () => void
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof subjectSchema>>({
+    resolver: zodResolver(subjectSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -47,7 +43,7 @@ export function CreateSubjectForm({
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: z.infer<typeof subjectSchema>) => {
       const pattern: RegExp = /^[A-Za-z]{3}\d{1,5}$/;
       const processedValues: CreateSubjectDto = {
         name: values.name,
@@ -58,9 +54,6 @@ export function CreateSubjectForm({
             .map(login => login.trim())
             .filter(login => {
               return pattern.test(login)
-              // return login.length > 0 &&
-              //   /^[a-zA-Z0-9]+$/.test(login) &&
-              //   login.length <= 10
             }) : undefined,
       };
 
@@ -94,7 +87,7 @@ export function CreateSubjectForm({
           form.setError("root", { message: errorMessages.join("\n") });
         } else {
           Object.entries(errorData.errors).forEach(([field, messages]) => {
-            form.setError(field as keyof z.infer<typeof formSchema>, {
+            form.setError(field as keyof z.infer<typeof subjectSchema>, {
               type: "server",
               message: messages.join(", "),
             });
@@ -108,7 +101,7 @@ export function CreateSubjectForm({
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof subjectSchema>) {
     mutation.mutate(values);
   }
 
@@ -140,7 +133,7 @@ export function CreateSubjectForm({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject description (optional)</FormLabel>
+                    <FormLabel>Subject Description (optional)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Enter subject description"
@@ -161,7 +154,7 @@ export function CreateSubjectForm({
                     <FormLabel>Student Logins (optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Enter comma-separated student logins (e.g., st1, st002)"
+                        placeholder="Enter comma-separated student logins (e.g., abc123, xyz45)"
                         className="resize-none"
                         {...field}
                       />

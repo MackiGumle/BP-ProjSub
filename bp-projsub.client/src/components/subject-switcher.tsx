@@ -32,7 +32,7 @@ export function SubjectSwitcher({
   selectedSubjectId: number | null
 }) {
 
-  const { getRole } = useAuth()
+  const { getRole, hasRole } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Fetch subjects
@@ -59,7 +59,7 @@ export function SubjectSwitcher({
 
   return (
     <Dialog>
-      <SidebarMenu>
+      <SidebarMenu className="m-1">
         <SidebarMenuItem>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -79,13 +79,17 @@ export function SubjectSwitcher({
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
-            <DialogTrigger asChild>
-              <DropdownMenuItem>
-                <Plus className="mr-2 " />
-                Add subject
-              </DropdownMenuItem>
-            </DialogTrigger>
-              <DropdownMenuSeparator />
+              {hasRole("Teacher") && (
+                <>
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem>
+                      <Plus className="mr-2 " />
+                      Add subject
+                    </DropdownMenuItem>
+                  </DialogTrigger>
+                  <DropdownMenuSeparator />
+                </>
+              )}
 
               {isLoading ? (
                 <DropdownMenuItem disabled>Loading subjects...</DropdownMenuItem>
@@ -111,12 +115,12 @@ export function SubjectSwitcher({
       </SidebarMenu>
 
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
-    <DialogHeader>
-      <DialogTitle aria-hidden></DialogTitle>
-    </DialogHeader>
-    <DialogDescription hidden/>
-    <CreateSubjectForm />
-  </DialogContent>
+        <DialogHeader>
+          <DialogTitle aria-hidden></DialogTitle>
+        </DialogHeader>
+        <DialogDescription hidden />
+        <CreateSubjectForm />
+      </DialogContent>
     </Dialog>
   )
 }

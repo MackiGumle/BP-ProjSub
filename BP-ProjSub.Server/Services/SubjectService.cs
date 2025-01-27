@@ -20,7 +20,7 @@ namespace BP_ProjSub.Server.Services
 
         /// <summary>
         /// Creates a new subject and assigns it to a teacher. <br/>
-        /// This is done as a transaction.
+        /// This should be done as a transaction.
         /// </summary>
         /// <param name="Subject"></param>
         /// <param name="personId">PersonId of the teacher</param>
@@ -28,7 +28,6 @@ namespace BP_ProjSub.Server.Services
         /// <exception cref="KeyNotFoundException">Thrown when the teacher is not found.</exception>
         public async Task<Subject> CreateSubjectAsync(Subject subject, string personId)
         {
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
                 var newSubject = new Subject
@@ -49,13 +48,10 @@ namespace BP_ProjSub.Server.Services
 
                 teacher.SubjectsTaught.Add(newSubject);
 
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
                 return newSubject;
             }
             catch
             {
-                await transaction.RollbackAsync();
                 throw;
             }
         }
@@ -64,16 +60,20 @@ namespace BP_ProjSub.Server.Services
         /// Adds students to a subject. <br/>
         /// If a student is already in the subject, they are not added again. <br/>
         /// If a student is not found, they are ignored. <br/>
-        /// This is done as a transaction.
+        /// This should be done as a transaction. <br/>
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="studentLogins"></param>
         /// <returns>The subject with added students</returns>
         public async Task<Subject> AddStudentsToSubject(Subject subject, List<string> studentLogins)
         {
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
+                if (studentLogins == null || studentLogins.Count == 0)
+                {
+                    throw new InvalidOperationException("No student logins provided.");
+                }
+
                 var subjectWithStudents = await _dbContext.Subjects
                     .Include(s => s.Students)
                     .FirstOrDefaultAsync(s => s.Id == subject.Id);
@@ -83,24 +83,14 @@ namespace BP_ProjSub.Server.Services
                     throw new KeyNotFoundException("Subject not found.");
                 }
 
+                studentLogins = studentLogins.Select(s => s.ToLower()).ToList();
                 var uniqueStudentLogins = studentLogins.Distinct().ToList();
 
+                // Get only students with the logins
                 var students = await _dbContext.Students
                     .Include(s => s.Person)
                     .Where(s => uniqueStudentLogins.Contains(s.Person.UserName))
                     .ToListAsync();
-
-                // // Get users with the given logins
-                // var users = await _dbContext.Users
-                //     .Where(u => uniqueStudentLogins.Contains(u.UserName))
-                //     .ToListAsync();
-
-                // var userIds = users.Select(u => u.Id).ToList();
-
-                // // Get only users that are students
-                // var students = await _dbContext.Students
-                //     .Where(s => userIds.Contains(s.PersonId))
-                //     .ToListAsync();
 
                 // Add students to the subject
                 foreach (var student in students)
@@ -112,67 +102,13 @@ namespace BP_ProjSub.Server.Services
                     }
                 }
 
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
                 return subjectWithStudents;
             }
             catch
             {
-                await transaction.RollbackAsync();
                 throw;
             }
         }
-
-        // public async Task<Subject> CreateSubjectAndAddStudents(Subject subject, string teacherId, List<string> studentLogins)
-        // {
-        //     Subject? newSubject = null;
-        //     try
-        //     {
-        //         newSubject = await CreateSubjectAsync(subject, teacherId);
-        //     }
-        //     catch (Exception)
-        //     {
-        //         throw;
-        //     }
-
-        //     // Students that are already in the database
-        //     var studentsInDb = await _dbContext.Students
-        //         .Include(s => s.Person)
-        //         .Where(s => studentLogins.Contains(s.Person.UserName))
-        //         .ToListAsync();
-
-        //     // get student logins that are not in the database
-        //     var studentLoginsInDb = studentsInDb.Select(s => s.Person.UserName).ToList();
-        //     var studentLoginsNotInDb = studentLogins.Except(studentLoginsInDb).ToList();
-
-        //     // create students that are not in the database
-        //     List<Person> createdStudents = new List<Person>();
-        //     foreach (var studentLogin in studentLoginsNotInDb)
-        //     {
-        //         var model = new CreateAccountDto
-        //         {
-        //             UserName = studentLogin,
-        //             Email = studentLogin + "@vsb.cz",
-        //             Role = "Student"
-        //         };
-
-        //         try
-        //         {
-        //             var newStudent = await _accountService.CreateAccountAsync(model);
-        //             createdStudents.Add(newStudent);
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             throw new InvalidOperationException($"Failed to create student '{studentLogin}' account: {ex.Message}");
-        //         }
-        //     }
-
-        //     // add created students to the subject
-        //     var createdStudentIds = createdStudents.Select(s => s.Id).ToList();
-
-            
-        // }
-
 
         /// <summary>
         /// Gets all subjects that user studies or teaches.
@@ -216,7 +152,8 @@ namespace BP_ProjSub.Server.Services
         }
 
         /// <summary>
-        /// Edits an subject that the teacher teaches.
+        /// Edits an subject that the teacher teaches. <br/>
+        /// This is done as a transaction.
         /// </summary>
         /// <param name="subjectDto">The subject DTO containing updated information.</param>
         /// <param name="personId">PersonId of teacher that teaches the subject.</param>

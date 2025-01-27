@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { ChevronUp, Pencil } from "lucide-react"
+import { ChevronUp, Pencil, Plus } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -26,17 +26,19 @@ import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
 import { ChevronDown } from "lucide-react"
 import { useSearchParams } from "react-router-dom";
-import AssignmentDto from "@/Dtos/AssignmentDto"
 import { TeacherAssignmentActions } from "@/components/custom-ui/Teacher/AssignmentActions"
 import { ThemeToggle } from "./theme-components/theme-toggle"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Separator } from "@radix-ui/react-dropdown-menu"
+import { AssignmentDto } from "@/Dtos/AssignmentDto"
 
 
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { getRole } = useAuth()
+  const { getRole, hasRole } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get("q")?.toLowerCase() || "";
+
 
   // Get selected subject from URL
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<number | null>(
@@ -71,8 +73,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [openGroups, searchParams, setSearchParams])
 
-   // Toggle group without side effects
-   const toggleGroup = (type: string) => {
+  // Toggle group without side effects
+  const toggleGroup = (type: string) => {
     setOpenGroups(prev => {
       const newSet = new Set(prev)
       newSet.has(type) ? newSet.delete(type) : newSet.add(type)
@@ -144,7 +146,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           onSubjectSelect={setSelectedSubjectId}
           selectedSubjectId={selectedSubjectId}
         />
-        <SearchForm />
+        <div className="flex items-center mt-2">
+          <SearchForm className="flex-grow" />
+
+          {selectedSubjectId && hasRole("Teacher") && (
+            <SidebarMenuButton
+              className="shrink-0 p-0 w-6 h-6 flex items-center justify-center"
+              onClick={() => console.log("Create assignment")}
+            >
+              <Plus className="h-6 w-6" />
+            </SidebarMenuButton>
+          )}
+        </div>
       </SidebarHeader>
       <SidebarContent className="">
         {!selectedSubjectId ? (
@@ -215,34 +228,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
-                    Username
-                    <ChevronUp className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  className="w-[--radix-popper-anchor-width]"
-                >
-                  <DropdownMenuItem>
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
+      
     </Sidebar>
   )
 }

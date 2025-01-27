@@ -12,6 +12,8 @@ function App() {
         <UserProvider>
             <ThemeProvider defaultTheme='dark' storageKey='bp-projsub-theme'>
             <div className="w-full h-full">
+                {/* <NavBar /> */}
+                {/* <div className="bg-zinc-800 text-white p-4 mb-4 w-full">Navbar</div> */}
                 <Outlet />
                 <Toaster />
                 <ReactQueryDevtools initialIsOpen={false} />

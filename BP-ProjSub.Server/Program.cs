@@ -9,6 +9,7 @@ using BP_ProjSub.Server.Services;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 
+
 namespace BP_ProjSub.Server
 {
     public class Program
@@ -103,6 +104,7 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<AccountService>();
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<StudentService>();
+            
 
             
 
