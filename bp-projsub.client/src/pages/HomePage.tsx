@@ -4,6 +4,7 @@ import { useState } from "react";
 import { UnauthorizedPage } from "./errorPages/UnauthorizedPage";
 import { AdminPage } from "./admin/AdminPage";
 import { TeacherPage } from "./teacher/TeacherPage";
+import { StudentPage } from "./student/StudentPage";
 
 
 type Forecast = {
@@ -59,7 +60,7 @@ const HomePage = () => {
 
     if (user.roles.includes("Student")) {
         return (
-            <AdminPage />
+            <StudentPage />
         );
     }
 

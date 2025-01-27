@@ -8,3 +8,5 @@
 **/*.dll
 **/*.exe
 **/*.cahe
+BP-ProjSub.Server/uploads/*
+

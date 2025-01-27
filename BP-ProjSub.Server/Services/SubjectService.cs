@@ -62,10 +62,10 @@ namespace BP_ProjSub.Server.Services
         /// If a student is not found, they are ignored. <br/>
         /// This should be done as a transaction. <br/>
         /// </summary>
-        /// <param name="subject"></param>
+        /// <param name="subject">The subject to add students to.</param>
         /// <param name="studentLogins"></param>
         /// <returns>The subject with added students</returns>
-        public async Task<Subject> AddStudentsToSubject(Subject subject, List<string> studentLogins)
+        public async Task<Subject> AddStudentsToSubjectAsync(Subject subject, List<string> studentLogins)
         {
             try
             {

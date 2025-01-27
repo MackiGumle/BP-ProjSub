@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace BP_ProjSub.Server.Controllers
@@ -88,7 +89,7 @@ namespace BP_ProjSub.Server.Controllers
                             var studentLoginsToAdd = existingStudents.Select(s => s.Person.UserName!).ToList();
                             studentLoginsToAdd.AddRange(users.Select(u => u.UserName!));
 
-                            await _subjectService.AddStudentsToSubject(subject, studentLoginsToAdd);
+                            await _subjectService.AddStudentsToSubjectAsync(subject, studentLoginsToAdd);
                             await _dbContext.SaveChangesAsync();
 
                         }
@@ -128,6 +129,60 @@ namespace BP_ProjSub.Server.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
+        }
+
+
+        /// <summary>
+        /// Adds students to a subject. <br/>
+        /// If a student is already in the subject, they are not added again. <br/>
+        /// If a student is not found, they are ignored. <br/>
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("AddStudentsToSubject")]
+        public async Task<IActionResult> AddStudentsToSubject([FromBody] AddStudentsToSubjectDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = ModelState.ToString() });
+            }
+
+            int studentCount;
+
+            try
+            {
+                using (var transaction = _dbContext.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var subject = await _dbContext.Subjects
+                            .FirstOrDefaultAsync(s => s.Id == model.SubjectId);
+
+                        if (subject == null)
+                        {
+                            throw new KeyNotFoundException("Subject not found.");
+                        }
+
+                        var subjectRes = await _subjectService.AddStudentsToSubjectAsync(subject, model.StudentLogins);
+                        studentCount = subjectRes.Students.Count;
+
+                        await _dbContext.SaveChangesAsync();
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return Ok(new { message = $"{studentCount} Students added to subject." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
+            }
+
         }
 
         [HttpGet("GetSubjects")]
