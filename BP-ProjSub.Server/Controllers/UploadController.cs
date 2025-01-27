@@ -32,7 +32,7 @@ namespace BP_ProjSub.Server.Controllers
         /// <param name="assignmentId"></param>
         /// <param name="files"></param>
         /// <returns></returns>
-        [HttpPost("upload/{assignmentId}")]
+        [HttpPost("{assignmentId}")]
         [Authorize(Roles = "Student")]
         public async Task<IActionResult> UploadFiles(int assignmentId, [FromForm] List<IFormFile> files)
         {
@@ -96,6 +96,7 @@ namespace BP_ProjSub.Server.Controllers
                 // var savedFiles = new List<object>();
                 foreach (var file in files)
                 {
+                    // TODO: Make filename actually safe
                     var safeFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
 
                     var fullPath = Path.Combine(targetDir, safeFileName);
