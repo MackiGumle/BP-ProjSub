@@ -17,6 +17,7 @@ import '@uppy/dashboard/dist/style.css'
 import { useTheme } from '@/components/theme-components/theme-provider';
 import { ThemeToggle } from '@/components/theme-components/theme-toggle';
 
+
 interface MyPluginOptions extends UIPluginOptions { }
 
 interface MyPluginState extends Record<string, unknown> { }
@@ -63,9 +64,21 @@ const metaFields = [
 
 function createUppy() {
     // return new Uppy({ restrictions: { requiredMetaFields: ['license'] } })
-    return new Uppy({
+
+    const uppy = new Uppy({
         restrictions: { maxFileSize: 5 * 1024 * 1024, maxTotalFileSize: 20 * 1024 * 1024 },
-        //  allowMultipleUploadBatches: false,
+        onBeforeFileAdded: (file) => { // rename the file to its relativePath so we can preserve folder structure https://stackoverflow.com/a/64503904
+            const originalFile = file.data as File;
+            const relativePath = originalFile.webkitRelativePath || (file.name ?? 'unnamed');
+            file.meta.name = relativePath;
+
+            const modifiedFile = {
+                ...file,
+                name: relativePath, 
+            }
+
+            return modifiedFile
+        },
     })
         .use(MyPlugin)
         .use(XHR, {
@@ -77,6 +90,18 @@ function createUppy() {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
         })
+    // .on('file-added', (file) => {
+    //     // const originalFile = file.meta as { name: string; webkitRelativePath?: string | null };
+    //     // const relativePath = originalFile.webkitRelativePath || originalFile.name;
+    //     // uppy.setFileMeta(file.id, { name: relativePath });
+    //     // console.log('file added', originalFile)
+    //     const originalFile = file.data as File;
+    //     const relativePath = originalFile.webkitRelativePath || file.name;
+    //     uppy.setFileMeta(file.id, { name: relativePath });
+    //     console.log('file added', originalFile)
+    // })
+
+    return uppy
 }
 
 export function TestingPage() {

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BP_ProjSub.Server.Controllers
 {
@@ -55,6 +56,11 @@ namespace BP_ProjSub.Server.Controllers
                 long totalSize = 0;
                 foreach (var file in files)
                 {
+                    if(string.IsNullOrEmpty(file.FileName))
+                    {
+                        return BadRequest(new { message = "A file has empty filename." });
+                    }
+
                     if (file.Length > maxFileSize)
                     {
                         return BadRequest(new { message = $"File {file.FileName} exceeds the maximum filesize of {maxFileSize} bytes." });
@@ -92,16 +98,51 @@ namespace BP_ProjSub.Server.Controllers
                 var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString(), userId, uploadId);
                 Directory.CreateDirectory(targetDir);
 
-
-                // var savedFiles = new List<object>();
+                // Check for directory traversal
                 foreach (var file in files)
                 {
-                    // TODO: Make filename actually safe
-                    var safeFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                    var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                    if (fileNameParts.Length == 0)
+                    {
+                        return BadRequest(new { message = "Empty filename." });
+                    }
 
-                    var fullPath = Path.Combine(targetDir, safeFileName);
+                    var fileName = fileNameParts.Last();
+                    var directoryParts = fileNameParts.Take(fileNameParts.Length - 1).ToArray();
 
-                    // Save the file
+                    foreach (var part in directoryParts)
+                    {
+                        if (part == "." || part == "..")
+                        {
+                            return BadRequest(new { message = "Directory traversal in filename." });
+                        }
+                        if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                        {
+                            return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
+                        }
+                    }
+
+                    if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    {
+                        return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
+                    }
+
+                    var currentDir = targetDir;
+                    foreach (var dirPart in directoryParts)
+                    {
+                        currentDir = Path.Combine(currentDir, dirPart);
+                        Directory.CreateDirectory(currentDir);
+                    }
+
+                    // To be sure the path is not a directory traversal
+                    var fullPath = Path.Combine(currentDir, fileName);
+                    var resolvedFullPath = Path.GetFullPath(fullPath);
+                    var targetDirFullPath = Path.GetFullPath(targetDir);
+                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                    {
+                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                    }
+
                     using (var stream = new FileStream(fullPath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);

@@ -1,5 +1,5 @@
 import { SubjectsList } from "@/components/custom-ui/SubjectList";
-import Page from "@/components/custom-ui/TeacherSidebar";
+import Page from "@/components/custom-ui/App-page";
 
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
 import { SidebarProvider } from "@/components/ui/sidebar";

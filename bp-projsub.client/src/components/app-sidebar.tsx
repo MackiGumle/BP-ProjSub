@@ -82,17 +82,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
   }
 
-  // Update URL when subject changes
-  React.useEffect(() => {
-    const newParams = new URLSearchParams(searchParams)
-    if (selectedSubjectId) {
-      newParams.set("subject", String(selectedSubjectId))
-    } else {
-      newParams.delete("subject")
-    }
-    setSearchParams(newParams, { replace: true })
-  }, [selectedSubjectId])
-
   // Update URL when selected assignment changes
   React.useEffect(() => {
     const newParams = new URLSearchParams(searchParams)
@@ -133,8 +122,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const type = assignment.type || 'Other';
       if (!groups[type]) groups[type] = [];
       groups[type].push(assignment);
-    });
-
+    }    
+  );
+  
     return Object.entries(groups);
   }, [assignments, searchQuery])
 
@@ -211,10 +201,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   )}
                                 </div>
                               </SidebarMenuButton>
-                              <SidebarMenuAction>
+                              {/* <SidebarMenuAction> */}
                                 {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
-                              </SidebarMenuAction>
+                              {/* </SidebarMenuAction> */}
                               {/* {hasRole("Teacher") && <TeacherAssignmentActions assignmentId={assignment.id} />} */}
                             </div>
                           </SidebarMenuItem>

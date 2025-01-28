@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/UserContext"
 import { useSearchParams } from "react-router-dom"
-import SubjectDto from "@/Dtos/SubjectDto"
+import { SubjectDto } from "@/Dtos/SubjectDto"
 import { Separator } from "./ui/separator"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Button } from "./ui/button"

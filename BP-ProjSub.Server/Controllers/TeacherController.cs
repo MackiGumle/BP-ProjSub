@@ -324,6 +324,7 @@ namespace BP_ProjSub.Server.Controllers
         }
 
 
+        // TODO: Create service for Assignments and check if the teacher should be able to see the assignments
         [HttpGet("GetAssignments")]
         public async Task<IActionResult> GetAssignments([FromQuery] int subjectId)
         {
@@ -334,9 +335,15 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
 
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
                 var assignments = await _dbContext.Assignments
-                    .Where(a => a.SubjectId == subjectId)
                     .Include(a => a.Teacher)
+                    .Where(a => a.SubjectId == subjectId && a.Teacher.PersonId == userId)
                     .Select(a => new AssignmentDto
                     {
                         Id = a.Id,
