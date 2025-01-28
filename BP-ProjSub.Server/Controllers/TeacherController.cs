@@ -323,8 +323,6 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-
-        // TODO: Create service for Assignments and check if the teacher should be able to see the assignments
         [HttpGet("GetAssignments")]
         public async Task<IActionResult> GetAssignments([FromQuery] int subjectId)
         {

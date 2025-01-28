@@ -82,7 +82,7 @@ function createUppy() {
     })
         .use(MyPlugin)
         .use(XHR, {
-            endpoint: `api/upload/${2}`,
+            endpoint: `api/upload/UploadSubmissionFiles/${2}`,
             fieldName: 'files',
             formData: true,
             bundle: true, // bundle multiple files into a single request https://www.gregoryalexander.com/blog/2024/3/25/ensuring-sequential-uppy-uploads-using-the-bundled-xhr-option

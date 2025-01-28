@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BP_ProjSub.Server.Data;
+using BP_ProjSub.Server.Helpers;
 using BP_ProjSub.Server.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,8 +17,8 @@ namespace BP_ProjSub.Server.Controllers
     {
         private readonly IWebHostEnvironment _env;
         private readonly BakalarkaDbContext _dbContext;
-        const long maxFileSize = 5 * 1024 * 1024; // 5MB
-        const long maxTotalSize = 20 * 1024 * 1024; // 20MB
+        private const long maxFileSize = 5 * 1024 * 1024; // 5MB
+        private const long maxTotalSize = 20 * 1024 * 1024; // 20MB
 
         public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext)
         {
@@ -33,9 +34,9 @@ namespace BP_ProjSub.Server.Controllers
         /// <param name="assignmentId"></param>
         /// <param name="files"></param>
         /// <returns></returns>
-        [HttpPost("{assignmentId}")]
+        [HttpPost("UploadSubmissionFiles/{assignmentId}")]
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> UploadFiles(int assignmentId, [FromForm] List<IFormFile> files)
+        public async Task<IActionResult> UploadSubmissionFiles(int assignmentId, [FromForm] List<IFormFile> files)
         {
             try
             {
@@ -56,7 +57,7 @@ namespace BP_ProjSub.Server.Controllers
                 long totalSize = 0;
                 foreach (var file in files)
                 {
-                    if(string.IsNullOrEmpty(file.FileName))
+                    if (string.IsNullOrEmpty(file.FileName))
                     {
                         return BadRequest(new { message = "A file has empty filename." });
                     }
@@ -75,7 +76,6 @@ namespace BP_ProjSub.Server.Controllers
 
                 // Get the assignment
                 var assignment = _dbContext.Assignments
-                .Include(a => a.Subject)
                 .Include(a => a.Subject.Students)
                 .FirstOrDefault(a => a.Id == assignmentId);
 
@@ -84,8 +84,7 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                var subject = assignment.Subject;
-                if (!subject.Students.Any(s => s.PersonId == userId))
+                if (!assignment.Subject.Students.Any(s => s.PersonId == userId))
                 {
                     return Unauthorized(new { message = "User is not a student in the subject." });
                 }
@@ -177,5 +176,84 @@ namespace BP_ProjSub.Server.Controllers
                 });
             }
         }
+
+        [HttpGet("GetSubmissionFileTree/{submissionId}")]
+        [Authorize(Roles = "Student, Teacher")]
+        public async Task<IActionResult> GetSubmissionFileTree(int submissionId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var submission = await _dbContext.Submissions
+                .Include(s => s.Assignment.Teacher)
+                .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                // Check if the student is the owner of the submission
+                if (submission.PersonId != userId && User.IsInRole("Student"))
+                {
+                    return Unauthorized(new { message = "User is not the owner of the submission." });
+                }
+
+                // Check if the teacher is the owner of the assignment
+                if (submission.Assignment.Teacher.PersonId != userId && User.IsInRole("Teacher"))
+                {
+                    return Unauthorized(new { message = "Teacher is not the owner of the assignment." });
+                }
+
+                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
+                var targetDir = Path.Combine(uploadsRoot, submission.FileName);
+
+                if (!Directory.Exists(targetDir))
+                {
+                    return NotFound(new { message = "Submission directory not found." });
+                }
+
+                var fileTree = new FileTreeNode(submission.FileName);
+                var rootDir = new DirectoryInfo(targetDir);
+                var stack = new Stack<(DirectoryInfo, FileTreeNode)>(); // (Directory, ParentNode)
+
+                stack.Push((rootDir, fileTree));
+
+                while (stack.Count > 0)
+                {
+                    var (currentDir, parentNode) = stack.Pop();
+                    var subDirs = currentDir.GetDirectories();
+                    foreach (var subDir in subDirs)
+                    {
+                        var subDirNode = new FileTreeNode(subDir.Name);
+                        parentNode.AddChild(subDirNode);
+                        stack.Push((subDir, subDirNode));
+                    }
+
+                    var files = currentDir.GetFiles();
+                    foreach (var file in files)
+                    {
+                        parentNode.AddChild(new FileTreeNode(file.Name));
+                    }
+                }
+
+                return Ok(fileTree);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "An error occurred during file tree reconstruction.",
+                    Error = ex.Message
+                });
+            }
+        }
+
+       
     }
 }
