@@ -14,11 +14,52 @@ namespace BP_ProjSub.Server
 {
     public class Program
     {
+        private static void ValidateEnvironmentVariable(string variableName)
+        {
+            var value = Environment.GetEnvironmentVariable(variableName);
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"Environment variable '{variableName}' is not set.");
+            }
+        }
+
+        private static void ValidateAppSettings(IConfiguration configuration, string key)
+        {
+            var value = configuration[key];
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"App setting '{key}' is not set.");
+            }
+        }
+
+        private static void ValidateAppSettingsArray(IConfiguration configuration, string key)
+        {
+            var values = configuration.GetSection(key).Get<string[]>();
+            if (values == null || values.Length == 0)
+            {
+                throw new InvalidOperationException($"App setting '{key}' is not set or is empty.");
+            }
+        }
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var api = builder.Configuration["ApiKeys:SendGrid"];
+            // var api = builder.Configuration["ApiKeys:SendGrid"];
+
+            // Validating environment variables
+            ValidateEnvironmentVariable("ApiKeys__SendGrid");
+            ValidateEnvironmentVariable("ConnectionStrings__BakalarkaDB");
+            ValidateEnvironmentVariable("WebsiteUrl");
+
+            // Validating appsettings.json configurations
+            ValidateAppSettings(builder.Configuration, "Uploads:MaxFileSize");
+            ValidateAppSettings(builder.Configuration, "Uploads:MaxTotalSize");
+            ValidateAppSettingsArray(builder.Configuration, "Uploads:AllowedFileExtensions");
+            ValidateAppSettings(builder.Configuration, "Jwt:Issuer");
+            ValidateAppSettings(builder.Configuration, "Jwt:Audience");
+            ValidateAppSettings(builder.Configuration, "Jwt:Key");
+            ValidateAppSettings(builder.Configuration, "Jwt:ExpirationInMinutes");
 
 
             var debugView = builder.Configuration.GetDebugView();
@@ -89,7 +130,7 @@ namespace BP_ProjSub.Server
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                 };
             });
 
@@ -104,9 +145,11 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<AccountService>();
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<StudentService>();
-            
+            builder.Services.AddScoped<ResourceAccessService>();
 
-            
+
+
+
 
             var app = builder.Build();
 

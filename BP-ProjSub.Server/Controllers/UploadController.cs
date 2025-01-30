@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Helpers;
 using BP_ProjSub.Server.Models;
+using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,23 @@ namespace BP_ProjSub.Server.Controllers
     {
         private readonly IWebHostEnvironment _env;
         private readonly BakalarkaDbContext _dbContext;
-        private const long maxFileSize = 5 * 1024 * 1024; // 5MB
-        private const long maxTotalSize = 20 * 1024 * 1024; // 20MB
+        private readonly IConfiguration _config;
+        private readonly ResourceAccessService _resourceAccessService;
+        private long maxFileSize = 5 * 1024 * 1024; // 5MB
+        private long maxTotalSize = 20 * 1024 * 1024; // 20MB
+        private List<string> allowedExtensions { get; }
 
-        public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext)
+        public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext,
+         IConfiguration config, ResourceAccessService resourceAccessService)
         {
             _env = env;
             _dbContext = dbContext;
+            _config = config;
+            _resourceAccessService = resourceAccessService;
+
+            maxFileSize = long.Parse(_config["Uploads:MaxFileSize"]!);
+            maxTotalSize = long.Parse(_config["Uploads:MaxTotalSize"]!);
+            allowedExtensions = _config.GetSection("Uploads:AllowedFileExtensions").Get<List<string>>() ?? new List<string>();
         }
 
         /// <summary>
@@ -53,13 +64,14 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "No files received from the upload." });
                 }
 
-                // Check file sizes
+                // Check the file sizes
                 long totalSize = 0;
                 foreach (var file in files)
                 {
-                    if (string.IsNullOrEmpty(file.FileName))
+                    var extension = Path.GetExtension(file.FileName).ToLower();
+                    if (!allowedExtensions.Contains("*") && !allowedExtensions.Contains(extension))
                     {
-                        return BadRequest(new { message = "A file has empty filename." });
+                        return BadRequest(new { message = $"Invalid file extension '{extension}'." });
                     }
 
                     if (file.Length > maxFileSize)
@@ -75,17 +87,12 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 // Get the assignment
-                var assignment = _dbContext.Assignments
+                var assignment = await _dbContext.Assignments
                 .Include(a => a.Subject.Students)
-                .FirstOrDefault(a => a.Id == assignmentId);
+                .FirstOrDefaultAsync(a => a.Id == assignmentId);
 
-                if (assignment == null)
-                {
-                    return NotFound(new { message = "Assignment not found." });
-                }
-
-                // Check if the user is a student in the subject
-                if (!assignment.Subject.Students.Any(s => s.PersonId == userId))
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
+                if (!access)
                 {
                     return NotFound(new { message = "Assignment not found" });
                 }
@@ -96,7 +103,6 @@ namespace BP_ProjSub.Server.Controllers
 
                 // The directory structure is: uploads/assignmentId/userId/uploadId
                 var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString(), userId, uploadId);
-                Directory.CreateDirectory(targetDir);
 
                 // Check for directory traversal
                 foreach (var file in files)
@@ -127,20 +133,30 @@ namespace BP_ProjSub.Server.Controllers
                         return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
                     }
 
-                    var currentDir = targetDir;
+                    // recreate the user path for checking
+                    var fullPath = targetDir;
                     foreach (var dirPart in directoryParts)
                     {
-                        currentDir = Path.Combine(currentDir, dirPart);
-                        Directory.CreateDirectory(currentDir);
+                        fullPath = Path.Combine(fullPath, dirPart);
                     }
 
-                    // To be sure the path is not a directory traversal
-                    var fullPath = Path.Combine(currentDir, fileName);
+                    fullPath = Path.Combine(fullPath, fileName);
+
+                    // Absolute path check for directory traversal
                     var resolvedFullPath = Path.GetFullPath(fullPath);
                     var targetDirFullPath = Path.GetFullPath(targetDir);
                     if (!resolvedFullPath.StartsWith(targetDirFullPath))
                     {
                         return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                    }
+
+                    Directory.CreateDirectory(targetDir);
+
+                    var currentDir = targetDir;
+                    foreach (var dirPart in directoryParts)
+                    {
+                        currentDir = Path.Combine(currentDir, dirPart);
+                        Directory.CreateDirectory(currentDir);
                     }
 
                     using (var stream = new FileStream(fullPath, FileMode.Create))
@@ -160,8 +176,14 @@ namespace BP_ProjSub.Server.Controllers
                     PersonId = userId,
                 });
 
-                // Save the submission, if it fails, deleting the files would be great
-                await _dbContext.SaveChangesAsync();
+                // If the submission is not saved to DB, delete the uploaded files
+                try { await _dbContext.SaveChangesAsync(); }
+                catch
+                {
+                    Directory.Delete(targetDir, true);
+                    throw;
+                }
+
 
                 return Ok(new
                 {
@@ -173,7 +195,6 @@ namespace BP_ProjSub.Server.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     Message = "An error occurred during file upload.",
-                    Error = ex.Message
                 });
             }
         }
@@ -191,24 +212,12 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 var submission = await _dbContext.Submissions
-                .Include(s => s.Assignment.Teacher)
                 .FirstOrDefaultAsync(s => s.Id == submissionId);
 
-                if (submission == null)
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, submissionId, User.FindFirst(ClaimTypes.Role)?.Value);
+                if (!access)
                 {
                     return NotFound(new { message = "Submission not found." });
-                }
-
-                // Check if the student is the owner of the submission
-                if (submission.PersonId != userId && User.IsInRole("Student"))
-                {
-                    return Unauthorized(new { message = "User is not the owner of the submission." });
-                }
-
-                // Check if the teacher is the owner of the assignment
-                if (submission.Assignment.Teacher.PersonId != userId && User.IsInRole("Teacher"))
-                {
-                    return Unauthorized(new { message = "Teacher is not the owner of the assignment." });
                 }
 
                 var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
@@ -219,31 +228,9 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Submission directory not found." });
                 }
 
-                var fileTree = new FileTreeNode(submission.FileName);
-                var rootDir = new DirectoryInfo(targetDir);
-                var stack = new Stack<(DirectoryInfo, FileTreeNode)>(); // (Directory, ParentNode)
+                var fileTree = FileTreeNode.CreateFromPath(targetDir);
 
-                stack.Push((rootDir, fileTree));
-
-                while (stack.Count > 0)
-                {
-                    var (currentDir, parentNode) = stack.Pop();
-                    var subDirs = currentDir.GetDirectories();
-                    foreach (var subDir in subDirs)
-                    {
-                        var subDirNode = new FileTreeNode(subDir.Name);
-                        parentNode.AddChild(subDirNode);
-                        stack.Push((subDir, subDirNode));
-                    }
-
-                    var files = currentDir.GetFiles();
-                    foreach (var file in files)
-                    {
-                        parentNode.AddChild(new FileTreeNode(file.Name));
-                    }
-                }
-
-                return Ok(fileTree);
+                return Ok(fileTree.Children);
             }
             catch (Exception ex)
             {
@@ -255,6 +242,6 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-       
+
     }
 }

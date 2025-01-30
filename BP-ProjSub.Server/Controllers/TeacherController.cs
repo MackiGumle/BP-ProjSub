@@ -63,7 +63,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 List<Person> newUsers = new List<Person>();
                 // Create subject and students in a transaction
-                using (var transaction = _dbContext.Database.BeginTransaction())
+                using (var transaction = await _dbContext.Database.BeginTransactionAsync())
                 {
                     try
                     {
@@ -98,11 +98,11 @@ namespace BP_ProjSub.Server.Controllers
                             var subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                             await _dbContext.SaveChangesAsync();
                         }
-                        transaction.Commit();
+                        await transaction.CommitAsync();
                     }
                     catch
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                         throw;
                     }
                 }
@@ -157,7 +157,7 @@ namespace BP_ProjSub.Server.Controllers
 
             try
             {
-                using (var transaction = _dbContext.Database.BeginTransaction())
+                using (var transaction = await _dbContext.Database.BeginTransactionAsync())
                 {
                     try
                     {
@@ -177,11 +177,11 @@ namespace BP_ProjSub.Server.Controllers
                         studentCount = subjectRes.Students.Count - studentCount;
 
                         await _dbContext.SaveChangesAsync();
-                        transaction.Commit();
+                        await transaction.CommitAsync();
                     }
                     catch
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                         throw;
                     }
                 }
@@ -213,7 +213,7 @@ namespace BP_ProjSub.Server.Controllers
 
             try
             {
-                using (var transaction = _dbContext.Database.BeginTransaction())
+                using (var transaction = await _dbContext.Database.BeginTransactionAsync())
                 {
                     try
                     {
@@ -233,11 +233,11 @@ namespace BP_ProjSub.Server.Controllers
                         studentCount = studentCount - subjectRes.Students.Count;
 
                         await _dbContext.SaveChangesAsync();
-                        transaction.Commit();
+                        await transaction.CommitAsync();
                     }
                     catch
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                         throw;
                     }
                 }
