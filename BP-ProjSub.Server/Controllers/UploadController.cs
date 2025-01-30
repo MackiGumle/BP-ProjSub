@@ -84,9 +84,10 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
+                // Check if the user is a student in the subject
                 if (!assignment.Subject.Students.Any(s => s.PersonId == userId))
                 {
-                    return Unauthorized(new { message = "User is not a student in the subject." });
+                    return NotFound(new { message = "Assignment not found" });
                 }
 
                 // Save the files

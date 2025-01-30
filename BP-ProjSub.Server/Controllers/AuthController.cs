@@ -15,12 +15,15 @@ namespace BP_ProjSub.Server.Controllers
         private readonly UserManager<Person> _userManager;
         private readonly TokenService _tokenService;
         private readonly SignInManager<Person> _signInManager;
+        private readonly IConfiguration _config;
 
-        public AuthController(UserManager<Person> userManager, TokenService tokenService, SignInManager<Person> signInManager)
+        public AuthController(UserManager<Person> userManager, TokenService tokenService,
+         SignInManager<Person> signInManager, IConfiguration config)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
+            _config = config;
         }
 
         [HttpPost("login")]
@@ -49,14 +52,17 @@ namespace BP_ProjSub.Server.Controllers
 
                 var roles = await _userManager.GetRolesAsync(user);
 
-                return Ok(new LoggedInDto
+                var response = new LoggedInDto
                 {
                     Id = user.Id,
                     Username = user.UserName,
                     Email = user.Email,
                     Token = _tokenService.CreateToken(user, roles as List<string>),
-                    Roles = await _userManager.GetRolesAsync(user)
-                });
+                    Roles = await _userManager.GetRolesAsync(user),
+                    Expires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
+                };
+
+                return Ok(response);
             }
             catch (Exception e)
             {

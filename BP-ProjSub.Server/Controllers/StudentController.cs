@@ -66,8 +66,8 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         // TODO: Create service for Assignments and check if the student should be able to see the assignments
-        [HttpGet("GetAssignments")]
-        public async Task<IActionResult> GetAssignments([FromQuery] int subjectId)
+        [HttpGet("GetAssignments/{subjectId}")]
+        public async Task<IActionResult> GetAssignments(int subjectId)
         {
             try
             {
@@ -76,9 +76,9 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
 
+                // TODO: I will have to monitor what assignments the student accesses
                 var assignments = await _dbContext.Assignments
                     .Where(a => a.SubjectId == subjectId)
-                    .Include(a => a.Teacher)
                     .Select(a => new AssignmentDto
                     {
                         Id = a.Id,

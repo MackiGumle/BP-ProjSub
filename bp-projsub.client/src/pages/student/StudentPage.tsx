@@ -1,4 +1,4 @@
-import Page from "@/components/custom-ui/App-page";
+import Page from "@/components/App-page";
 
 export function StudentPage() {
     return (

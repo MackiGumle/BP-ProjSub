@@ -3,10 +3,15 @@ using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
 using BP_ProjSub.Server.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace BP_ProjSub.Server.Services
 {
+    /// <summary>
+    /// Service for managing subjects.
+    /// Does not handle authentication or authorization.
+    /// </summary>
     public class SubjectService
     {
         private readonly BakalarkaDbContext _dbContext;
@@ -99,6 +104,51 @@ namespace BP_ProjSub.Server.Services
                     if (!subjectWithStudents.Students.Any(s => s.PersonId == student.PersonId))
                     {
                         subjectWithStudents.Students.Add(student);
+                    }
+                }
+
+                return subjectWithStudents;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public async Task<Subject> RemoveStudentsFromSubjectAsync(int subjectId, List<string> studentLogins)
+        {
+            try
+            {
+                if (studentLogins == null || studentLogins.Count == 0)
+                {
+                    throw new InvalidOperationException("No student logins provided.");
+                }
+
+                var subjectWithStudents = await _dbContext.Subjects
+                    .Include(s => s.Students)
+                    .FirstOrDefaultAsync(s => s.Id == subjectId);
+
+                if (subjectWithStudents == null)
+                {
+                    throw new KeyNotFoundException("Subject not found.");
+                }
+
+                studentLogins = studentLogins.Select(s => s.ToLower()).ToList();
+                var uniqueStudentLogins = studentLogins.Distinct().ToList();
+
+                // Get only students with the logins
+                var students = await _dbContext.Students
+                    .Include(s => s.Person)
+                    .Where(s => uniqueStudentLogins.Contains(s.Person.UserName))
+                    .ToListAsync();
+
+                // Remove students from the subject
+                foreach (var student in students)
+                {
+                    // If student is in the subject
+                    if (subjectWithStudents.Students.Any(s => s.PersonId == student.PersonId))
+                    {
+                        subjectWithStudents.Students.Remove(student);
                     }
                 }
 

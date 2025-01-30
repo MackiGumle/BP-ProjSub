@@ -14,15 +14,19 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import CurrentUserButton from "@/components/custom-ui/CurrentUserButton"
-import { ThemeToggle } from "../theme-components/theme-toggle"
+import { ThemeToggle } from "./theme-components/theme-toggle"
 import { format } from "date-fns"
 import { useState } from "react"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible"
 import { ChevronDown } from "lucide-react"
-import { Card } from "../ui/card"
+import { Card } from "./ui/card"
+import { useQuery } from "@tanstack/react-query"
+import { Button } from "./ui/button"
+import { useToast } from "./ui/use-toast"
 
 export default function Page() {
   const [isAssignmentOpen, setAssignmentOpen] = useState<boolean | undefined>(true)
+  const { toast } = useToast()
 
   return (
     <>
@@ -33,21 +37,6 @@ export default function Page() {
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
-
-              {/* <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">
-                      Building Your Application
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-              <Separator orientation="vertical" className="mr-2 h-4" /> */}
             </div>
 
             <div className="ml-auto flex items-center gap-2">
@@ -65,13 +54,11 @@ export default function Page() {
               <Card className="p-4">
                 <CollapsibleTrigger className="w-full flex items-center justify-between border-b">
                   <div className="p-2 flex items-center gap-2">
-                    <span>Assignment</span>
+                    <h1>Nazev zadani</h1>
                     <ChevronDown className={`h-4 w-4 transition-transform ${isAssignmentOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-
-                  <h1 className="text-2xl font-semibold">Nazev zadani</h1>
                   <p className="text-muted-foreground">
                     Popis zadani
                   </p>
@@ -80,7 +67,6 @@ export default function Page() {
             </Collapsible>
           </div>
 
-          <Separator className="my-4" />
 
           <div className="flex flex-1 flex-col gap-4 p-4">
             {Array.from({ length: 24 }).map((_, index) => (

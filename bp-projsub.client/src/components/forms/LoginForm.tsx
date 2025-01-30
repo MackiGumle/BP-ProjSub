@@ -75,7 +75,7 @@ export default function LoginForm() {
 
           )}
         />
-        <FormMessage>Form message</FormMessage>
+        {/* <FormMessage>Form message</FormMessage> */}
         <Button type="submit">Login</Button>
       </form>
     </Form>

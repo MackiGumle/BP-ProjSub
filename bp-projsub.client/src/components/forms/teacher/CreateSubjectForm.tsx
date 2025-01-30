@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { SubjectDto, CreateSubjectDto } from "@/Dtos/SubjectDto";
 import { subjectSchema } from "@/schemas/subject";
@@ -28,6 +28,7 @@ export function CreateSubjectForm({
   onSuccess?: (newSubject: SubjectDto) => void
   onCancel?: () => void
 }) {
+  const { toast } = useToast()
   const form = useForm<z.infer<typeof subjectSchema>>({
     resolver: zodResolver(subjectSchema),
     defaultValues: {

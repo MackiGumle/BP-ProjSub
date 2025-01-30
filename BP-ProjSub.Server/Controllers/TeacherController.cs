@@ -147,6 +147,12 @@ namespace BP_ProjSub.Server.Controllers
                 return BadRequest(new { message = ModelState.ToString() });
             }
 
+            var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (personId == null)
+            {
+                return Unauthorized(new { message = "User ID not found in token." });
+            }
+
             int studentCount;
 
             try
@@ -156,15 +162,19 @@ namespace BP_ProjSub.Server.Controllers
                     try
                     {
                         var subject = await _dbContext.Subjects
+                            .Include(s => s.Teachers)
+                            .Include(s => s.Students)
                             .FirstOrDefaultAsync(s => s.Id == model.SubjectId);
 
-                        if (subject == null)
+                        if (subject == null || !subject.Teachers.Any(t => t.PersonId == personId))
                         {
                             throw new KeyNotFoundException("Subject not found.");
                         }
 
+                        studentCount = subject.Students.Count;
+
                         var subjectRes = await _subjectService.AddStudentsToSubjectAsync(subject, model.StudentLogins);
-                        studentCount = subjectRes.Students.Count;
+                        studentCount = subjectRes.Students.Count - studentCount;
 
                         await _dbContext.SaveChangesAsync();
                         transaction.Commit();
@@ -183,6 +193,108 @@ namespace BP_ProjSub.Server.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
 
+        }
+
+        [HttpDelete("RemoveStudentsFromSubject/{subjectId}")]
+        public async Task<IActionResult> RemoveStudentsFromSubject(int subjectId, [FromBody] List<string> studentLogins)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = ModelState.ToString() });
+            }
+
+            var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (personId == null)
+            {
+                return Unauthorized(new { message = "User ID not found in token." });
+            }
+
+            int studentCount;
+
+            try
+            {
+                using (var transaction = _dbContext.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var subject = await _dbContext.Subjects
+                            .Include(s => s.Teachers)
+                            .Include(s => s.Students)
+                            .FirstOrDefaultAsync(s => s.Id == subjectId);
+
+                        if (subject == null || !subject.Teachers.Any(t => t.PersonId == personId))
+                        {
+                            throw new KeyNotFoundException("Subject not found.");
+                        }
+
+                        studentCount = subject.Students.Count;
+
+                        var subjectRes = await _subjectService.RemoveStudentsFromSubjectAsync(subjectId, studentLogins);
+                        studentCount = studentCount - subjectRes.Students.Count;
+
+                        await _dbContext.SaveChangesAsync();
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+
+                return Ok(new { message = $"{studentCount} Students removed from subject." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
+            }
+        }
+
+        [HttpGet("GetSubjectTudents/{subjectId}")]
+        public async Task<IActionResult> GetSubjectTudents(int subjectId)
+        {
+            try
+            {
+                if (subjectId <= 0)
+                {
+                    return BadRequest(new { message = "Invalid subject ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var teacherSubjects = await _dbContext.Teachers
+                    .Include(t => t.SubjectsTaught)
+                    .ThenInclude(s => s.Students)
+                    .ThenInclude(s => s.Person)
+                    .FirstOrDefaultAsync(t => t.PersonId == userId && t.SubjectsTaught.Any(s => s.Id == subjectId));
+
+                if (teacherSubjects == null)
+                {
+                    return NotFound(new { message = "Subject not found." });
+                }
+
+                var subject = teacherSubjects.SubjectsTaught.First(s => s.Id == subjectId);
+
+                var students = subject.Students.Select(s => new StudentDto
+                {
+                    PersonId = s.PersonId,
+                    UserName = s.Person.UserName!,
+                    Email = s.Person.Email
+                }).ToList();
+
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
         }
 
         [HttpGet("GetSubjects")]
@@ -323,8 +435,8 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpGet("GetAssignments")]
-        public async Task<IActionResult> GetAssignments([FromQuery] int subjectId)
+        [HttpGet("GetAssignments/{subjectId}")]
+        public async Task<IActionResult> GetAssignments(int subjectId)
         {
             try
             {
@@ -364,37 +476,91 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpPost("createStudent")]
-        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDto model)
+        [HttpGet("GetSubmissions/{assignmentId}")]
+        public async Task<IActionResult> GetSubmissions(int assignmentId)
         {
             try
             {
-                if (!ModelState.IsValid)
+                if (assignmentId <= 0)
                 {
-                    return BadRequest(ModelState);
+                    return BadRequest(new { message = "Invalid assignment ID" });
                 }
 
-                var user = new Person
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
                 {
-                    UserName = model.Name + model.Surname,
-                    Email = model.Email
-                };
-
-                var result = await _userManager.CreateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    var roleResult = await _userManager.AddToRoleAsync(user, "Student");
-
-                    return Ok();
+                    return Unauthorized(new { message = "User not found." });
                 }
 
-                return BadRequest(result.Errors);
+                // Check if the assignment belongs to the teacher
+                var assignment = await _dbContext.Assignments
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Teacher.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Student)
+                    .Include(s => s.Ratings)
+                    .Where(s => s.Assignment.Id == assignmentId)
+                    .ToListAsync();
+
+                var newestRatings = submissions.Select(s => s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()).ToList();
+
+                var response = submissions.Select(s => new SubmissionDto
+                {
+                    Id = s.Id,
+                    SubmissionDate = s.SubmissionDate,
+                    AssignmentId = s.AssignmentId,
+                    PersonId = s.PersonId,
+                    StudentLogin = s.Student.Person.UserName!,
+                    Rating = (float)(newestRatings.FirstOrDefault(r => r.SubmissionId == s.Id)?.Value ?? 0)
+                }).ToList().OrderBy(s => s.SubmissionDate);
+
+                return Ok(response);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
             }
         }
+
+        // [HttpPost("createStudent")]
+        // public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDto model)
+        // {
+        //     try
+        //     {
+        //         if (!ModelState.IsValid)
+        //         {
+        //             return BadRequest(ModelState);
+        //         }
+
+        //         var user = new Person
+        //         {
+        //             UserName = model.Name + model.Surname,
+        //             Email = model.Email
+        //         };
+
+        //         var result = await _userManager.CreateAsync(user);
+
+        //         if (result.Succeeded)
+        //         {
+        //             var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+
+        //             return Ok();
+        //         }
+
+        //         return BadRequest(result.Errors);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
+        //     }
+        // }
     }
 }

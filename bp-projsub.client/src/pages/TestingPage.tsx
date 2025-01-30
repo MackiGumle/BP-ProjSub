@@ -16,6 +16,9 @@ import '@uppy/core/dist/style.css'
 import '@uppy/dashboard/dist/style.css'
 import { useTheme } from '@/components/theme-components/theme-provider';
 import { ThemeToggle } from '@/components/theme-components/theme-toggle';
+import { ToastAction } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 
 
 interface MyPluginOptions extends UIPluginOptions { }
@@ -118,6 +121,7 @@ export function TestingPage() {
     // Also possible to get the state of all plugins.
     const plugins = useUppyState(uppy, (state) => state.plugins)
     const { theme } = useTheme()
+    const { toast } = useToast()
 
     return (
         <>
@@ -125,6 +129,7 @@ export function TestingPage() {
             <p>Total progress: {totalProgress}</p>
             <Dashboard theme={theme === 'system' ? 'auto' : theme} uppy={uppy} metaFields={metaFields} />
             <ThemeToggle />
+
         </>
     )
 }

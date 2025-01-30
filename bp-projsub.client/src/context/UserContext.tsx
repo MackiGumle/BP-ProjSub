@@ -1,7 +1,6 @@
 import axios from "axios";
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 
 export type UserProfile = {
   id: string;
@@ -16,18 +15,17 @@ type LoginResponse = {
   email: string;
   token: string;
   roles: string[];
+  expires: string;
 };
 
 type UserContextType = {
   user: UserProfile | null;
   token: string | null;
-
-  // register: (email: string, name: string, surname: string, password: string) => void;
-  login: (username: string, password: string) => void;
+  login: (email: string, password: string) => void;
   logout: () => void;
   isLoggedIn: () => boolean;
-  hasRole: (role: string) => boolean; 
-  getRole: () => string; // returns highest role: Admin > Teacher > Student > None
+  hasRole: (role: string) => boolean;
+  getRole: () => string;
 };
 
 type Props = { children: React.ReactNode };
@@ -38,54 +36,83 @@ export const UserProvider = ({ children }: Props) => {
   const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  //const [roles, setRoles] = useState<string[] | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    console.log("UserProvider: useEffect set token");
-    const storage_user = localStorage.getItem("user");
-    const storage_token = localStorage.getItem("token");
-    if (storage_user && storage_token) {
-      setUser(JSON.parse(storage_user));
-      setToken(storage_token);
-      axios.defaults.headers.common["Authorization"] = "Bearer " + storage_token;
-    }
-    setIsReady(true);
+    const initializeAuth = () => {
+      const storage_user = localStorage.getItem("user");
+      const storage_token = localStorage.getItem("token");
+      const storage_expires = localStorage.getItem("expires");
+
+      if (storage_user && storage_token && storage_expires) {
+        const expirationTime = new Date(storage_expires); // this actually converts to the right UTC time
+        const currentTime = new Date();
+        
+        if (expirationTime > currentTime) {
+          try {
+            const parsedUser = JSON.parse(storage_user);
+            setUser(parsedUser);
+            setToken(storage_token);
+            axios.defaults.headers.common["Authorization"] = "Bearer " + storage_token;
+          } catch (error) {
+            console.error("Error parsing user data:", error);
+            localStorage.clear();
+          }
+        } else {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          localStorage.removeItem("expires");
+        }
+      }
+      setIsReady(true);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post<LoginResponse>("api/Auth/login", { email, password });
-      const { id, username, email: userEmail, token, roles } = response.data;
+      const response = await axios.post<LoginResponse>("/api/Auth/login", { email, password });
+      const { id, username, email: userEmail, token, roles, expires } = response.data;
 
       setUser({ id, username, email: userEmail, roles });
       setToken(token);
-
       axios.defaults.headers.common["Authorization"] = "Bearer " + token;
 
       localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
-      localStorage.setItem("token", token ?? "");
+      localStorage.setItem("token", token);
+      localStorage.setItem("expires", expires);
 
-      console.log("Success: logged in");
       navigate("/");
-
     } catch (error) {
       console.error("Login failed:", error);
+      throw error;
     }
   };
 
-  const logout = () => {
-    if (isLoggedIn()) {
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
-      navigate("/login", { replace: true });
-    } else {
-      navigate("/login", { replace: true });
-    }
-  };
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("expires");
+    delete axios.defaults.headers.common["Authorization"];
+    navigate("/login", { replace: true });
+  }, [navigate]);
+
+  useEffect(() => {
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => axios.interceptors.response.eject(interceptorId);
+  }, [logout]);
 
   const isLoggedIn = (): boolean => {
     return !!token;
@@ -95,17 +122,18 @@ export const UserProvider = ({ children }: Props) => {
     return user?.roles?.includes(role) ?? false;
   };
 
-  // returns highest role: Admin > Teacher > Student > None
   const getRole = (): string => {
     if (!isLoggedIn()) return "None";
-    return user?.roles?.includes("Admin") ? "Admin" : user?.roles?.includes("Teacher") ? "Teacher" : "Student";
-  }
+    if (user?.roles?.includes("Admin")) return "Admin";
+    if (user?.roles?.includes("Teacher")) return "Teacher";
+    return "Student";
+  };
 
   return (
     <UserContext.Provider value={{ user, token, login, logout, isLoggedIn, hasRole, getRole }}>
       {isReady ? children : null}
     </UserContext.Provider>
   );
-}
+};
 
 export const useAuth = () => React.useContext(UserContext);

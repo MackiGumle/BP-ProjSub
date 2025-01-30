@@ -99,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     queryFn: async () => {
       if (!selectedSubjectId) return []
       const response = await axios.get(
-        `/api/${getRole()}/GetAssignments?subjectId=${selectedSubjectId}`,
+        `/api/${getRole()}/GetAssignments/${selectedSubjectId}`,
       )
       return response.data as AssignmentDto[]
     },
