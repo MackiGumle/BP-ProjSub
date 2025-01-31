@@ -1,12 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -15,18 +7,10 @@ import {
 } from "@/components/ui/sidebar"
 import CurrentUserButton from "@/components/custom-ui/CurrentUserButton"
 import { ThemeToggle } from "./theme-components/theme-toggle"
-import { format } from "date-fns"
 import { useState } from "react"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible"
-import { ChevronDown } from "lucide-react"
-import { Card } from "./ui/card"
-import { useQuery } from "@tanstack/react-query"
-import { Button } from "./ui/button"
-import { useToast } from "./ui/use-toast"
 
-export default function Page() {
-  const [isAssignmentOpen, setAssignmentOpen] = useState<boolean | undefined>(true)
-  const { toast } = useToast()
+export default function AppPage({ children }: { children: React.ReactNode }) {
+  // const [isAssignmentOpen] = useState<boolean | undefined>(true)
 
   return (
     <>
@@ -45,7 +29,9 @@ export default function Page() {
             </div>
           </header>
 
-          <div className="p-4">
+          { children }
+
+          {/* <div className="p-4">
             <Collapsible
               open={isAssignmentOpen}
               onOpenChange={() => setAssignmentOpen(!isAssignmentOpen)}
@@ -65,9 +51,9 @@ export default function Page() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
-          </div>
+          </div> */}
 
-
+{/* 
           <div className="flex flex-1 flex-col gap-4 p-4">
             {Array.from({ length: 24 }).map((_, index) => (
               <div
@@ -85,7 +71,8 @@ export default function Page() {
                 </span>
               </div>
             ))}
-          </div>
+          </div> 
+*/}
         </SidebarInset>
 
       </SidebarProvider >

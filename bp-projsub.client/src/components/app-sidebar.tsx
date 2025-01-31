@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { ChevronUp, Pencil, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -11,25 +11,19 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
 import { ChevronDown } from "lucide-react"
-import { useSearchParams } from "react-router-dom";
-import { TeacherAssignmentActions } from "@/components/custom-ui/Teacher/AssignmentActions"
-import { ThemeToggle } from "./theme-components/theme-toggle"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Separator } from "@radix-ui/react-dropdown-menu"
+import { Link, useSearchParams } from "react-router-dom";
+
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
 
 
@@ -122,9 +116,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const type = assignment.type || 'Other';
       if (!groups[type]) groups[type] = [];
       groups[type].push(assignment);
-    }    
-  );
-  
+    }
+    );
+
     return Object.entries(groups);
   }, [assignments, searchQuery])
 
@@ -134,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SubjectSwitcher
           onSubjectSelect={setSelectedSubjectId}
-          selectedSubjectId={selectedSubjectId}
+        // selectedSubjectId={selectedSubjectId}
         />
         <div className="flex items-center mt-2">
           <SearchForm className="flex-grow" />
@@ -184,25 +178,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <CollapsibleContent>
                     <SidebarGroupContent>
                       <SidebarMenu className="p-0">
-                        {typeAssignments.map((assignment) => (
+                        {typeAssignments.map((assignment) => ( // each assignment
                           <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
                             <div className="flex items-center justify-between w-full">
-                              <SidebarMenuButton className="w-full m-1 p-1 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)} isActive={selectedAssignmentId === assignment.id}>
-                                <div className="flex flex-col flex-1 text-left">
-                                  <span className="font-medium">{assignment.title}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    Due: {assignment.dueDate ?
-                                      new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
-                                  </span>
-                                  {assignment.maxPoints && (
+                              {/* <SidebarMenuButton className="w-full m-1 p-1 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)} isActive={selectedAssignmentId === assignment.id}> */}
+                              <Link to={`/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)}>
+                                <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={selectedAssignmentId === assignment.id}>
+                                  <div className="flex flex-col flex-1 text-left">
+                                    <span className="font-medium">{assignment.title}</span>
                                     <span className="text-xs text-muted-foreground">
-                                      Max points: {assignment.maxPoints}
+                                      Due: {assignment.dueDate ?
+                                        new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                     </span>
-                                  )}
-                                </div>
-                              </SidebarMenuButton>
+                                    {assignment.maxPoints && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Max points: {assignment.maxPoints}
+                                      </span>
+                                    )}
+                                  </div>
+                                </SidebarMenuButton>
+                              </Link>
                               {/* <SidebarMenuAction> */}
-                                {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
+                              {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
                               {/* </SidebarMenuAction> */}
                               {/* {hasRole("Teacher") && <TeacherAssignmentActions assignmentId={assignment.id} />} */}
@@ -218,7 +215,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarContent>
-      
+
     </Sidebar>
   )
 }

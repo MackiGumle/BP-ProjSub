@@ -251,7 +251,7 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         [HttpGet("GetSubjectTudents/{subjectId}")]
-        public async Task<IActionResult> GetSubjectTudents(int subjectId)
+        public async Task<IActionResult> GetSubjectStudents(int subjectId)
         {
             try
             {

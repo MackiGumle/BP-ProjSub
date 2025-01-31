@@ -5,44 +5,17 @@ import { UnauthorizedPage } from "./errorPages/UnauthorizedPage";
 import { AdminPage } from "./admin/AdminPage";
 import { TeacherPage } from "./teacher/TeacherPage";
 import { StudentPage } from "./student/StudentPage";
+import { Navigate, Outlet } from "react-router-dom";
+import AppPage from "@/components/App-page";
 
 
-type Forecast = {
-    date: string;
-    temperatureC: number;
-    summary: string;
-}
 
 const HomePage = () => {
-    const [forecast, setForecast] = useState<Forecast[]>([]);
     const { user } = useAuth();
-
-
-    function getForecast() {
-        axios.get('api/weatherforecast')
-            .then(response => {
-                console.log(response);
-                setForecast(response.data);
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    }
-
-    function getProtectedForecast() {
-        axios.get('api/protectedweatherforecast')
-            .then(response => {
-                console.log(response);
-                setForecast(response.data);
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    }
 
     if (user === null) {
         return (
-            <UnauthorizedPage />
+            <Navigate to="/login" />
         );
     }
 
@@ -54,7 +27,11 @@ const HomePage = () => {
 
     if (user.roles.includes("Teacher")) {
         return (
-            <TeacherPage />
+            // <TeacherPage />
+            <AppPage >
+                <Outlet />
+            </AppPage>
+
         );
     }
 
@@ -66,17 +43,7 @@ const HomePage = () => {
 
     return (
         <>
-        <UnauthorizedPage />
-            {/* <h1>Home Page</h1>
-            <Button onClick={getForecast}>get forecast</Button>
-            <Button onClick={getProtectedForecast}>get protected forecast</Button>
-
-            <ul>
-                {
-                forecast.map((f, i) => (
-                    <li key={i}>{f.date} - {f.summary}</li>
-                ))}
-            </ul> */}
+            <UnauthorizedPage />
         </>
     );
 }

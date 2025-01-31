@@ -1,5 +1,5 @@
+import React from "react"
 import { Search } from "lucide-react"
-
 import { Label } from "@/components/ui/label"
 import {
   SidebarGroup,
@@ -7,7 +7,6 @@ import {
   SidebarInput,
 } from "@/components/ui/sidebar"
 import { useSearchParams } from "react-router-dom"
-import React from "react"
 import { useDebouncedCallback } from "use-debounce";
 
 
