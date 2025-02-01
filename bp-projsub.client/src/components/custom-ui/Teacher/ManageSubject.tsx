@@ -1,16 +1,13 @@
-import { Card, CardHeader } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StudentColumns } from "@/Dtos/StudentDto";
 import { SubjectDto } from "@/Dtos/SubjectDto";
-import { useStudentsQuery, useSubjectsQuery } from "@/hooks/useCustomQuery";
+import { useSubjectsQuery } from "@/hooks/useCustomQuery";
 import { useParams } from "react-router-dom";
+import { ManageStudents } from "./ManageStudents";
+import { EditSubjectForm } from "@/components/forms/teacher/EditSubjectForm";
 
 export function ManageSubject() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const { data: subjects, isLoading: isSubjectsLoading, error: errorSubjecst } = useSubjectsQuery();
-  const { data: students, isLoading: isStudentssLoading, error: errorStudents } = useStudentsQuery({ subjectId: parseInt(subjectId || "") });
-
 
   const currentSubject = subjects?.find(
     (sub: SubjectDto) => sub.id === parseInt(subjectId || "")
@@ -22,7 +19,8 @@ export function ManageSubject() {
 
   return (
     <div className="flex flex-col justify-center items-center w-full">
-      Manage Subject
+      {subjects && (<div className="text-2xl font-bold mb-4">Manage {currentSubject?.name}</div>)}
+
       {currentSubject ? (
         <>
           <Tabs defaultValue="students" className="w-full">
@@ -31,9 +29,18 @@ export function ManageSubject() {
               <TabsTrigger value="assignment">Assignment</TabsTrigger>
               <TabsTrigger value="subject">Subject</TabsTrigger>
             </TabsList>
-            <TabsContent value="students"><DataTable columns={StudentColumns} data={students || []} /></TabsContent>
+
+            <TabsContent value="students">
+              {subjectId &&
+                <ManageStudents subjectId={parseInt(subjectId || "")} />
+              }
+            </TabsContent>
+
             <TabsContent value="assignment">Add assignment form</TabsContent>
-            <TabsContent value="subject">Edit subject form</TabsContent>
+
+            <TabsContent value="subject">
+              <EditSubjectForm subject={currentSubject}/>
+            </TabsContent>
           </Tabs>
         </>
       ) : (

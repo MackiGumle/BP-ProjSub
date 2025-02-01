@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BP_ProjSub.Server.Data.Dtos;
 
-public class AddStudentsToSubjectDto
+public class StudentLoginsAndSubjectDto
 {
     [Required]
     public int SubjectId { get; set; }

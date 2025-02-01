@@ -140,7 +140,7 @@ namespace BP_ProjSub.Server.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("AddStudentsToSubject")]
-        public async Task<IActionResult> AddStudentsToSubject([FromBody] AddStudentsToSubjectDto model)
+        public async Task<IActionResult> AddStudentsToSubject([FromBody] StudentLoginsAndSubjectDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -195,8 +195,8 @@ namespace BP_ProjSub.Server.Controllers
 
         }
 
-        [HttpDelete("RemoveStudentsFromSubject/{subjectId}")]
-        public async Task<IActionResult> RemoveStudentsFromSubject(int subjectId, [FromBody] List<string> studentLogins)
+        [HttpPost("RemoveStudentsFromSubject")]
+        public async Task<IActionResult> RemoveStudentsFromSubject([FromBody] StudentLoginsAndSubjectDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -220,7 +220,7 @@ namespace BP_ProjSub.Server.Controllers
                         var subject = await _dbContext.Subjects
                             .Include(s => s.Teachers)
                             .Include(s => s.Students)
-                            .FirstOrDefaultAsync(s => s.Id == subjectId);
+                            .FirstOrDefaultAsync(s => s.Id == model.SubjectId);
 
                         if (subject == null || !subject.Teachers.Any(t => t.PersonId == personId))
                         {
@@ -229,7 +229,7 @@ namespace BP_ProjSub.Server.Controllers
 
                         studentCount = subject.Students.Count;
 
-                        var subjectRes = await _subjectService.RemoveStudentsFromSubjectAsync(subjectId, studentLogins);
+                        var subjectRes = await _subjectService.RemoveStudentsFromSubjectAsync(model.SubjectId, model.StudentLogins);
                         studentCount = studentCount - subjectRes.Students.Count;
 
                         await _dbContext.SaveChangesAsync();

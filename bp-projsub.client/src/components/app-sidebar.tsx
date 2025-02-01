@@ -22,7 +22,7 @@ import {
 import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
 import { ChevronDown } from "lucide-react"
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
 
@@ -30,14 +30,12 @@ import { AssignmentDto } from "@/Dtos/AssignmentDto"
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { getRole, hasRole } = useAuth()
+  const { subjectId } = useParams<{ subjectId: string }>();
+  
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get("q")?.toLowerCase() || "";
 
 
-  // Get selected subject from URL
-  const [selectedSubjectId, setSelectedSubjectId] = React.useState<number | null>(
-    Number(searchParams.get("subject")) || null
-  )
 
   // Get selected assignment from URL
   const [selectedAssignmentId, setSelectedAssignmentId] = React.useState<number | null>(
@@ -89,15 +87,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Fetch assignments
   const { data: assignments, isLoading, error } = useQuery({
-    queryKey: ['assignments', selectedSubjectId],
+    queryKey: ['assignments', subjectId],
     queryFn: async () => {
-      if (!selectedSubjectId) return []
+      if (!subjectId) return []
       const response = await axios.get(
-        `/api/${getRole()}/GetAssignments/${selectedSubjectId}`,
+        `/api/${getRole()}/GetAssignments/${subjectId}`,
       )
       return response.data as AssignmentDto[]
     },
-    enabled: !!selectedSubjectId,
+    enabled: !!subjectId,
   })
 
   // Group assignments by type
@@ -126,14 +124,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="sidebar" {...props}>
       <SidebarHeader>
-        <SubjectSwitcher
-          onSubjectSelect={setSelectedSubjectId}
-        // selectedSubjectId={selectedSubjectId}
-        />
+        <SubjectSwitcher />
         <div className="flex items-center mt-2">
           <SearchForm className="flex-grow" />
 
-          {selectedSubjectId && hasRole("Teacher") && (
+          {subjectId && hasRole("Teacher") && (
             <SidebarMenuButton
               className="shrink-0 p-0 w-6 h-6 flex items-center justify-center"
               onClick={() => console.log("Create assignment")}
@@ -144,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent className="">
-        {!selectedSubjectId ? (
+        {!subjectId ? (
           <div className="p-4 text-center text-muted-foreground">
             Select a subject to view assignments
           </div>

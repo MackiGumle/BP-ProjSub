@@ -1,3 +1,4 @@
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { createContext, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +38,7 @@ export const UserProvider = ({ children }: Props) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const initializeAuth = () => {
@@ -91,6 +93,7 @@ export const UserProvider = ({ children }: Props) => {
   };
 
   const logout = useCallback(() => {
+    queryClient.clear();
     setUser(null);
     setToken(null);
     localStorage.removeItem("user");

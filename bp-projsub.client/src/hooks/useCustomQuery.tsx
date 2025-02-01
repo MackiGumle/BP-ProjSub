@@ -20,7 +20,7 @@ export const useSubjectsQuery = (): UseQueryResult<SubjectDto[], Error> => {
                 throw new Error("Failed to fetch subjects");
             }
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 2 * 60 * 1000,
         retry: 2
     });
 };
@@ -41,7 +41,7 @@ export const useStudentsQuery = ({ subjectId }: { subjectId: number }): UseQuery
                 throw new Error("Failed to fetch subjects");
             }
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 2 * 60 * 1000,
         retry: 2
     });
 };

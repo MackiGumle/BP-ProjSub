@@ -31,10 +31,11 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
+                int random = Random.Shared.Next(1000, 9999);
                 var model = new CreateAccountDto
                 {
-                    UserName = "Stu" + Random.Shared.Next(1000, 9999),
-                    Email = "stu" + Random.Shared.Next(1000, 9999) + "@example.com",
+                    UserName = "Stu" + random,
+                    Email = "stu" + random + "@example.com",
                     Role = "Student"
                 };
 
@@ -43,7 +44,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
         }
 
@@ -52,10 +53,11 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
+                int random = Random.Shared.Next(1000, 9999);
                 var model = new CreateAccountDto
                 {
-                    UserName = "Tea" + Random.Shared.Next(1000, 9999),
-                    Email = "tea" + Random.Shared.Next(1000, 9999) + "@example.com",
+                    UserName = "Tea" + random,
+                    Email = "tea" + random + "@example.com",
                     Role = "Teacher"
                 };
 
@@ -64,7 +66,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new {message = e.Message});
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
         }
 

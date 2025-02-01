@@ -1,7 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown, BookOpen, Plus, Wrench } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
-import axios from "axios"
+import { Check, ChevronsUpDown, BookOpen, Wrench } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,28 +13,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/UserContext"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { SubjectDto } from "@/Dtos/SubjectDto"
+import { Link, useParams } from "react-router-dom"
 import { useSubjectsQuery } from "@/hooks/useCustomQuery"
 
 
 // 
-export function SubjectSwitcher({
-  onSubjectSelect,
-  // selectedSubjectId
-}: {
-  onSubjectSelect: (subjectId: number) => void
-  // selectedSubjectId: number | null
-}) {
-  const { getRole, hasRole } = useAuth()
+export function SubjectSwitcher() {
+  const { hasRole } = useAuth()
   const { subjectId } = useParams();
-  const navigate = useNavigate()
   const { data: subjects, isLoading, error } = useSubjectsQuery();
-
-  const handleSubjectSelect = (subjectId: number) => {
-    onSubjectSelect(subjectId)
-    navigate(`/subject/${subjectId}`)
-  }
 
 
   const selectedSubject = subjects?.find(subj => subj.id === Number(subjectId))
@@ -64,7 +49,7 @@ export function SubjectSwitcher({
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
             {hasRole("Teacher") && selectedSubject && (
-              <Link to={`/subject/${subjectId}/manage`}>
+              <Link to={`subject/${subjectId}/manage`}>
                 <DropdownMenuItem>
                   <Wrench className="mr-2 " />
                   Manage subject
@@ -81,14 +66,15 @@ export function SubjectSwitcher({
               </DropdownMenuItem>
             ) : (
               subjects?.map((subject) => (
-                <DropdownMenuItem
-                  key={subject.id}
-                  onSelect={() => handleSubjectSelect(subject.id)}
-                  className="flex items-center justify-between"
-                >
-                  <span className="truncate max-w-[200px]">{subject.name}</span>
-                  {subject.id === Number(subjectId) && <Check className="ml-2 size-4" />}
-                </DropdownMenuItem>
+                <Link to={`subject/${subject.id}`} key={subject.id}>
+                  <DropdownMenuItem
+                    key={subject.id}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="truncate max-w-[200px]">{subject.name}</span>
+                    {subject.id === Number(subjectId) && <Check className="ml-2 size-4" />}
+                  </DropdownMenuItem>
+                </Link>
               ))
             )}
           </DropdownMenuContent>

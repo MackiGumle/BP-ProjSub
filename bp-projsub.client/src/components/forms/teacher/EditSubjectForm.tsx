@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import {
     Form,
@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import SubjectDto from "@/Dtos/SubjectDto";
+import { SubjectDto } from "@/Dtos/SubjectDto";
 
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -29,6 +29,9 @@ interface EditSubjectFormProps {
 }
 
 export function EditSubjectForm({ subject, onSuccess }: EditSubjectFormProps) {
+    // const { data: cachedSubjects } = useQuery<SubjectDto[]>(['subjects']);
+    const queryClient = useQueryClient();
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -43,15 +46,23 @@ export function EditSubjectForm({ subject, onSuccess }: EditSubjectFormProps) {
             const response = await axios.put(
                 `/api/Teacher/EditSubject`, payload
             );
+
             return response.data;
         },
-        onSuccess: (data: { message: string; subjectId: number }) => {
+        onSuccess: (data: SubjectDto) => {
             toast({
                 title: "Success!",
-                description: data.message,
+                description: `Subject '${data.name}' updated successfully`,
                 variant: "success",
             });
-            form.reset();
+
+            queryClient.setQueryData<SubjectDto[]>(['subjects'], (oldData) => {
+                if (!oldData) return [];
+                return oldData.map((subj) =>
+                    subj.id === data.id ? data : subj
+                );
+            });
+
             onSuccess?.();
         },
         onError: (error: AxiosError<{

@@ -20,7 +20,6 @@ import { SubjectDto, CreateSubjectDto } from "@/Dtos/SubjectDto";
 import { subjectSchema } from "@/schemas/subject";
 
 
-
 export function CreateSubjectForm({
   onSuccess,
   onCancel
