@@ -10,6 +10,8 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { AccountPage } from "@/pages/AccountPage";
 import { TestingPage } from "@/pages/TestingPage";
 import { ManageSubject } from "@/components/custom-ui/Teacher/ManageSubject";
+import { AssignmentSubmissions } from "@/components/custom-ui/AssignmentSubmissions";
+import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 
 
 
@@ -23,13 +25,20 @@ export const router = createBrowserRouter([
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
                     {
-                        path: "subject/:subjectId", element: <Outlet/>,
+                        path: "subject/:subjectId", element: <Outlet />,
                         children: [
-                            { path: "manage/", element: <ManageSubject/> },
-                            { path: "assignments/:assignmentId", element: <>Assignment page</> },
+                            { path: "manage/", element: <ManageSubject /> },
+                            {
+                                path: "assignments/:assignmentId", element: <Outlet />,
+                                children: [
+                                    { path: "", element: <AssignmentSubmissions /> },
+                                    { path: "submission/:submissionId", element: <SubmissionBrowser /> },
+                                ]
+                            },
+                            // { path: "submission/:submissionId", element: <SubmissionPage /> },
                         ]
                     },
-                    { path: "subjectmanagement", element: <>Subject management</> },
+
                 ],
             },
             // { path: "register", element: <RegisterPage /> },

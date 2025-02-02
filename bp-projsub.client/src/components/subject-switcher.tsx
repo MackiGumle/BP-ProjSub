@@ -65,17 +65,20 @@ export function SubjectSwitcher() {
                 Error loading subjects
               </DropdownMenuItem>
             ) : (
-              subjects?.map((subject) => (
-                <Link to={`subject/${subject.id}`} key={subject.id}>
-                  <DropdownMenuItem
-                    key={subject.id}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="truncate max-w-[200px]">{subject.name}</span>
-                    {subject.id === Number(subjectId) && <Check className="ml-2 size-4" />}
-                  </DropdownMenuItem>
-                </Link>
-              ))
+              subjects?.length === 0 ? (
+                <DropdownMenuItem disabled>No subjects found</DropdownMenuItem>
+              ) :
+                subjects?.map((subject) => (
+                  <Link to={`subject/${subject.id}`} key={subject.id}>
+                    <DropdownMenuItem
+                      key={subject.id}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="truncate max-w-[200px]">{subject.name}</span>
+                      {subject.id === Number(subjectId) && <Check className="ml-2 size-4" />}
+                    </DropdownMenuItem>
+                  </Link>
+                ))
             )}
           </DropdownMenuContent>
         </DropdownMenu>

@@ -6,6 +6,7 @@ using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -242,6 +243,74 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpGet("DownloadSubmissionFile/{submissionId}/{requestedFileName}")]
+        [Authorize(Roles = "Student, Teacher")]
+        public async Task<IActionResult> DownloadSubmissionFile(int submissionId, string requestedFileName)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var submissionDb = await _dbContext.Submissions
+                .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, submissionId, User.FindFirst(ClaimTypes.Role)?.Value);
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
+                var targetDir = Path.Combine(uploadsRoot, submissionDb.FileName);
+
+                if (!Directory.Exists(targetDir))
+                {
+                    return NotFound(new { message = "Submission directory not found." });
+                }
+
+                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName);
+                var filePath = Path.Combine(targetDir, decodedFileName);
+                var resolvedFullPath = Path.GetFullPath(filePath);
+                var targetDirFullPath = Path.GetFullPath(targetDir);
+                if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                {
+                    return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                }
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound(new { message = "File not found." });
+                }
+
+                var memory = new MemoryStream();
+                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
+
+                var provider = new FileExtensionContentTypeProvider();
+
+                if (!provider.TryGetContentType(filePath, out string contentType))
+                {
+                    contentType = "text/plain";
+                }
+
+                return File(memory, contentType, Path.GetFileName(filePath));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "An error occurred during file download.",
+                    Error = ex.Message
+                });
+            }
+        }
 
     }
 }

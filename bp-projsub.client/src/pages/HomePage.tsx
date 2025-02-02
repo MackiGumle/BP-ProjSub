@@ -25,19 +25,13 @@ const HomePage = () => {
         );
     }
 
-    if (user.roles.includes("Teacher")) {
+    if (user.roles.includes("Teacher") || user.roles.includes("Student")) {
         return (
             // <TeacherPage />
             <AppPage >
                 <Outlet />
             </AppPage>
 
-        );
-    }
-
-    if (user.roles.includes("Student")) {
-        return (
-            <StudentPage />
         );
     }
 

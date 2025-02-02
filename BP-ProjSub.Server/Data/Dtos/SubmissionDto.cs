@@ -2,7 +2,8 @@ using System;
 
 namespace BP_ProjSub.Server.Data.Dtos;
 
-public class SubmissionDto
+
+public class PartialSubmissionDto
 {
     public int Id { get; set; }
 
@@ -14,5 +15,5 @@ public class SubmissionDto
 
     public string StudentLogin { get; set; }
 
-    public float Rating { get; set; }
+    public decimal? Rating { get; set; }
 }

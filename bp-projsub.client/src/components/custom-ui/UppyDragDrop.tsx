@@ -27,7 +27,7 @@ export function UppyDragDrop({ assignmentId }: { assignmentId: number }) {
             },
         })
             .use(XHR, {
-                endpoint: `api/upload/UploadSubmissionFiles/${assignmentId}`,
+                endpoint: `/api/upload/UploadSubmissionFiles/${assignmentId}`,
                 fieldName: 'files',
                 formData: true,
                 bundle: true, // bundle multiple files into a single request https://www.gregoryalexander.com/blog/2024/3/25/ensuring-sequential-uppy-uploads-using-the-bundled-xhr-option
@@ -55,7 +55,7 @@ export function UppyDragDrop({ assignmentId }: { assignmentId: number }) {
         <>
             {/* <p>File count: {fileCount}</p>
             <p>Total progress: {totalProgress}</p> */}
-            <Dashboard theme={theme === 'system' ? 'auto' : theme} uppy={uppy} />
+            <Dashboard width="100%" theme={theme === 'system' ? 'auto' : theme} uppy={uppy} />
         </>
     )
 }

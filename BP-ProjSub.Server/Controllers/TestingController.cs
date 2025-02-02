@@ -1,3 +1,4 @@
+using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
@@ -18,12 +19,15 @@ namespace BP_ProjSub.Server.Controllers
         private readonly ILogger<TestingController> _logger;
         private readonly UserManager<Person> _userManager;
         private readonly AccountService _accountService;
+        private readonly BakalarkaDbContext _dbContext;
 
-        public TestingController(AccountService accountService, UserManager<Person> userManager, ILogger<TestingController> logger)
+        public TestingController(AccountService accountService, UserManager<Person> userManager, ILogger<TestingController> logger
+            , BakalarkaDbContext dbContext)
         {
             _logger = logger;
             _userManager = userManager;
             _accountService = accountService;
+            _dbContext = dbContext;
         }
 
         [HttpGet("CreateRandomStudentAccount")]
@@ -40,6 +44,13 @@ namespace BP_ProjSub.Server.Controllers
                 };
 
                 var user = await _accountService.CreateAccountAsync(model);
+
+                var passwordResult = await _userManager.AddPasswordAsync(user, "P@ssw0rd");
+                if (!passwordResult.Succeeded)
+                {
+                    return BadRequest(new { message = "Password could not be set." });
+                }
+
                 return Ok();
             }
             catch (Exception e)
@@ -62,6 +73,13 @@ namespace BP_ProjSub.Server.Controllers
                 };
 
                 var user = await _accountService.CreateAccountAsync(model);
+
+                var passwordResult = await _userManager.AddPasswordAsync(user, "P@ssw0rd");
+                if (!passwordResult.Succeeded)
+                {
+                    return BadRequest(new { message = "Password could not be set." });
+                }
+
                 return Ok();
             }
             catch (Exception e)
@@ -70,16 +88,5 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
     }
 }

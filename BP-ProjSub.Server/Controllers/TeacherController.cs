@@ -24,11 +24,12 @@ namespace BP_ProjSub.Server.Controllers
         private readonly EmailService _emailService;
         private readonly AccountService _accountService;
         private readonly TokenService _tokenService;
+        private readonly ResourceAccessService _resourceAccessService;
 
         public TeacherController(
             UserManager<Person> userManager, BakalarkaDbContext dbContext,
             SubjectService subjectService, EmailService emailService,
-            AccountService accountService, TokenService tokenService)
+            AccountService accountService, TokenService tokenService, ResourceAccessService resourceAccessService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -36,6 +37,7 @@ namespace BP_ProjSub.Server.Controllers
             _emailService = emailService;
             _accountService = accountService;
             _tokenService = tokenService;
+            _resourceAccessService = resourceAccessService;
         }
 
         [HttpPost("CreateSubject")]
@@ -501,25 +503,39 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
+
                 var submissions = await _dbContext.Submissions
-                    .Include(s => s.Student)
+                    .Include(s => s.Student.Person)
                     .Include(s => s.Ratings)
-                    .Where(s => s.Assignment.Id == assignmentId)
+                    .Where(s => s.AssignmentId == assignmentId)
                     .ToListAsync();
 
-                var newestRatings = submissions.Select(s => s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()).ToList();
+                var latestSubmissions = submissions
+                .GroupBy(s => s.PersonId)
+                .Select(g =>
+                {
+                    // First take rated submissions, if any, take the latest.
+                    var ratedSubmission = g
+                        .Where(s => s.Ratings.Any())
+                        .OrderByDescending(s => s.SubmissionDate)
+                        .FirstOrDefault();
 
-                var response = submissions.Select(s => new SubmissionDto
+                    // Choose the latest submission if none are rated.
+                    return ratedSubmission ?? g.OrderByDescending(s => s.SubmissionDate).First();
+                })
+                .Select(s => new PartialSubmissionDto
                 {
                     Id = s.Id,
                     SubmissionDate = s.SubmissionDate,
                     AssignmentId = s.AssignmentId,
                     PersonId = s.PersonId,
                     StudentLogin = s.Student.Person.UserName!,
-                    Rating = (float)(newestRatings.FirstOrDefault(r => r.SubmissionId == s.Id)?.Value ?? 0)
-                }).ToList().OrderBy(s => s.SubmissionDate);
+                    Rating = s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value
+                })
+                .OrderByDescending(s => s.SubmissionDate)
+                .ToList();
 
-                return Ok(response);
+                return Ok(latestSubmissions);
             }
             catch (Exception ex)
             {

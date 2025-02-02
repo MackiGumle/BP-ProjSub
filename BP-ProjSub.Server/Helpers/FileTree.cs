@@ -2,14 +2,21 @@ using System;
 
 namespace BP_ProjSub.Server.Helpers;
 
+//   id: string;
+//   name: string;
+//   isSelectable?: boolean;
+//   children?: TreeViewElement[];
+
 public class FileTreeNode
 {
+    public int Id { get; set; } // This is for the frontend to keep track of the nodes
     public string Name { get; set; }
     public bool IsFolder { get; private set; } = false;
     public List<FileTreeNode> Children { get; private set; } = new List<FileTreeNode>();
 
-    public FileTreeNode(string name)
+    public FileTreeNode(int id, string name)
     {
+        Id = id;
         Name = name;
     }
 
@@ -17,11 +24,6 @@ public class FileTreeNode
     {
         Children.Add(child);
         IsFolder = true;
-    }
-
-    public void AddChildren(List<FileTreeNode> children)
-    {
-        Children.AddRange(children);
     }
 
     /// <summary>
@@ -34,7 +36,8 @@ public class FileTreeNode
     {
         try
         {
-            var fileTree = new FileTreeNode(rootPath);
+            int id = 1;
+            var fileTree = new FileTreeNode(id, rootPath);
             var rootDir = new DirectoryInfo(rootPath);
             var stack = new Stack<(DirectoryInfo, FileTreeNode)>(); // (Directory, ParentNode)
 
@@ -46,7 +49,7 @@ public class FileTreeNode
                 var subDirs = currentDir.GetDirectories();
                 foreach (var subDir in subDirs)
                 {
-                    var subDirNode = new FileTreeNode(subDir.Name);
+                    var subDirNode = new FileTreeNode(++id, subDir.Name);
                     parentNode.AddChild(subDirNode);
                     stack.Push((subDir, subDirNode));
                 }
@@ -54,7 +57,7 @@ public class FileTreeNode
                 var files = currentDir.GetFiles();
                 foreach (var file in files)
                 {
-                    parentNode.AddChild(new FileTreeNode(file.Name));
+                    parentNode.AddChild(new FileTreeNode(++id, file.Name));
                 }
             }
 

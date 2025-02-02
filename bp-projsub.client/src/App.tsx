@@ -9,7 +9,7 @@ import { ThemeProvider } from './components/theme-components/theme-provider';
 function App() {
     return (
         <UserProvider>
-            <ThemeProvider defaultTheme='system' storageKey='bp-projsub-theme'>
+            <ThemeProvider defaultTheme='light' storageKey='bp-projsub-theme'>
             <div className="w-full h-full">
                 <Outlet />
                 <Toaster />

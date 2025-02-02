@@ -30,17 +30,11 @@ import { AssignmentDto } from "@/Dtos/AssignmentDto"
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { getRole, hasRole } = useAuth()
-  const { subjectId } = useParams<{ subjectId: string }>();
-  
+  const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
+
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get("q")?.toLowerCase() || "";
 
-
-
-  // Get selected assignment from URL
-  const [selectedAssignmentId, setSelectedAssignmentId] = React.useState<number | null>(
-    Number(searchParams.get("assignment")) || null
-  )
 
   // Initialize open groups from URL using useMemo to avoid warning
   const initialOpenGroups = React.useMemo(
@@ -73,17 +67,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return newSet
     })
   }
-
-  // Update URL when selected assignment changes
-  React.useEffect(() => {
-    const newParams = new URLSearchParams(searchParams)
-    if (selectedAssignmentId) {
-      newParams.set("assignment", String(selectedAssignmentId))
-    } else {
-      newParams.delete("assignment")
-    }
-    setSearchParams(newParams, { replace: true })
-  }, [selectedAssignmentId])
 
   // Fetch assignments
   const { data: assignments, isLoading, error } = useQuery({
@@ -128,14 +111,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="flex items-center mt-2">
           <SearchForm className="flex-grow" />
 
-          {subjectId && hasRole("Teacher") && (
+          {/* {subjectId && hasRole("Teacher") && (
             <SidebarMenuButton
               className="shrink-0 p-0 w-6 h-6 flex items-center justify-center"
               onClick={() => console.log("Create assignment")}
             >
               <Plus className="h-6 w-6" />
             </SidebarMenuButton>
-          )}
+          )} */}
         </div>
       </SidebarHeader>
       <SidebarContent className="">
@@ -176,9 +159,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         {typeAssignments.map((assignment) => ( // each assignment
                           <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
                             <div className="flex items-center justify-between w-full">
-                              {/* <SidebarMenuButton className="w-full m-1 p-1 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)} isActive={selectedAssignmentId === assignment.id}> */}
-                              <Link to={`/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto" onClick={() => setSelectedAssignmentId(assignment.id)}>
-                                <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={selectedAssignmentId === assignment.id}>
+                              <Link to={`subject/${subjectId}/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto">
+                                <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={assignmentId === String(assignment.id)}>
                                   <div className="flex flex-col flex-1 text-left">
                                     <span className="font-medium">{assignment.title}</span>
                                     <span className="text-xs text-muted-foreground">
