@@ -257,7 +257,7 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
-                if (subjectId <= 0)
+                if (subjectId < 0)
                 {
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
@@ -317,7 +317,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
                 catch (KeyNotFoundException ex)
                 {
-                    return Unauthorized(new { message = ex.Message });
+                    return NotFound(new { message = ex.Message });
                 }
 
                 List<SubjectDto> subjectDtos = subjects.Select(s => new SubjectDto
@@ -546,37 +546,63 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        // [HttpPost("createStudent")]
-        // public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDto model)
-        // {
-        //     try
-        //     {
-        //         if (!ModelState.IsValid)
-        //         {
-        //             return BadRequest(ModelState);
-        //         }
+        [HttpPost("AddSubmissionRating")]
+        public async Task<IActionResult> AddSubmissionRating([FromBody] AddSubmissionRating model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-        //         var user = new Person
-        //         {
-        //             UserName = model.Name + model.Surname,
-        //             Email = model.Email
-        //         };
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
 
-        //         var result = await _userManager.CreateAsync(user);
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, model.SubmissionId, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
 
-        //         if (result.Succeeded)
-        //         {
-        //             var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .FirstOrDefaultAsync(s => s.Id == model.SubmissionId);
 
-        //             return Ok();
-        //         }
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
 
-        //         return BadRequest(result.Errors);
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
-        //     }
-        // }
+                var rating = new Rating
+                {
+                    Time = DateTime.UtcNow,
+                    Value = model.Rating,
+                    Note = model.Note,
+                    SubmissionId = model.SubmissionId,
+                    PersonId = userId
+                };
+
+                await _dbContext.Ratings.AddAsync(rating);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new RatingDto
+                {
+                    Time = rating.Time,
+                    Value = rating.Value,
+                    Note = rating.Note
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

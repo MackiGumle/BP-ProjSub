@@ -34,6 +34,8 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     public virtual DbSet<Submission> Submissions { get; set; }
 
+    public virtual DbSet<SubmissionComment> SubmissionComments { get; set; }
+
     public virtual DbSet<Teacher> Teachers { get; set; }
 
     public virtual DbSet<Admin> Admins { get; set; }

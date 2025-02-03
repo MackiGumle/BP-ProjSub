@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown, BookOpen, Wrench } from "lucide-react"
+import { Check, ChevronsUpDown, BookOpen, Wrench, Plus } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,9 +23,7 @@ export function SubjectSwitcher() {
   const { subjectId } = useParams();
   const { data: subjects, isLoading, error } = useSubjectsQuery();
 
-
   const selectedSubject = subjects?.find(subj => subj.id === Number(subjectId))
-
 
   return (
     <SidebarMenu className="m-1">
@@ -48,6 +46,15 @@ export function SubjectSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
+            {hasRole("Teacher") && (
+              <Link to={`subject/${subjectId}/create`}>
+                <DropdownMenuItem>
+                  <Plus className="mr-2 " />
+                  Create subject
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </Link>
+            )}
             {hasRole("Teacher") && selectedSubject && (
               <Link to={`subject/${subjectId}/manage`}>
                 <DropdownMenuItem>

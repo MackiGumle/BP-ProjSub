@@ -33,6 +33,7 @@ namespace BP_ProjSub.Server.Controllers
         [HttpPost("createAccount")]
         public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDto model)
         {
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
                 if (!ModelState.IsValid)
@@ -45,6 +46,8 @@ namespace BP_ProjSub.Server.Controllers
                 var token = _tokenService.CreateAccountActivationToken(user, emailToken);
                 var response = await _emailService.SendAccountActivation(user.Email, token);
 
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return Ok(new
                 {
                     message = $"Account created successfully. Email sent to {user.Email} = {response.IsSuccessStatusCode}.",
@@ -52,6 +55,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
+                await transaction.RollbackAsync();
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
         }

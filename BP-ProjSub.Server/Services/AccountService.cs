@@ -65,6 +65,7 @@ public class AccountService
                 throw new InvalidOperationException($"Failed to add user {user.UserName} to role {model.Role}.");
             }
 
+
             // Create entry in table for specific role
             switch (model.Role)
             {
@@ -74,7 +75,12 @@ public class AccountService
                         Person = user
                     };
 
-                    await _dbContext.Admins.AddAsync(admin);
+                    var resAdmin = await _dbContext.Admins.AddAsync(admin);
+                    if (resAdmin == null)
+                    {
+                        throw new InvalidOperationException($"Failed to create admin {user.UserName} in Admin table.");
+                    }
+
                     break;
 
                 case "Teacher":
@@ -83,7 +89,11 @@ public class AccountService
                         Person = user
                     };
 
-                    await _dbContext.Teachers.AddAsync(teacher);
+                    var resTeacher = await _dbContext.Teachers.AddAsync(teacher);
+                    if (resTeacher == null)
+                    {
+                        throw new InvalidOperationException($"Failed to create teacher {user.UserName} in Teacher table.");
+                    }
                     break;
 
                 case "Student":
@@ -92,7 +102,11 @@ public class AccountService
                         Person = user
                     };
 
-                    await _dbContext.Students.AddAsync(student);
+                    var resStudent = await _dbContext.Students.AddAsync(student);
+                    if (resStudent == null)
+                    {
+                        throw new InvalidOperationException($"Failed to create student {user.UserName} in Student table.");
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Role {model.Role} is invalid.");

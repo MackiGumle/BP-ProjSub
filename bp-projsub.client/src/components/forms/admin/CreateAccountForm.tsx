@@ -20,11 +20,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/UserContext"
 import axios from "axios"
+import { toast } from "@/components/ui/use-toast"
 
 
 const formSchema = z.object({
-  name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
-  surname: z.string().min(3, { message: "Surname must be at least 3 characters long" }),
+  userName: z.string().min(3, { message: "Name must be at least 3 characters long" }),
   email: z.string().email({
     message: "Invalid email"
   }),
@@ -41,12 +41,9 @@ export default function CreateAccountForm() {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      surname: "",
+      userName: "",
       email: "",
       role: "Teacher",
-      // password: "",
-      // confirmPassword: "",
     },
   })
 
@@ -54,9 +51,14 @@ export default function CreateAccountForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await axios.post("api/Admin/createAccount", values).then(response => {
       console.log(response);
+      toast({ title: "Success", description: response.data.message });
     }
     ).catch(error => {
-      console.error(error);
+      // console.error(error);
+      console.log(error.response.data.message);
+      toast({ title: "Error", description: error.response.data.message, variant: "destructive" });
+
+      
     });
   }
 
@@ -66,7 +68,7 @@ export default function CreateAccountForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <FormField
           control={form.control}
-          name="name"
+          name="userName"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="">Name</FormLabel>
@@ -77,19 +79,7 @@ export default function CreateAccountForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="surname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="">Surname</FormLabel>
-              <FormControl>
-                <Input placeholder="Surname" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
         <FormField
           control={form.control}
           name="email"
@@ -103,6 +93,7 @@ export default function CreateAccountForm() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="role"
@@ -124,32 +115,6 @@ export default function CreateAccountForm() {
             </FormItem>
           )}
         />
-        {/* <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input placeholder="Password" type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <Input placeholder="Confirm Password" type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
         <Button type="submit">Create</Button>
       </form>
     </Form>
