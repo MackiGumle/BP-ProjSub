@@ -38,8 +38,8 @@ namespace BP_ProjSub.Server.Controllers
                 int random = Random.Shared.Next(1000, 9999);
                 var model = new CreateAccountDto
                 {
-                    UserName = "Stu" + random,
-                    Email = "stu" + random + "@example.com",
+                    UserName = "sss" + random,
+                    Email = "sss" + random + "@example.com",
                     Role = "Student"
                 };
 
@@ -51,7 +51,17 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Password could not be set." });
                 }
 
-                return Ok();
+                var verifyEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                await _userManager.ConfirmEmailAsync(user, verifyEmailToken);
+
+                return Ok(
+                    new
+                    {
+                        user.Id,
+                        user.UserName,
+                        user.Email,
+                        password = "P@ssw0rd"
+                    });
             }
             catch (Exception e)
             {
@@ -67,8 +77,8 @@ namespace BP_ProjSub.Server.Controllers
                 int random = Random.Shared.Next(1000, 9999);
                 var model = new CreateAccountDto
                 {
-                    UserName = "Tea" + random,
-                    Email = "tea" + random + "@example.com",
+                    UserName = "ttt" + random,
+                    Email = "ttt" + random + "@example.com",
                     Role = "Teacher"
                 };
 
@@ -80,7 +90,18 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Password could not be set." });
                 }
 
-                return Ok();
+                var verifyEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                await _userManager.ConfirmEmailAsync(user, verifyEmailToken);
+
+                return Ok(
+                    new
+                    {
+                        user.Id,
+                        user.UserName,
+                        user.Email,
+                        password = "P@ssw0rd"
+                    }
+                );
             }
             catch (Exception e)
             {

@@ -1,6 +1,6 @@
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { createContext, useCallback, useEffect, useState } from "react";
+import React, { createContext, useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 export type UserProfile = {
@@ -40,6 +40,8 @@ export const UserProvider = ({ children }: Props) => {
   const [isReady, setIsReady] = useState(false);
   const queryClient = useQueryClient();
 
+  const refreshEndpoint = "/api/Auth/RequestNewToken";
+
   useEffect(() => {
     const initializeAuth = () => {
       const storage_user = localStorage.getItem("user");
@@ -47,9 +49,9 @@ export const UserProvider = ({ children }: Props) => {
       const storage_expires = localStorage.getItem("expires");
 
       if (storage_user && storage_token && storage_expires) {
-        const expirationTime = new Date(storage_expires); // this actually converts to the right UTC time
+        const expirationTime = new Date(storage_expires);
         const currentTime = new Date();
-        
+
         if (expirationTime > currentTime) {
           try {
             const parsedUser = JSON.parse(storage_user);
@@ -101,10 +103,77 @@ export const UserProvider = ({ children }: Props) => {
     localStorage.removeItem("expires");
     delete axios.defaults.headers.common["Authorization"];
     navigate("/login", { replace: true });
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
+  const isRefreshRequest = (url: string | undefined) => {
+    return url?.endsWith(refreshEndpoint);
+  };
+
+  // Refresh token interceptor
   useEffect(() => {
-    const interceptorId = axios.interceptors.response.use(
+    let isRefreshing = false;
+    let refreshSubscribers: ((token: string) => void)[] = [];
+
+    const requestInterceptor = axios.interceptors.request.use(
+      async (config) => {
+        if (isRefreshRequest(config.url)) {
+          return config;
+        }
+
+        const storedToken = localStorage.getItem('token');
+        const storedExpires = localStorage.getItem('expires');
+        if (!storedToken || !storedExpires) {
+          return config;
+        }
+
+        const expirationTime = new Date(storedExpires);
+        const currentTime = new Date();
+        const remainingTime = expirationTime.getTime() - currentTime.getTime();
+        const refreshThreshold = 10 * 60 * 1000;
+
+        console.log("Time before token refresh:", (remainingTime - refreshThreshold) / 60000, "minutes");
+
+        if (remainingTime > refreshThreshold) {
+          return config;
+        }
+
+        if (!isRefreshing) {
+          isRefreshing = true;
+          try {
+            console.log("Refreshing token...");
+            const response = await axios.post<LoginResponse>(refreshEndpoint, {}, {
+              headers: { Authorization: `Bearer ${storedToken}` }
+            });
+            const { id, username, email: userEmail, token: newToken, roles, expires } = response.data;
+
+            setUser({ id, username, email: userEmail, roles });
+            setToken(newToken);
+            axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+            localStorage.setItem("user", JSON.stringify({ id, username, email: userEmail, roles }));
+            localStorage.setItem("token", newToken);
+            localStorage.setItem("expires", expires);
+
+            refreshSubscribers.forEach(cb => cb(newToken));
+            refreshSubscribers = [];
+          } catch (error) {
+            logout();
+            return Promise.reject(error);
+          } finally {
+            isRefreshing = false;
+          }
+        }
+
+        return new Promise((resolve, reject) => {
+          refreshSubscribers.push((newToken: string) => {
+            config.headers.Authorization = `Bearer ${newToken}`;
+            resolve(axios(config));
+          });
+        });
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
@@ -114,8 +183,11 @@ export const UserProvider = ({ children }: Props) => {
       }
     );
 
-    return () => axios.interceptors.response.eject(interceptorId);
-  }, [logout]);
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, [logout, refreshEndpoint]);
 
   const isLoggedIn = (): boolean => {
     return !!token;
@@ -127,8 +199,8 @@ export const UserProvider = ({ children }: Props) => {
 
   const getRole = (): string => {
     if (!isLoggedIn()) return "None";
-    if (user?.roles?.includes("Admin")) return "Admin";
-    if (user?.roles?.includes("Teacher")) return "Teacher";
+    if (hasRole("Admin")) return "Admin";
+    if (hasRole("Teacher")) return "Teacher";
     return "Student";
   };
 

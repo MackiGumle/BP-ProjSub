@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BP_ProjSub.Server.Data;
+using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Helpers;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
@@ -307,6 +308,53 @@ namespace BP_ProjSub.Server.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     Message = "An error occurred during file download.",
+                    Error = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetSubmissionComments/{submissionId}")]
+        [Authorize(Roles = "Student, Teacher")]
+        public async Task<IActionResult> GetSubmissionComments(int submissionId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, submissionId, User.FindFirst(ClaimTypes.Role)?.Value);
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                .Include(s => s.Comments)
+                .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var response = submission.Comments.Select(c => new SubmissionCommentDto
+                {
+                    Id = c.Id,
+                    CommentDate = c.CommentDate,
+                    FileName = c.FileName,
+                    LineCommented = c.LineCommented,
+                    Comment = c.Comment
+                }).OrderBy(c => c.CommentDate).ToList();
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "An error occurred during fetching submission comments.",
                     Error = ex.Message
                 });
             }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import { createElement } from "react-syntax-highlighter";
 import { Plus } from "lucide-react";
@@ -13,6 +13,9 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
+import { toast } from "../ui/use-toast";
+import { te } from "date-fns/locale";
 
 const getFileLanguage = (fileName: string): string => {
     const extension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -62,9 +65,47 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
 
     const [fileType, setFileType] = useState<string | null>(null);
     const [selectedLines, setSelectedLines] = useState<number[]>([]);
-    // State for controlling the comment dialog and tracking which line is selected
+    // State for controlling the comment dialog and tracking selected line
     const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     const [selectedLineForComment, setSelectedLineForComment] = useState<number | null>(null);
+    const [commentText, setCommentText] = useState("");
+    const queryClient = useQueryClient();
+
+
+    // Query to fetch the submission comments.
+    const {
+        data: comments,
+        isLoading: commentsLoading,
+        error: commentsError,
+        refetch: refetchComments,
+    } = useQuery<SubmissionCommentDto[], Error>(
+        ["submissionComments", submissionId],
+        async () => {
+            const { data } = await axios.get(`/api/Upload/GetSubmissionComments/${submissionId}`);
+            return data;
+        },
+        { enabled: !!submissionId }
+    );
+
+    const addCommentMutation = useMutation({
+        mutationFn: async (newComment: AddSubmissionCommentDto) => {
+            const response = await axios.post<SubmissionCommentDto>("/api/Teacher/AddSubmissionComment", newComment);
+            return response.data;
+        },
+        onSuccess: (newComment) => {
+            toast({ title: "Comment added", variant: "success" });
+            setCommentText("");
+            setCommentDialogOpen(false);
+            queryClient.setQueryData<SubmissionCommentDto[]>
+                (["submissionComments", submissionId], (oldData = []) => [...oldData, newComment]);
+
+
+        },
+        onError: (error) => {
+            console.error("Error adding comment", error);
+            toast({ title: "Error adding comment", variant: "destructive" });
+        },
+    });
 
     async function fetchSubmissionFile() {
         const response = await axios.get(
@@ -79,12 +120,20 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
         if (contentType.startsWith("image/")) {
             const imageUrl = URL.createObjectURL(blob);
             response.data = imageUrl;
-        } else if (contentType.startsWith("text/")) {
+        } else if (contentType.startsWith("text/") || contentType.startsWith("application/json")) {
             const text = await blob.text();
+            setFileType("text/");
             response.data = text;
-        } else {
-            response.data = "Unsupported file type.";
+        } else if (contentType.startsWith("application/pdf")) {
+            const pdfUrl = URL.createObjectURL(blob);
+            response.data = pdfUrl;
+        } else if (contentType.startsWith("x-zip-compressed")) {
+            const zipUrl = URL.createObjectURL(blob);
+            response.data = zipUrl;
         }
+        // else {
+        //     response.data = "Unsupported file type.";
+        // }
 
         return response.data;
     }
@@ -124,7 +173,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                                 alt="Preview"
                                 className="max-w-full max-h-full object-contain rounded-lg"
                             />
-                        ) : fileType?.startsWith("text/") ? (
+                        ) : fileType?.startsWith("text/")? (
                             <SyntaxHighlighter
                                 language={getFileLanguage(fileName)}
                                 style={materialLight}
@@ -141,20 +190,36 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                                                 key: j,
                                             })
                                         );
+
+                                        // Filter comments that belong to this file and line (using 1-based numbering).
+                                        const lineComments = comments?.filter(
+                                            (c) => c.fileName === fileName && c.lineCommented === i + 1
+                                        );
+
                                         return (
-                                            <div key={i} className="flex items-center">
-                                                <Button
-                                                    variant={"ghost"}
-                                                    // Set the selected line and open the comment dialog on plus click.
-                                                    onClick={() => {
-                                                        setSelectedLineForComment(i);
-                                                        setCommentDialogOpen(true);
-                                                    }}
-                                                    className="text-blue-500 mr-2"
-                                                >
-                                                    <Plus />
-                                                </Button>
-                                                <span style={row.properties?.style}>{line}</span>
+                                            <div key={i} className="flex flex-col">
+                                                <div className="flex items-center p-0 m-0">
+                                                    <Button
+                                                        variant={"ghost"}
+                                                        onClick={() => {
+                                                            setSelectedLineForComment(i);
+                                                            setCommentDialogOpen(true);
+                                                        }}
+                                                        className="text-blue-500 p-0 m-0 max-h-1"
+                                                    >
+                                                        <Plus className="p-0 m-0 max-w-fit max-h-fit"/>
+                                                    </Button>
+                                                    <span style={row.properties?.style}>{line}</span>
+                                                </div>
+                                                {lineComments && lineComments.length > 0 && (
+                                                    <div className="ml-8">
+                                                        {lineComments.map((comment) => (
+                                                            <div key={comment.id} className="text-sm text-gray-600 bg-cyan-100">
+                                                                {comment.comment}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     });
@@ -176,21 +241,32 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            Add Comment on Line {selectedLineForComment !== null ? selectedLineForComment + 1 : ""}
+                            Add Comment on Line{" "}
+                            {selectedLineForComment !== null ? selectedLineForComment + 1 : ""}
                         </DialogTitle>
                     </DialogHeader>
                     <textarea
                         className="w-full p-2 border rounded"
                         placeholder="Enter your comment"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
                     />
                     <DialogFooter>
                         <Button
                             onClick={() => {
-                                // Here you can add your submit logic.
-                                setCommentDialogOpen(false);
+                                if (fileName && selectedLineForComment !== null) {
+                                    // Call the mutation with the proper payload.
+                                    addCommentMutation.mutate({
+                                        submissionId,
+                                        fileName,
+                                        lineCommented: selectedLineForComment + 1, // 1 based line number.
+                                        comment: commentText,
+                                    });
+                                }
                             }}
+                            disabled={addCommentMutation.isLoading || !commentText.trim()}
                         >
-                            Submit
+                            {addCommentMutation.isLoading ? "Submitting..." : "Submit"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

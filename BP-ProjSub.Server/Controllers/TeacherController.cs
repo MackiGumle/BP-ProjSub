@@ -442,7 +442,7 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
-                if (subjectId <= 0)
+                if (subjectId < 0)
                 {
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
@@ -478,12 +478,66 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpGet("GetSubmission/{submissionId}")]
+        public async Task<IActionResult> GetSubmission(int submissionId)
+        {
+            try
+            {
+                if (submissionId < 0)
+                {
+                    return BadRequest(new { message = "Invalid submission ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Student.Person)
+                    .Include(s => s.Ratings)
+                    .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, submissionId, "Teacher");
+
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var submissionDto = new PartialSubmissionDto
+                {
+                    Id = submission.Id,
+                    SubmissionDate = submission.SubmissionDate,
+                    AssignmentId = submission.AssignmentId,
+                    PersonId = submission.PersonId,
+                    StudentLogin = submission.Student.Person.UserName!,
+                    Rating = submission.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value
+                };
+
+                return Ok(submissionDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
         [HttpGet("GetSubmissions/{assignmentId}")]
         public async Task<IActionResult> GetSubmissions(int assignmentId)
         {
             try
             {
-                if (assignmentId <= 0)
+                if (assignmentId < 0)
                 {
                     return BadRequest(new { message = "Invalid assignment ID" });
                 }
@@ -502,7 +556,6 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     return NotFound(new { message = "Assignment not found." });
                 }
-
 
                 var submissions = await _dbContext.Submissions
                     .Include(s => s.Student.Person)
@@ -546,6 +599,123 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpGet("GetSubmissionVersionIds/{submissionId}")]
+        public async Task<IActionResult> GetSubmissionVersionIds(int submissionId)
+        {
+            try
+            {
+                if (submissionId < 0)
+                {
+                    return BadRequest(new { message = "Invalid submission ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Student.Person)
+                    .Include(s => s.Ratings)
+                    .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, submission.AssignmentId, "Teacher");
+
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Where(s => s.AssignmentId == submission.AssignmentId && s.PersonId == submission.PersonId)
+                    .OrderByDescending(s => s.SubmissionDate)
+                    .ToListAsync();
+
+                return Ok(submissions.Select(s => s.Id).ToList());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("AddSubmissionComment")]
+        public async Task<IActionResult> AddSubmissionComment([FromBody] AddSubmissionComment model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, model.SubmissionId, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Comments)
+                    .FirstOrDefaultAsync(s => s.Id == model.SubmissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var comment = new SubmissionComment
+                {
+                    CommentDate = DateTime.UtcNow,
+                    FileName = model.FileName,
+                    LineCommented = model.LineCommented,
+                    Comment = model.Comment,
+                    PersonId = userId,
+                    SubmissionId = model.SubmissionId
+                };
+
+                await _dbContext.SubmissionComment.AddAsync(comment);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new SubmissionCommentDto
+                {
+                    Id = comment.Id,
+                    CommentDate = comment.CommentDate,
+                    FileName = comment.FileName,
+                    LineCommented = comment.LineCommented,
+                    Comment = comment.Comment
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Adds a rating to a submission. //TODO: test AddSubmissionRating
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("AddSubmissionRating")]
         public async Task<IActionResult> AddSubmissionRating([FromBody] AddSubmissionRating model)
         {

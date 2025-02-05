@@ -160,7 +160,7 @@ type TOCProps = {
 
 const TOC = ({ toc }: TOCProps) => {
   return (
-    <Tree className="min-w-full min-h-full bg-background p-2 rounded-md" indicator={true}>
+    <Tree className="bg-background p-2 rounded-md" indicator={true}>
       {toc.map((element) => (
         <TreeItem
           key={element.id}
@@ -168,7 +168,7 @@ const TOC = ({ toc }: TOCProps) => {
           parentPath=""
         />
       ))}
-      <CollapseButton elements={toc} expandAll={true} />
+      <CollapseButton elements={toc} expandAll={false} />
     </Tree>
   );
 };

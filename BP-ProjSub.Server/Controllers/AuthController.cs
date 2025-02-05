@@ -70,6 +70,48 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpPost("RequestNewToken")]
+        [Authorize]
+        public async Task<IActionResult> RequestNewToken([FromHeader] string Authorization)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var authToken = tokenHandler.ReadToken(Authorization.Replace("Bearer ", string.Empty)) as JwtSecurityToken;
+
+                var email = authToken?.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Email)?.Value ?? string.Empty;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Token does not contain email." });
+                }
+
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var roles = await _userManager.GetRolesAsync(user);
+
+                var response = new LoggedInDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    Email = user.Email,
+                    Token = _tokenService.CreateToken(user, roles as List<string>),
+                    Roles = await _userManager.GetRolesAsync(user),
+                    Expires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
+                };
+
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            }
+        }
+
         [HttpPost("ActivateAccount")]
         [Authorize(Policy = "AccountActivation")]
         public async Task<IActionResult> ActivateAccount([FromHeader] string Authorization, [FromBody] string Password)
@@ -105,12 +147,12 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 var passwordResult = await _userManager.AddPasswordAsync(user, Password);
-                if(!passwordResult.Succeeded)
+                if (!passwordResult.Succeeded)
                 {
-                    return BadRequest(new {message = "Password could not be set." });
+                    return BadRequest(new { message = "Password could not be set." });
                 }
 
-                return Ok(new {message = "Account activated successfully." });
+                return Ok(new { message = "Account activated successfully." });
             }
             catch (Exception e)
             {
