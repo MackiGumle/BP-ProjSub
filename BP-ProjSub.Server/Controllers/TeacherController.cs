@@ -29,7 +29,8 @@ namespace BP_ProjSub.Server.Controllers
         public TeacherController(
             UserManager<Person> userManager, BakalarkaDbContext dbContext,
             SubjectService subjectService, EmailService emailService,
-            AccountService accountService, TokenService tokenService, ResourceAccessService resourceAccessService)
+            AccountService accountService, TokenService tokenService,
+            ResourceAccessService resourceAccessService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -116,7 +117,7 @@ namespace BP_ProjSub.Server.Controllers
                     {
                         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                         var token = _tokenService.CreateAccountActivationToken(user, emailToken);
-                        var response = await _emailService.SendAccountActivation(user.Email, token);
+                        var response = await _emailService.SendAccountActivationAsync(user.Email, token);
                     }
                 }
 
@@ -156,7 +157,7 @@ namespace BP_ProjSub.Server.Controllers
             }
 
             int studentCount;
-
+            int createdStudentsCount;
             try
             {
                 using (var transaction = await _dbContext.Database.BeginTransactionAsync())
@@ -175,6 +176,11 @@ namespace BP_ProjSub.Server.Controllers
 
                         studentCount = subject.Students.Count;
 
+                        var createdStudents = await _accountService.CreateStudentAccountsFromLoginsAsync(model.StudentLogins);
+                        createdStudentsCount = createdStudents.Count;
+                        // Save changes
+                        await _dbContext.SaveChangesAsync();
+
                         var subjectRes = await _subjectService.AddStudentsToSubjectAsync(subject, model.StudentLogins);
                         studentCount = subjectRes.Students.Count - studentCount;
 
@@ -188,7 +194,7 @@ namespace BP_ProjSub.Server.Controllers
                     }
                 }
 
-                return Ok(new { message = $"{studentCount} Students added to subject." });
+                return Ok(new { message = $"{studentCount - createdStudentsCount} existing and {createdStudentsCount} created students added to subject." });
             }
             catch (Exception e)
             {
@@ -712,7 +718,7 @@ namespace BP_ProjSub.Server.Controllers
         }
 
         /// <summary>
-        /// Adds a rating to a submission. //TODO: test AddSubmissionRating
+        /// Adds a rating to a submission.
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>

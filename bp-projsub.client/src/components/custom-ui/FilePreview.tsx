@@ -16,6 +16,7 @@ import {
 import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
 import { toast } from "../ui/use-toast";
 import { te } from "date-fns/locale";
+import { useAuth } from "@/context/UserContext";
 
 const getFileLanguage = (fileName: string): string => {
     const extension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -55,6 +56,7 @@ interface FilePreviewerProps {
 }
 
 const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName }) => {
+    const { hasRole } = useAuth();
     const { data: fileContent, isLoading, error } = useQuery<string, Error>(
         [submissionId, fileName],
         fetchSubmissionFile,
@@ -166,14 +168,14 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                 </div>
 
                 {fileContent && fileName && (
-                    <div className="overflow-auto max-w-full max-h-full">
+                    <div className="overflow-auto max-w-full max-h-full m-auto">
                         {fileType?.startsWith("image/") ? (
                             <img
                                 src={fileContent}
                                 alt="Preview"
                                 className="max-w-full max-h-full object-contain rounded-lg"
                             />
-                        ) : fileType?.startsWith("text/")? (
+                        ) : fileType?.startsWith("text/") ? (
                             <SyntaxHighlighter
                                 language={getFileLanguage(fileName)}
                                 style={materialLight}
@@ -199,16 +201,18 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                                         return (
                                             <div key={i} className="flex flex-col">
                                                 <div className="flex items-center p-0 m-0">
-                                                    <Button
-                                                        variant={"ghost"}
-                                                        onClick={() => {
-                                                            setSelectedLineForComment(i);
-                                                            setCommentDialogOpen(true);
-                                                        }}
-                                                        className="text-blue-500 p-0 m-0 max-h-1"
-                                                    >
-                                                        <Plus className="p-0 m-0 max-w-fit max-h-fit"/>
-                                                    </Button>
+                                                    {hasRole("Teacher") && (
+                                                        <Button
+                                                            variant={"ghost"}
+                                                            onClick={() => {
+                                                                setSelectedLineForComment(i);
+                                                                setCommentDialogOpen(true);
+                                                            }}
+                                                            className="text-blue-500 p-0 m-0"
+                                                        >
+                                                            <Plus className="p-0 m-0 max-w-fit" />
+                                                        </Button>
+                                                    )}
                                                     <span style={row.properties?.style}>{line}</span>
                                                 </div>
                                                 {lineComments && lineComments.length > 0 && (

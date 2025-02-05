@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export function ManageStudents({ subjectId }: { subjectId: number }) {
     const queryClient = useQueryClient();
@@ -27,7 +28,7 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
             toast({ title: "Success", description: data.message });
             queryClient.invalidateQueries(["students", subjectId]);
             // queryClient.refetchQueries(["students", subjectId]);
-            setStudentLogins("");
+            // setStudentLogins("");
         },
         onError: (error: any) => {
             toast({ title: "Error", description: error.response?.data?.message || "Failed to add students", variant: "destructive" });
@@ -46,7 +47,7 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
             toast({ title: "Success", description: data.message });
             queryClient.invalidateQueries(["students", subjectId]);
             // queryClient.refetchQueries(["students", subjectId]);
-            setStudentLogins("");
+            // setStudentLogins("");
         },
         onError: (error: any) => {
             toast({ title: "Error", description: error.response?.data?.message || "Failed to remove students", variant: "destructive" });
@@ -70,9 +71,33 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
                         <Button onClick={() => addStudentsMutation.mutate()} disabled={addStudentsMutation.isLoading}>
                             Add Students
                         </Button>
-                        <Button variant="destructive" onClick={() => removeStudentsMutation.mutate()} disabled={removeStudentsMutation.isLoading}>
-                            Remove Students
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    disabled={removeStudentsMutation.isLoading}
+                                >
+                                    Remove Students
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirm Student Removal</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Are you sure you want to remove the students from the subject?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={() => removeStudentsMutation.mutate()}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Confirm Removal
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </CardContent>
             </Card>

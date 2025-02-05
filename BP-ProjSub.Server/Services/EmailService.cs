@@ -20,7 +20,13 @@ public class EmailService
         _client = new SendGridClient(_apiKey);
     }
     
-    public async Task<Response> SendAccountActivation(string recipient, string token)
+    /// <summary>
+    /// Sends an email to the recipient with the activation link.
+    /// </summary>
+    /// <param name="recipient"></param>
+    /// <param name="token">Token with email confirmation</param>
+    /// <returns></returns>
+    public async Task<Response> SendAccountActivationAsync(string recipient, string token)
     {
         // var client = new SendGridClient(_apiKey);
         // var encodedToken = Uri.EscapeDataString(token);

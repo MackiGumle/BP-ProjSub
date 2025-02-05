@@ -44,7 +44,7 @@ namespace BP_ProjSub.Server.Controllers
                 var user = await _accountService.CreateAccountAsync(model);
                 var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var token = _tokenService.CreateAccountActivationToken(user, emailToken);
-                var response = await _emailService.SendAccountActivation(user.Email, token);
+                var response = await _emailService.SendAccountActivationAsync(user.Email, token);
 
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();

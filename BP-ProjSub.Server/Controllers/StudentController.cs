@@ -18,12 +18,15 @@ namespace BP_ProjSub.Server.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly BakalarkaDbContext _dbContext;
         private readonly SubjectService _subjectService;
+        private readonly ResourceAccessService _resourceAccessService;
 
-        public StudentController(IWebHostEnvironment env, BakalarkaDbContext dbContext, SubjectService subjectService)
+        public StudentController(IWebHostEnvironment env, BakalarkaDbContext dbContext,
+         SubjectService subjectService, ResourceAccessService resourceAccessService)
         {
             _env = env;
             _dbContext = dbContext;
             _subjectService = subjectService;
+            _resourceAccessService = resourceAccessService;
         }
 
         [HttpGet("GetSubjects")]
@@ -91,6 +94,161 @@ namespace BP_ProjSub.Server.Controllers
                     .ToListAsync();
 
                 return Ok(assignments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetSubmissions/{assignmentId}")]
+        public async Task<IActionResult> GetSubmissions(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found" });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Where(s => s.AssignmentId == assignmentId && s.PersonId == userId)
+                    .ToListAsync();
+
+                if (submissions.Count == 0)
+                {
+                    return Ok();
+                }
+
+                var latestSubmission = submissions.OrderByDescending(s => s.SubmissionDate).FirstOrDefault();
+
+                return Ok(new PartialSubmissionDto
+                {
+                    Id = latestSubmission.Id,
+                    SubmissionDate = latestSubmission.SubmissionDate,
+                    AssignmentId = latestSubmission.AssignmentId,
+                    PersonId = latestSubmission.PersonId,
+                    Rating = latestSubmission.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value,
+                }
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetSubmission/{submissionId}")]
+        public async Task<IActionResult> GetSubmission(int submissionId)
+        {
+            try
+            {
+                if (submissionId < 0)
+                {
+                    return BadRequest(new { message = "Invalid submission ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessSubmissionAsync(userId, submissionId, "Student");
+
+                if (!access)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var submissionDto = new PartialSubmissionDto
+                {
+                    Id = submission.Id,
+                    SubmissionDate = submission.SubmissionDate,
+                    AssignmentId = submission.AssignmentId,
+                    PersonId = submission.PersonId,
+                    Rating = submission.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value
+                };
+
+                return Ok(submissionDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetSubmissionVersionIds/{submissionId}")]
+        public async Task<IActionResult> GetSubmissionVersionIds(int submissionId)
+        {
+            try
+            {
+                if (submissionId < 0)
+                {
+                    return BadRequest(new { message = "Invalid submission ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var submission = await _dbContext.Submissions
+                    .Include(s => s.Student.Person)
+                    .Include(s => s.Ratings)
+                    .FirstOrDefaultAsync(s => s.Id == submissionId);
+
+                if (submission == null)
+                {
+                    return NotFound(new { message = "Submission not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, submission.AssignmentId, "Student");
+
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Where(s => s.AssignmentId == submission.AssignmentId && s.PersonId == submission.PersonId)
+                    .OrderByDescending(s => s.SubmissionDate)
+                    .ToListAsync();
+
+                return Ok(submissions.Select(s => s.Id).ToList());
             }
             catch (Exception ex)
             {

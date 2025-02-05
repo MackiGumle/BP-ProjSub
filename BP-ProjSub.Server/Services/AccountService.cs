@@ -14,12 +14,15 @@ public class AccountService
     private readonly BakalarkaDbContext _dbContext;
     private readonly UserManager<Person> _userManager;
     private readonly EmailService _emailService;
+    private readonly TokenService _tokenService;
 
-    public AccountService(BakalarkaDbContext dbContext, UserManager<Person> userManager, EmailService emailService)
+    public AccountService(BakalarkaDbContext dbContext, UserManager<Person> userManager,
+     EmailService emailService, TokenService tokenService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _emailService = emailService;
+        _tokenService = tokenService;
     }
 
     public static bool IsLoginFormatValid(string login)
@@ -165,8 +168,18 @@ public class AccountService
                     Role = "Student"
                 };
 
-                // This throws an exception if the login already exists
+                // This throws an exception if the login already exists hence var existingUsers
                 var student = await CreateAccountAsync(newStudent);
+
+                // Send email with activation link
+                var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(student);
+                var tokenWithEmail = _tokenService.CreateAccountActivationToken(student, emailToken);
+                var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
+                if (!emailRes.IsSuccessStatusCode)
+                {
+                    throw new InvalidOperationException($"Failed to send email to {student.Email}.");
+                }
+
                 newPeople.Add(student);
             }
 

@@ -11,11 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PartialSubmissionDto } from "@/Dtos/SubmissionDto";
 import { AssignmentDto } from "@/Dtos/AssignmentDto";
 
+
 async function fetchSubmissions(assignmentId: string) {
     const { data } = await axios.get(`/api/Teacher/GetSubmissions/${assignmentId}`);
     return data;
 }
-
 
 
 export function TeacherAssignmentSubmissions() {
@@ -25,8 +25,8 @@ export function TeacherAssignmentSubmissions() {
 
     const getAssignmentFromCache = () => {
         try {
-            const assignments = queryClient.getQueryData<AssignmentDto[]>(['assignments', '1']);
-            // console.log('Cached Assignment:', assignments);
+            const assignments = queryClient.getQueryData<AssignmentDto[]>(['assignments', subjectId]);
+            console.log('Cached Assignment:', assignments);
 
             const assignment = assignments?.find(a => a.id === Number(assignmentId));
 
@@ -74,11 +74,11 @@ export function TeacherAssignmentSubmissions() {
                                 <p className="text-sm text-muted-foreground">{new Date(submission.submissionDate).toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{submission.rating || "-"} / {getAssignmentFromCache()?.maxPoints} points</p>
+                                <p className="text-sm text-muted-foreground">{submission.rating || "-"} / {getAssignmentFromCache()?.maxPoints ?? '-'} points</p>
                             </div>
                             {/* /subject/${subjectId}/assignment/${assignmentId}/submission/${submission.id} */}
                             <Link to={`submission/${submission.id}`}>
-                                <Button variant="outline">Review</Button>
+                                <Button variant="outline">View</Button>
                             </Link>
                         </Card>
                     ))
