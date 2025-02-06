@@ -138,7 +138,10 @@ public class AccountService
             throw new InvalidOperationException("No student logins provided.");
         }
 
-        studentLogins = studentLogins.Select(s => s.ToLower()).ToList();
+        studentLogins = studentLogins
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Select(s => s.ToLower())
+            .ToList();
 
         // No multi role support
         var existingUsers = _dbContext.Users
@@ -171,17 +174,25 @@ public class AccountService
                 // This throws an exception if the login already exists hence var existingUsers
                 var student = await CreateAccountAsync(newStudent);
 
+                newPeople.Add(student);
+            }
+
+            await Parallel.ForEachAsync(newPeople, async (student, cancellationToken) =>
+            {
                 // Send email with activation link
                 var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(student);
                 var tokenWithEmail = _tokenService.CreateAccountActivationToken(student, emailToken);
-                var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
+                // var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
+                // NOTE: For testing purposes, send email to the same address
+                var emailRes = await _emailService.SendAccountActivationAsync("sis0049@vsb.cz", tokenWithEmail);
                 if (!emailRes.IsSuccessStatusCode)
                 {
                     throw new InvalidOperationException($"Failed to send email to {student.Email}.");
                 }
 
-                newPeople.Add(student);
+                // Console.WriteLine("[i] Email sent to " + student.Email);
             }
+            );
 
             return newPeople;
         }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
+using BP_ProjSub.Server.Data.Dtos.Teacher;
 using BP_ProjSub.Server.Helpers;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
@@ -101,7 +102,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 // Save the files
                 var uploadId = Guid.NewGuid().ToString();
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
+                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/submissions");
 
                 // The directory structure is: uploads/assignmentId/userId/uploadId
                 var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString(), userId, uploadId);
@@ -223,7 +224,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
-                var targetDir = Path.Combine(uploadsRoot, submission.FileName);
+                var targetDir = Path.Combine(uploadsRoot, "submissions", submission.FileName);
 
                 if (!Directory.Exists(targetDir))
                 {
@@ -266,7 +267,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
-                var targetDir = Path.Combine(uploadsRoot, submissionDb.FileName);
+                var targetDir = Path.Combine(uploadsRoot, "submissions", submissionDb.FileName);
 
                 if (!Directory.Exists(targetDir))
                 {
@@ -360,5 +361,6 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+       
     }
 }

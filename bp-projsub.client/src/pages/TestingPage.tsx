@@ -1,6 +1,7 @@
 import { FilePreviewer } from "@/components/custom-ui/FilePreview"
 import TOCWrapper from "@/components/custom-ui/Teacher/TOCWrapper"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 
 export function TestingPage() {
@@ -8,33 +9,32 @@ export function TestingPage() {
   const submissionId = "1035";
   const fileName = searchParams.get('file');
 
+  // const { data: assignments, isLoading } = useQuery(["assignments"], getAssignments);
+
+  // if (isLoading) return <p>Loading...</p>;
+
   return (
     <>
-      {
-        submissionId ? (
-          <div className="min-w-full max-w-full min-h-full max-h-full">
-            <ResizablePanelGroup direction="horizontal">
-              <ResizablePanel defaultSize={15}>
-                <div className="p-4">top 1</div>
-                <TOCWrapper submissionId={submissionId} />
-                <div className="p-4">bottom 1</div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={85}>
-                <div className="p-4">top 2</div>
-                <FilePreviewer submissionId={submissionId} fileName={fileName} />
-                <div className="p-4">bottom 2</div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+      {/* <div>
+        {assignments.map((assignment: any) => (
+          <div key={assignment.id} className="p-4 border-b">
+            <h2>{assignment.title}</h2>
+            <ReactMarkdown>{assignment.contentMarkdown}</ReactMarkdown>
+            {assignment.attachments.length > 0 && (
+              <div>
+                <h3>Attachments:</h3>
+                <ul>
+                  {assignment.attachments.map((att: any) => (
+                    <li key={att.id}>
+                      <a href={att.filePath} target="_blank" rel="noopener noreferrer">{att.fileName}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )
-          : (
-            <div className="flex justify-center items-center h-full">
-              <h1 className="text-2xl">Please select a submission to preview</h1>
-            </div>
-          )
-      }
-
+        ))}
+      </div> */}
     </>
-  )
+  );
 }

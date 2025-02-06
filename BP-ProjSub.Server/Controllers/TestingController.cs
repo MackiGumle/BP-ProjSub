@@ -109,5 +109,11 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+         [HttpGet("ConsoleLog")]
+        public async Task<IActionResult> ConsoleLog()
+        {
+            Console.WriteLine("Console log test");
+            return Ok();
+        }
     }
 }

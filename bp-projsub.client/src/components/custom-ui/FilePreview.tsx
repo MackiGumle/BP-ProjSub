@@ -152,6 +152,9 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
         });
     };
 
+    // const [hoveredLine, setHoveredLine] = React.useState<number | null>(null);
+
+
     return (
         <>
             <div className="max-w-full overflow-x-hidden">
@@ -200,7 +203,10 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
 
                                         return (
                                             <div key={i} className="flex flex-col">
-                                                <div className="flex items-center p-0 m-0">
+                                                <div className="flex items-center p-0 m-0 relative group code-line"
+                                                // onMouseEnter={() => setHoveredLine(i)}
+                                                // onMouseLeave={() => setHoveredLine(null)}
+                                                >
                                                     {hasRole("Teacher") && (
                                                         <Button
                                                             variant={"ghost"}
@@ -208,9 +214,9 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                                                                 setSelectedLineForComment(i);
                                                                 setCommentDialogOpen(true);
                                                             }}
-                                                            className="text-blue-500 p-0 m-0"
+                                                            className={`text-blue-500 p-0 m-0 plus-button absolute left-0 opacity-0 group-hover:opacity-100`}
                                                         >
-                                                            <Plus className="p-0 m-0 max-w-fit" />
+                                                            <Plus className="p-0 m-0 max-h-fit" />
                                                         </Button>
                                                     )}
                                                     <span style={row.properties?.style}>{line}</span>

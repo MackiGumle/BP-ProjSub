@@ -20,4 +20,6 @@ public class CreateAssignmentDto
 
     [Required]
     public int SubjectId { get; set; }
+    
+    public List<IFormFile> Files { get; set; }
 }
