@@ -5,6 +5,7 @@ using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BP_ProjSub.Server.Services;
@@ -201,4 +202,31 @@ public class AccountService
             throw;
         }
     }
+
+    // [HttpPost("BlockAccount")]
+    // public async Task<IActionResult> BlockAccount([FromBody] BlockAccountDto model)
+    // {
+    //     try
+    //     {
+    //         var user = await _userManager.FindByEmailAsync(model.Email);
+    //         if (user == null)
+    //         {
+    //             // return BadRequest(new { message = $"User with email '{model.Email}' not found." });
+    //             throw new InvalidOperationException($"User with email '{model.Email}' not found.");
+    //         }
+
+    //         var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+    //         if (!result.Succeeded)
+    //         {
+    //             // return BadRequest(new { message = $"Failed to block user with email '{model.Email}'." });
+    //             throw new InvalidOperationException($"Failed to block user with email '{model.Email}'.");
+    //         }
+
+    //         return Ok(new { message = $"User with email '{model.Email}' blocked." });
+    //     }
+    //     catch
+    //     {
+    //         throw;
+    //     }
+    // }
 }

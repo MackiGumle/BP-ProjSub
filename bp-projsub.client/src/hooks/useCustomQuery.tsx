@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "@/context/UserContext";
 import { SubjectDto } from "@/Dtos/SubjectDto";
 import { StudentDto } from "@/Dtos/StudentDto";
+import { AssignmentDto } from "@/Dtos/AssignmentDto";
 
 export const useSubjectsQuery = (): UseQueryResult<SubjectDto[], Error> => {
     const { getRole } = useAuth();
@@ -24,6 +25,27 @@ export const useSubjectsQuery = (): UseQueryResult<SubjectDto[], Error> => {
         retry: 2
     });
 };
+
+export const useAssignmentQuery = ({ assignmentId }: { assignmentId: number }): UseQueryResult<AssignmentDto, Error> => {
+    const { getRole } = useAuth();
+
+    return useQuery<AssignmentDto, Error>({
+        queryKey: ['assignment', assignmentId],
+        queryFn: async () => {
+            try {
+                const response = await axios.get<AssignmentDto>(
+                    `/api/${getRole()}/GetAssignment/${assignmentId}`,
+                    { withCredentials: true }
+                );
+                return response.data;
+            } catch (error) {
+                throw new Error("Failed to fetch assignment");
+            }
+        },
+        staleTime: 2 * 60 * 1000,
+        retry: 2
+    });
+}
 
 export const useStudentsQuery = ({ subjectId }: { subjectId: number }): UseQueryResult<StudentDto[], Error> => {
     const { getRole } = useAuth();

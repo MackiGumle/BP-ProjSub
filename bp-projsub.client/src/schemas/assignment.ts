@@ -3,7 +3,16 @@ import { z } from "zod"
 export const assignmentSchema = z.object({
     type: z.enum(["Homework", "Test", "Project"]),
     title: z.string().min(1, "Title is required"),
-    description: z.string().max(500).optional(),
+    description: z.string().optional(),
+
+    assignmentDate: z
+        .string()
+        .optional()
+        .refine((val) => {
+            if (!val) return true // optional
+            const d = new Date(val)
+            return !isNaN(d.getTime())
+        }, { message: "Invalid date" }),
 
     dueDate: z
         .string()

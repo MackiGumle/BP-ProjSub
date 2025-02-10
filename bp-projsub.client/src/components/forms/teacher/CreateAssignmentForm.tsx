@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
+import { DatetimePicker } from "@/components/ui/datetime-picker"
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>
 
@@ -35,7 +36,8 @@ export function CreateAssignmentForm({
       type: "Homework",
       title: "",
       description: "",
-      dueDate: "",
+      assignmentDate: new Date(Date.now()).toUTCString(),
+      dueDate: new Date(Date.now()).toUTCString(),
       maxPoints: "",
     },
   })
@@ -123,7 +125,7 @@ export function CreateAssignmentForm({
                 <FormControl>
                   <Textarea
                     placeholder="Optional description"
-                    className="resize-none"
+                    className="resize-y"
                     {...field}
                   />
                 </FormControl>
@@ -139,17 +141,28 @@ export function CreateAssignmentForm({
               <FormItem>
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
-                  <Input
+                  {/* <Input
                     type="date"
                     placeholder="yyyy-mm-dd"
                     value={field.value || ""}
                     onChange={(e) => field.onChange(e.target.value)}
+                  /> */}
+                  <DatetimePicker
+                    value={new Date()}
+                    // onChange={(date) => console.log(date)}
+                    onChange={(date) => field.onChange(date?.toUTCString())}
+                    format={
+                      [["days", "months", "years"], ["hours", "minutes", "seconds"]]
+                    }
+                    dtOptions={{ hour12: false }}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+
 
           <FormField
             control={form.control}

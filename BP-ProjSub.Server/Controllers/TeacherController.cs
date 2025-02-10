@@ -402,10 +402,10 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized(new { message = "User not found." });
                 }
 
-                var subjectExists = await _dbContext.Subjects.AnyAsync(s => s.Id == model.SubjectId);
-                if (!subjectExists)
+                var access = await _resourceAccessService.CanAccessSubjectAsync(personId, model.SubjectId, "Teacher");
+                if (!access)
                 {
-                    return BadRequest(new { message = $"Invalid SubjectId {model.SubjectId}. Subject does not exist." });
+                    return NotFound(new { message = "Subject not found." });
                 }
 
                 var assignment = new Assignment
@@ -474,6 +474,53 @@ namespace BP_ProjSub.Server.Controllers
                     .ToListAsync();
 
                 return Ok(assignments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("GetAssignment/{assignmentId}")]
+        public async Task<IActionResult> GetAssignment(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    .Include(a => a.Teacher)
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Teacher.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var assignmentDto = new AssignmentDto
+                {
+                    Id = assignment.Id,
+                    Type = assignment.Type,
+                    Title = assignment.Title,
+                    Description = assignment.Description,
+                    DateAssigned = assignment.DateAssigned,
+                    DueDate = assignment.DueDate,
+                    MaxPoints = assignment.MaxPoints
+                };
+
+                return Ok(assignmentDto);
             }
             catch (Exception ex)
             {

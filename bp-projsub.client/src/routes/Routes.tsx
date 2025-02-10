@@ -13,6 +13,7 @@ import { ManageSubject } from "@/components/custom-ui/Teacher/ManageSubject";
 import { AssignmentSubmissions } from "@/components/custom-ui/AssignmentSubmissions";
 import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
+import { AssignmentEdit } from "@/components/custom-ui/Teacher/AssignmentEdit";
 
 
 
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
                                 children: [
                                     { path: "", element: <AssignmentSubmissions /> },
                                     { path: "submission/:submissionId", element: <SubmissionBrowser /> },
+                                    { path: "edit/", element: <AssignmentEdit /> },
                                 ]
                             },
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },

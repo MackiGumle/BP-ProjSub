@@ -12,6 +12,7 @@ import { getAssignmentFromCache } from "@/utils/cacheUtils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { toast } from "../ui/use-toast";
+import { Separator } from "../ui/separator";
 
 export function SubmissionBrowser() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -121,129 +122,132 @@ export function SubmissionBrowser() {
                     //         </div>
                     //     </ResizablePanel>
                     // </ResizablePanelGroup>
-                    <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                        <ResizablePanel defaultSize={15}>
-                            <div className="flex items-center justify-between p-0">
-                                {submissionIds && (
-                                    <>
-                                        <div className="flex-1 flex justify-start">
-                                            {cycleSubmission('prev') ? (
-                                                <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('prev')}`}>
-                                                    <Button variant="ghost">
-                                                        <ArrowLeft />
+                    <>
+                        <div className="flex justify-between items-center p-1 text-muted-foreground">
+                            <div>
+                                {
+                                    isLoadingPartialSubmission ? 'Loading...' :
+                                        errorPartialSubmission ? 'Error loading submission' :
+                                            (new Date(partialSubmission?.submissionDate ?? '').toLocaleString())
+                                }
+                            </div>
+                            <div className="">
+                                {partialSubmission?.rating ?? '-'} / {assignment?.maxPoints} points
+                            </div>
+                            {/* <Button variant="default" className="mr-2"
+                                    onClick={() => console.log(partialSubmission)}>Rate</Button> */}
+                            {/* The Rate button (DialogTrigger) */}
+                            <div>
+                                {getRole() === "Teacher" && (
+                                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="default" className="mr-2">
+                                                Rate
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+
+                                            </DialogHeader>
+
+                                            <form onSubmit={handleRatingSubmit} className="space-y-4 py-2">
+                                                <div className="flex flex-col space-y-2">
+                                                    <label className="text-sm font-semibold" htmlFor="rating">
+                                                        Rating
+                                                    </label>
+                                                    <input
+                                                        id="rating"
+                                                        type="number"
+                                                        placeholder={`Max points:  ${assignment?.maxPoints}`}
+                                                        className="border p-2 rounded"
+                                                        value={ratingValue}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value
+                                                            if (val === "") {
+                                                                setRatingValue("")
+                                                            } else {
+                                                                setRatingValue(parseInt(val, 10))
+                                                            }
+                                                        }}
+                                                        min={0}
+                                                        max={assignment?.maxPoints}
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="flex flex-col space-y-2">
+                                                    <label className="text-sm font-semibold" htmlFor="note">
+                                                        Note
+                                                    </label>
+                                                    <textarea
+                                                        id="note"
+                                                        className="border p-2 rounded"
+                                                        value={noteValue}
+                                                        onChange={(e) => setNoteValue(e.target.value)}
+                                                    />
+                                                </div>
+
+                                                <DialogFooter>
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={addRatingMutation.isLoading}
+                                                    >
+                                                        {addRatingMutation.isLoading ? "Saving..." : "Save"}
                                                     </Button>
-                                                </Link>
-                                            ) : (
-                                                <Button variant="ghost" disabled>
-                                                    <ArrowLeft />
-                                                </Button>
-                                            )}
-                                        </div>
-                                        {partialSubmission?.studentLogin}
-                                        <div className="flex-1 flex justify-end">
-                                            {cycleSubmission('next') ? (
-                                                <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('next')}`}>
-                                                    <Button variant="ghost">
-                                                        <ArrowRight />
-                                                    </Button>
-                                                </Link>
-                                            ) : (
-                                                <Button variant="ghost" disabled>
-                                                    <ArrowRight />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </>
+                                                </DialogFooter>
+                                            </form>
+                                        </DialogContent>
+                                    </Dialog>
                                 )}
                             </div>
-                            <TOCWrapper submissionId={submissionId} />
-                            {/* <div className="p-4">bottom 1</div> */}
-                        </ResizablePanel>
-                        <ResizableHandle />
-                        <ResizablePanel defaultSize={85}>
-                            {/* <div className="p-4">top 2</div> */}
-                            <div className="flex justify-between items-center p-1 text-muted-foreground">
-                                <div>
-                                    {
-                                        isLoadingPartialSubmission ? 'Loading...' :
-                                            errorPartialSubmission ? 'Error loading submission' :
-                                                (new Date(partialSubmission?.submissionDate ?? '').toLocaleString())
-                                    }
-                                </div>
-                                <div className="">
-                                    {partialSubmission?.rating ?? '-'} / {assignment?.maxPoints} points
-                                </div>
-                                {/* <Button variant="default" className="mr-2"
-                                    onClick={() => console.log(partialSubmission)}>Rate</Button> */}
-                                {/* The Rate button (DialogTrigger) */}
-                                <div>
-                                    {getRole() === "Teacher" && (
-                                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="default" className="mr-2">
-                                                    Rate
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-
-                                                </DialogHeader>
-
-                                                <form onSubmit={handleRatingSubmit} className="space-y-4 py-2">
-                                                    <div className="flex flex-col space-y-2">
-                                                        <label className="text-sm font-semibold" htmlFor="rating">
-                                                            Rating
-                                                        </label>
-                                                        <input
-                                                            id="rating"
-                                                            type="number"
-                                                            placeholder={`Max points:  ${assignment?.maxPoints}`}
-                                                            className="border p-2 rounded"
-                                                            value={ratingValue}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value
-                                                                if (val === "") {
-                                                                    setRatingValue("")
-                                                                } else {
-                                                                    setRatingValue(parseInt(val, 10))
-                                                                }
-                                                            }}
-                                                            min={0}
-                                                            max={assignment?.maxPoints}
-                                                            required
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex flex-col space-y-2">
-                                                        <label className="text-sm font-semibold" htmlFor="note">
-                                                            Note
-                                                        </label>
-                                                        <textarea
-                                                            id="note"
-                                                            className="border p-2 rounded"
-                                                            value={noteValue}
-                                                            onChange={(e) => setNoteValue(e.target.value)}
-                                                        />
-                                                    </div>
-
-                                                    <DialogFooter>
-                                                        <Button
-                                                            type="submit"
-                                                            disabled={addRatingMutation.isLoading}
-                                                        >
-                                                            {addRatingMutation.isLoading ? "Saving..." : "Save"}
+                        </div>
+                        <Separator />
+                        <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+                            <ResizablePanel defaultSize={15}>
+                                <div className="flex items-center justify-between p-0">
+                                    {submissionIds && (
+                                        <>
+                                            <div className="flex-1 flex justify-start">
+                                                {cycleSubmission('prev') ? (
+                                                    <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('prev')}`}>
+                                                        <Button variant="ghost">
+                                                            <ArrowLeft />
                                                         </Button>
-                                                    </DialogFooter>
-                                                </form>
-                                            </DialogContent>
-                                        </Dialog>
+                                                    </Link>
+                                                ) : (
+                                                    <Button variant="ghost" disabled>
+                                                        <ArrowLeft />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            {partialSubmission?.studentLogin}
+                                            <div className="flex-1 flex justify-end">
+                                                {cycleSubmission('next') ? (
+                                                    <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('next')}`}>
+                                                        <Button variant="ghost">
+                                                            <ArrowRight />
+                                                        </Button>
+                                                    </Link>
+                                                ) : (
+                                                    <Button variant="ghost" disabled>
+                                                        <ArrowRight />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
-                            </div>
-                            <FilePreviewer submissionId={submissionId} fileName={fileName} />
-                            {/* <div className="p-4">bottom 2 end</div> */}
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
+                                <TOCWrapper submissionId={submissionId} />
+                                {/* <div className="p-4">bottom 1</div> */}
+                            </ResizablePanel>
+                            <ResizableHandle />
+                            <ResizablePanel defaultSize={85}>
+                                {/* <div className="p-4">top 2</div> */}
+                                <FilePreviewer submissionId={submissionId} fileName={fileName} />
+                                {/* <div className="p-4">bottom 2 end</div> */}
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
+                    </>
                 )
                     : (
                         <div className="flex justify-center items-center h-full">

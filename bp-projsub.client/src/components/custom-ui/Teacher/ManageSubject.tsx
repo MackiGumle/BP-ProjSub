@@ -4,6 +4,7 @@ import { useSubjectsQuery } from "@/hooks/useCustomQuery";
 import { useParams } from "react-router-dom";
 import { ManageStudents } from "./ManageStudents";
 import { EditSubjectForm } from "@/components/forms/teacher/EditSubjectForm";
+import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
 
 export function ManageSubject() {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -24,7 +25,7 @@ export function ManageSubject() {
       {currentSubject ? (
         <>
           <Tabs defaultValue="students" className="w-full">
-            <TabsList>
+            <TabsList className="mx-auto flex justify-center w-fit">
               <TabsTrigger value="students">Students</TabsTrigger>
               <TabsTrigger value="assignment">Assignment</TabsTrigger>
               <TabsTrigger value="subject">Subject</TabsTrigger>
@@ -36,10 +37,10 @@ export function ManageSubject() {
               }
             </TabsContent>
 
-            <TabsContent value="assignment">Add assignment form</TabsContent>
+            <TabsContent value="assignment"><CreateAssignmentForm subjectId={parseInt(subjectId || "")} /></TabsContent>
 
             <TabsContent value="subject">
-              <EditSubjectForm subject={currentSubject}/>
+              <EditSubjectForm subject={currentSubject} />
             </TabsContent>
           </Tabs>
         </>

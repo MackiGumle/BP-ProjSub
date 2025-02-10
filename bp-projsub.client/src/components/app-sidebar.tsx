@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { Plus } from "lucide-react"
+import { Pencil, Plus } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -16,6 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
@@ -175,11 +176,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   </div>
                                 </SidebarMenuButton>
                               </Link>
-                              {/* <SidebarMenuAction> */}
-                              {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
+                              <SidebarMenuAction>
+                                {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
-                              {/* </SidebarMenuAction> */}
-                              {/* {hasRole("Teacher") && <TeacherAssignmentActions assignmentId={assignment.id} />} */}
+                                {hasRole("Teacher") && (
+                                  <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
+                                    <SidebarMenuButton
+                                      className="w-6 h-6 p-1"
+                                      onClick={() => console.log("Assignment actions")}
+                                    >
+                                      <Pencil className="w-6 h-6" />
+                                    </SidebarMenuButton>
+                                  </Link>
+                                )}
+                              </SidebarMenuAction>
                             </div>
                           </SidebarMenuItem>
                         ))}
