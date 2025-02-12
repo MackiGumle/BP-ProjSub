@@ -9,10 +9,11 @@ export interface AssignmentDto {
 }
 
 export interface CreateAssignmentDto {
-  type: string
-  title: string
-  description?: string
-  dueDate?: Date | string
-  maxPoints?: number
-  subjectId: number
+  Type: string
+  Title: string
+  Description?: string
+  DateAssigned?: Date | string
+  DueDate?: Date | string
+  MaxPoints?: number
+  SubjectId: number
 }

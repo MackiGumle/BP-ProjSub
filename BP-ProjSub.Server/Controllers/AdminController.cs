@@ -1,4 +1,5 @@
 using BP_ProjSub.Server.Data;
+using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
 namespace BP_ProjSub.Server.Controllers
 {
@@ -58,6 +60,82 @@ namespace BP_ProjSub.Server.Controllers
                 await transaction.RollbackAsync();
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
             }
+        }
+
+        [HttpGet("getAccounts")]
+        public async Task<IActionResult> GetAccounts([FromQuery] string searchTerm = "")
+        {
+            var query = _userManager.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => u.UserName.Contains(searchTerm));
+            }
+
+            var users = await query.ToListAsync();
+
+            var userDtos = new List<UserDto>();
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userDtos.Add(new UserDto
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    Roles = roles.ToList(),
+                    LockoutEnabled = user.LockoutEnabled,
+                    LockoutEnd = user.LockoutEnd,
+                });
+            }
+
+            return Ok(userDtos);
+        }
+
+        [HttpPost("lockAccount")]
+        public async Task<IActionResult> LockAccount([FromBody] string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(new { message = "User ID is required." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Account locked successfully." });
+            }
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to lock account." });
+        }
+
+        [HttpPost("unlockAccount")]
+        public async Task<IActionResult> UnlockAccount([FromBody] string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(new { message = "User ID is required." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            var result = await _userManager.SetLockoutEndDateAsync(user, null);
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Account unlocked successfully." });
+            }
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Failed to unlock account." });
         }
     }
 }

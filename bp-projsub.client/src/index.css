@@ -88,4 +88,7 @@
 https://stackoverflow.com/questions/74607419/react-markdown-don%c2%b4t-render-markdown#74607475 */
 .markdown > * {
   all: revert;
+  a {
+    @apply text-primary underline;
+  }
 }

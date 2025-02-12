@@ -5,7 +5,7 @@ export const assignmentSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
 
-    assignmentDate: z
+    dateAssigned: z
         .string()
         .optional()
         .refine((val) => {
@@ -31,4 +31,6 @@ export const assignmentSchema = z.object({
             const num = Number(val)
             return !isNaN(num) && num >= 0
         }, { message: "Max Points must be a non-negative number" }),
+
+    // attachments: z.any().optional(),
 })

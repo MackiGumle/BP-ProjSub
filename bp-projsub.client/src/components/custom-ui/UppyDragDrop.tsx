@@ -8,8 +8,8 @@ import '@uppy/dashboard/dist/style.css'
 import { useTheme } from '@/components/theme-components/theme-provider';
 
 
-
-export function UppyDragDrop({ assignmentId }: { assignmentId: number }) {
+export function UppyDragDrop({ endpoint }: { endpoint: string }) {
+    // console.log('UppyDragDrop rendered endpoint:', endpoint)
     function createUppy() {
         const uppy = new Uppy({
             restrictions: { maxFileSize: 5 * 1024 * 1024, maxTotalFileSize: 20 * 1024 * 1024 },
@@ -27,7 +27,7 @@ export function UppyDragDrop({ assignmentId }: { assignmentId: number }) {
             },
         })
             .use(XHR, {
-                endpoint: `/api/upload/UploadSubmissionFiles/${assignmentId}`,
+                endpoint: endpoint,
                 fieldName: 'files',
                 formData: true,
                 bundle: true, // bundle multiple files into a single request https://www.gregoryalexander.com/blog/2024/3/25/ensuring-sequential-uppy-uploads-using-the-bundled-xhr-option

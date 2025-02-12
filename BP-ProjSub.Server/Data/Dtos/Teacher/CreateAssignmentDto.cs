@@ -14,6 +14,9 @@ public class CreateAssignmentDto
 
     public string? Description { get; set; }
 
+    // TODO: Also the date that the assignment should be visible
+    public DateTime? DateAssigned { get; set; }
+
     public DateTime? DueDate { get; set; }
 
     public long? MaxPoints { get; set; }
@@ -21,5 +24,5 @@ public class CreateAssignmentDto
     [Required]
     public int SubjectId { get; set; }
     
-    public List<IFormFile> Files { get; set; }
+    public List<IFormFile>? Files { get; set; }
 }

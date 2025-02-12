@@ -26,6 +26,7 @@ import { ChevronDown } from "lucide-react"
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
+import { Button } from "./ui/button"
 
 
 // Sidebar component for displaying assignments
@@ -176,17 +177,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   </div>
                                 </SidebarMenuButton>
                               </Link>
-                              <SidebarMenuAction>
+                              <SidebarMenuAction className="flex items-center">
                                 {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
                                 {hasRole("Teacher") && (
                                   <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
-                                    <SidebarMenuButton
+                                    {/* <SidebarMenuButton
                                       className="w-6 h-6 p-1"
                                       onClick={() => console.log("Assignment actions")}
-                                    >
-                                      <Pencil className="w-6 h-6" />
-                                    </SidebarMenuButton>
+                                    > */}
+                                    <div className="">
+                                      <Pencil className="w-6 h-6 p-1" />
+                                    </div>
+                                    {/* </SidebarMenuButton> */}
                                   </Link>
                                 )}
                               </SidebarMenuAction>

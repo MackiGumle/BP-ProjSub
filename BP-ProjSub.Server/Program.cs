@@ -166,6 +166,7 @@ namespace BP_ProjSub.Server
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+            app.UseMiddleware<LockoutMiddleware>();
             app.UseAuthorization();
 
             app.MapControllers();

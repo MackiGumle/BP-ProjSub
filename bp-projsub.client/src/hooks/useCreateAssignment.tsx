@@ -1,50 +1,44 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { AssignmentDto, CreateAssignmentDto } from "@/Dtos/AssignmentDto"
-import { UseFormSetError } from "react-hook-form"
-import { FieldValues } from "react-hook-form"
-import { handleFormErrors } from "@/utils/handleFormErrors"
+import { toast } from "@/components/ui/use-toast"
 
-interface UseCreateAssignmentOptions<T extends FieldValues> {
-  subjectId: number
-  setError?: UseFormSetError<T>     // This will be called on error
-  onSuccess?: (newAssignment: AssignmentDto) => void
-  onError?: (error: unknown) => void // For custom error handling
-}
 
-export function useCreateAssignment<T extends FieldValues>({
+export function useCreateAssignment<CreateAssignmentDto>({
   subjectId,
-  setError,
-  onSuccess,
-  onError,
-}: UseCreateAssignmentOptions<T>) {
+}: { subjectId: number }) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: Omit<CreateAssignmentDto, "subjectId">) => {
+    mutationFn: async (data: CreateAssignmentDto) => {
       const response = await axios.post<AssignmentDto>(
-        "/api/teacher/CreateAssignment",
-        { ...data, subjectId }
+        "/api/teacher/CreateAssignment", data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      },
       )
       return response.data
     },
     onSuccess: (newAssignment) => {
-      // Update React Query cache
       queryClient.setQueryData<AssignmentDto[]>(
         ["assignments", subjectId],
         (old = []) => [...old, newAssignment]
       )
 
-      onSuccess?.(newAssignment)
+      toast({
+        title: "Assignment created",
+        description: "Assignment was created successfully.",
+        variant: "success",
+      })
     },
     onError: (error) => {
-      // The custom onError callback
-      onError?.(error)
+      toast({
+        title: "Failed to create assignment",
+        description: "An error occurred while creating the assignment.",
+        variant: "destructive",
+      })
 
-      // If setError is provided, call handleFormErrors
-      if (setError) {
-        handleFormErrors<T>(error, setError, "Failed to create assignment.")
-      }
     },
   })
 }

@@ -11,6 +11,7 @@ import { ChevronDown } from 'lucide-react';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { SimpleTimePicker } from '@/components/ui/simple-time-picker';
 import { DatetimePicker } from '@/components/ui/datetime-picker';
+import { CreateAssignmentForm } from '@/components/forms/teacher/CreateAssignmentForm';
 
 export function TestingPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -58,46 +59,8 @@ Beanos:
 
   return (
     <>
-      <Collapsible
-        open={isAssignmentOpen}
-        onOpenChange={() => setAssignmentOpen(!isAssignmentOpen)}
-      >
-        <Card className="shadow-lg rounded-lg overflow-hidden">
-          <CollapsibleTrigger className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-            <span className="text-xl font-semibold">Název zadání</span>
-            <ChevronDown
-              className={`h-5 w-5 transition-transform duration-200 ${isAssignmentOpen ? 'rotate-180' : ''
-                }`}
-            />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="px-6 py-4">
 
-            <Markdown className='markdown'
-              // children={markdown}
-              remarkPlugins={[remarkGfm]}
-              components={{
-                code(props) {
-                  const { children, className, node, ...rest } = props
-                  const match = /language-(\w+)/.exec(className || '')
-                  console.log(match)
-                  return match ? (
-                    <SyntaxHighlighter
-                      PreTag="div"
-                      children={String(children).replace(/\n$/, '')}
-                      language={match[1]}
-                      style={docco}
-                    />
-                  ) : (
-                    <code {...rest} className={className}>
-                      {children}
-                    </code>
-                  )
-                }
-              }}
-            >{markdown}</Markdown>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      <CreateAssignmentForm subjectId={1037} />
     </>
   );
 }

@@ -104,6 +104,57 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpGet("GetAssignment/{assignmentId}")]
+        public async Task<IActionResult> GetAssignment(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId);
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var assignmentDto = new AssignmentDto
+                {
+                    Id = assignment.Id,
+                    Type = assignment.Type,
+                    Title = assignment.Title,
+                    Description = assignment.Description,
+                    DateAssigned = assignment.DateAssigned,
+                    DueDate = assignment.DueDate,
+                    MaxPoints = assignment.MaxPoints
+                };
+
+                return Ok(assignmentDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
         [HttpGet("GetSubmissions/{assignmentId}")]
         public async Task<IActionResult> GetSubmissions(int assignmentId)
         {

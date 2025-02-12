@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json;
 
 
 namespace BP_ProjSub.Server.Controllers
@@ -25,12 +26,13 @@ namespace BP_ProjSub.Server.Controllers
         private readonly AccountService _accountService;
         private readonly TokenService _tokenService;
         private readonly ResourceAccessService _resourceAccessService;
+        private readonly IHostEnvironment _env;
 
         public TeacherController(
             UserManager<Person> userManager, BakalarkaDbContext dbContext,
             SubjectService subjectService, EmailService emailService,
             AccountService accountService, TokenService tokenService,
-            ResourceAccessService resourceAccessService)
+            ResourceAccessService resourceAccessService, IHostEnvironment env)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -39,6 +41,7 @@ namespace BP_ProjSub.Server.Controllers
             _accountService = accountService;
             _tokenService = tokenService;
             _resourceAccessService = resourceAccessService;
+            _env = env;
         }
 
         [HttpPost("CreateSubject")]
@@ -386,8 +389,64 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpPut("EditAssignment")]
+        public async Task<IActionResult> EditAssignment([FromBody] EditAssignmentDto model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(personId, model.Id, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    .FirstOrDefaultAsync(a => a.Id == model.Id);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                assignment.Type = model.Type;
+                assignment.Title = model.Title;
+                assignment.Description = model.Description;
+                assignment.DateAssigned = model.DateAssigned;
+                assignment.DueDate = model.DueDate;
+                assignment.MaxPoints = model.MaxPoints;
+
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new AssignmentDto
+                {
+                    Id = assignment.Id,
+                    Type = assignment.Type,
+                    Title = assignment.Title,
+                    Description = assignment.Description,
+                    DateAssigned = assignment.DateAssigned,
+                    DueDate = assignment.DueDate,
+                    MaxPoints = assignment.MaxPoints
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
         [HttpPost("CreateAssignment")]
-        public async Task<IActionResult> CreateAssignment([FromBody] CreateAssignmentDto model)
+        public async Task<IActionResult> CreateAssignment([FromForm] CreateAssignmentDto model)
         {
             try
             {
@@ -413,7 +472,7 @@ namespace BP_ProjSub.Server.Controllers
                     Type = model.Type,
                     Title = model.Title,
                     Description = model.Description,
-                    DateAssigned = DateTime.Now,
+                    DateAssigned = model.DateAssigned ?? DateTime.UtcNow,
                     DueDate = model.DueDate,
                     MaxPoints = model.MaxPoints,
                     SubjectId = model.SubjectId,
@@ -422,6 +481,31 @@ namespace BP_ProjSub.Server.Controllers
 
                 await _dbContext.Assignments.AddAsync(assignment);
                 await _dbContext.SaveChangesAsync();
+
+                if (model.Files != null && model.Files.Count > 0)
+                {
+                    var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
+                    var assignmentDir = Path.Combine(uploadsRoot, assignment.Id.ToString());
+                    Directory.CreateDirectory(assignmentDir);
+
+                    foreach (var file in model.Files)
+                    {
+                        var filePath = Path.Combine(assignmentDir, file.FileName);
+                        var absolutePath = Path.GetFullPath(filePath);
+                        var targetPath = Path.GetFullPath(assignmentDir);
+
+                        if (!absolutePath.StartsWith(targetPath))
+                        {
+                            return BadRequest(new { message = "Directory traversal detected." });
+                        }
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                    }
+                }
 
                 return Ok(new AssignmentDto
                 {
@@ -436,10 +520,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    message = ex.Message
-                });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
 

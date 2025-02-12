@@ -16,59 +16,42 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
 import { DatetimePicker } from "@/components/ui/datetime-picker"
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>
 
-interface CreateAssignmentFormProps {
-  subjectId: number
-  onSuccess?: () => void
-}
 
 export function CreateAssignmentForm({
   subjectId,
-  onSuccess,
-}: CreateAssignmentFormProps) {
+}: { subjectId: number }) {
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
       type: "Homework",
       title: "",
       description: "",
-      assignmentDate: new Date(Date.now()).toUTCString(),
-      dueDate: new Date(Date.now()).toUTCString(),
+      dateAssigned: new Date(Date.now()).toISOString(),
+      dueDate: new Date(Date.now()).toISOString(),
       maxPoints: "",
     },
   })
 
-  // Custom hook uses <T extends FieldValues> to pass form.setError
-  const createAssignment = useCreateAssignment<AssignmentFormValues>({
-    subjectId,
-    // Pass form.setError so the hook can call handleFormErrors
-    setError: form.setError,
-    onSuccess: () => {
-      toast({
-        title: "Assignment created",
-        description: "Assignment was created successfully.",
-        variant: "success",
-      })
-      // form.reset()
-      onSuccess?.()
-    },
+  const createAssignment = useCreateAssignment<CreateAssignmentDto>({
+    subjectId
   })
 
   function onSubmit(values: AssignmentFormValues) {
-    // Transform form string to numbers or keep as string
-    const payload: Omit<CreateAssignmentDto, "subjectId"> = {
-      type: values.type,
-      title: values.title,
-      description: values.description,
-      dueDate: values.dueDate || undefined,
-      maxPoints: values.maxPoints ? Number(values.maxPoints) : undefined,
+    const payload: CreateAssignmentDto = {
+      SubjectId: subjectId,
+      Type: values.type,
+      Title: values.title,
+      Description: values.description,
+      DateAssigned: values.dateAssigned ? new Date(values.dateAssigned).toISOString() : undefined,
+      DueDate: values.dueDate ? new Date(values.dueDate).toISOString() : undefined,
+      MaxPoints: values.maxPoints ? Number(values.maxPoints) : undefined,
     }
 
-    createAssignment.mutate(payload)
+    createAssignment.mutate(payload);
   }
 
   return (
@@ -136,21 +119,14 @@ export function CreateAssignmentForm({
 
           <FormField
             control={form.control}
-            name="dueDate"
+            name="dateAssigned"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Due Date</FormLabel>
+                <FormLabel>Assignment Date</FormLabel>
                 <FormControl>
-                  {/* <Input
-                    type="date"
-                    placeholder="yyyy-mm-dd"
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  /> */}
                   <DatetimePicker
                     value={new Date()}
-                    // onChange={(date) => console.log(date)}
-                    onChange={(date) => field.onChange(date?.toUTCString())}
+                    onChange={(date) => field.onChange(date?.toISOString())}
                     format={
                       [["days", "months", "years"], ["hours", "minutes", "seconds"]]
                     }
@@ -162,7 +138,26 @@ export function CreateAssignmentForm({
             )}
           />
 
-
+          <FormField
+            control={form.control}
+            name="dueDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Due Date</FormLabel>
+                <FormControl>
+                  <DatetimePicker
+                    value={new Date()}
+                    onChange={(date) => field.onChange(date?.toISOString())}
+                    format={
+                      [["days", "months", "years"], ["hours", "minutes", "seconds"]]
+                    }
+                    dtOptions={{ hour12: false }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -182,13 +177,6 @@ export function CreateAssignmentForm({
               </FormItem>
             )}
           />
-
-          {/* ROOT LEVEL ERROR MESSAGES */}
-          {form.formState.errors.root && (
-            <div className="text-sm text-red-600">
-              {form.formState.errors.root.message}
-            </div>
-          )}
 
           <div>
             <Button
