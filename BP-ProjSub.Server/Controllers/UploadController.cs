@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
@@ -24,6 +26,7 @@ namespace BP_ProjSub.Server.Controllers
         private readonly BakalarkaDbContext _dbContext;
         private readonly IConfiguration _config;
         private readonly ResourceAccessService _resourceAccessService;
+        private readonly BlobServiceClient _blobServiceClient;
         private long maxFileSize = 5 * 1024 * 1024; // 5MB
         private long maxTotalSize = 20 * 1024 * 1024; // 20MB
         private List<string> allowedExtensions { get; }
@@ -39,36 +42,38 @@ namespace BP_ProjSub.Server.Controllers
             maxFileSize = long.Parse(_config["Uploads:MaxFileSize"]!);
             maxTotalSize = long.Parse(_config["Uploads:MaxTotalSize"]!);
             allowedExtensions = _config.GetSection("Uploads:AllowedFileExtensions").Get<List<string>>() ?? new List<string>();
+            _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
         }
 
         /// <summary>
         /// Uploads files for a given assignment.
-        /// Path: _env.ContentRootPath/uploads/assignmentId/userId/uploadId
-        /// DB saves relative path: assignmentId/userId/uploadId
+        /// Files are uploaded to Azure Blob Storage into a container using a virtual folder structure:
+        /// "assignmentId/userId/uploadId/..."
+        /// The relative path is saved to the database.
         /// </summary>
         /// <param name="assignmentId"></param>
-        /// <param name="files"></param>
+        /// <param name="files">The files to upload.</param>
         /// <returns></returns>
         [HttpPost("UploadSubmissionFiles/{assignmentId}")]
         [Authorize(Roles = "Student")]
         public async Task<IActionResult> UploadSubmissionFiles(int assignmentId, [FromForm] List<IFormFile> files)
         {
+            string blobName = string.Empty;
+
             try
             {
-                // Get the user ID from the token
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (userId == null)
                 {
                     return Unauthorized(new { message = "User ID not found in token." });
                 }
 
-                // Check if files were received
                 if (files == null || files.Count == 0)
                 {
                     return BadRequest(new { message = "No files received from the upload." });
                 }
 
-                // Check the file sizes
+                // Validate file extensions and sizes
                 long totalSize = 0;
                 foreach (var file in files)
                 {
@@ -77,12 +82,10 @@ namespace BP_ProjSub.Server.Controllers
                     {
                         return BadRequest(new { message = $"Invalid file extension '{extension}'." });
                     }
-
                     if (file.Length > maxFileSize)
                     {
                         return BadRequest(new { message = $"File {file.FileName} exceeds the maximum filesize of {maxFileSize} bytes." });
                     }
-
                     totalSize += file.Length;
                     if (totalSize > maxTotalSize)
                     {
@@ -90,40 +93,34 @@ namespace BP_ProjSub.Server.Controllers
                     }
                 }
 
-                // Get the assignment
+                // Check if student is in the subject
                 var assignment = await _dbContext.Assignments
-                .Include(a => a.Subject.Students)
-                .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Subject.Students.Any(s => s.PersonId == userId));
+                    .Include(a => a.Subject.Students)
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Subject.Students.Any(s => s.PersonId == userId));
 
                 if (assignment == null)
                 {
                     return NotFound(new { message = "Assignment not found" });
                 }
 
-                // var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
-                // if (!access)
-                // {
-                //     return NotFound(new { message = "Assignment not found" });
-                // }
-
-                // Save the files
                 var uploadId = Guid.NewGuid().ToString();
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/submissions");
 
-                // The directory structure is: uploads/assignmentId/userId/uploadId
-                var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString(), userId, uploadId);
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
-                // Check for directory traversal
+                // Upload each file
                 foreach (var file in files)
                 {
+                    // Split the filename to preserve folder structure
                     var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
                     if (fileNameParts.Length == 0)
                     {
                         return BadRequest(new { message = "Empty filename." });
                     }
 
+                    // Validate directory parts to prevent directory traversal
                     var fileName = fileNameParts.Last();
-                    var directoryParts = fileNameParts.Take(fileNameParts.Length - 1).ToArray();
+                    var directoryParts = fileNameParts.Length > 1 ? fileNameParts.Take(fileNameParts.Length - 1).ToArray() : Array.Empty<string>();
 
                     foreach (var part in directoryParts)
                     {
@@ -136,75 +133,60 @@ namespace BP_ProjSub.Server.Controllers
                             return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
                         }
                     }
-
                     if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                     {
                         return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
                     }
 
-                    // recreate the user path for checking
-                    var fullPath = targetDir;
-                    foreach (var dirPart in directoryParts)
+                    // Construct the blob name from folder structure: 
+                    // assignmentId/userId/uploadId/[subfolders]/filename
+                    blobName = $"{assignmentId}/{userId}/{uploadId}";
+                    if (directoryParts.Length > 0)
                     {
-                        fullPath = Path.Combine(fullPath, dirPart);
+                        blobName += "/" + string.Join("/", directoryParts);
                     }
+                    blobName += "/" + fileName;
 
-                    fullPath = Path.Combine(fullPath, fileName);
-
-                    // Absolute path check for directory traversal
-                    var resolvedFullPath = Path.GetFullPath(fullPath);
-                    var targetDirFullPath = Path.GetFullPath(targetDir);
-                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                    // Upload the file stream and set file content type
+                    var blobClient = containerClient.GetBlobClient(blobName);
+                    var blobHttpHeaders = new BlobHttpHeaders
                     {
-                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    }
+                        ContentType = file.ContentType
+                    };
 
-                    Directory.CreateDirectory(targetDir);
-
-                    var currentDir = targetDir;
-                    foreach (var dirPart in directoryParts)
-                    {
-                        currentDir = Path.Combine(currentDir, dirPart);
-                        Directory.CreateDirectory(currentDir);
-                    }
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
+                    await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
                 }
 
-                var relativePath = Path.Combine(assignmentId.ToString(), userId, uploadId);
-
-                var submission = await _dbContext.Submissions.AddAsync(new Submission
+                // Save submission details to the database
+                var relativePath = $"{assignmentId}/{userId}/{uploadId}";
+                var submission = new Submission
                 {
                     SubmissionDate = DateTime.Now,
                     FileName = relativePath,
                     AssignmentId = assignmentId,
                     FileData = new byte[1], // TODO: remove this field from db
                     PersonId = userId,
-                });
+                };
+                await _dbContext.Submissions.AddAsync(submission);
 
-                // If the submission is not saved to DB, delete the uploaded files
-                try { await _dbContext.SaveChangesAsync(); }
+                try
+                {
+                    await _dbContext.SaveChangesAsync();
+                }
                 catch
                 {
-                    Directory.Delete(targetDir, true);
-                    throw;
+                    // Delete blobs if database save fails
+                    var blobClient = containerClient.GetBlobClient(blobName);
+                    await blobClient.DeleteAsync();
+
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error saving submission to database." });
                 }
 
-
-                return Ok(new
-                {
-                    Message = "Files uploaded successfully.",
-                });
+                return Ok(new { Message = "Files uploaded successfully." });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    Message = "An error occurred during file upload.",
-                });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during file upload.", Error = ex.Message });
             }
         }
 
@@ -547,15 +529,11 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Submission not found." });
                 }
 
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
-                var targetDir = Path.Combine(uploadsRoot, "submissions", submission.FileName);
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
 
-                if (!Directory.Exists(targetDir))
-                {
-                    return NotFound(new { message = "Submission directory not found." });
-                }
+                string prefix = submission.FileName.TrimEnd('/') + "/";
 
-                var fileTree = FileTreeNode.CreateFromPath(targetDir);
+                var fileTree = await FileTreeNode.BuildFileTreeFromBlobStorageAsync(containerClient, prefix);
 
                 return Ok(fileTree.Children);
             }
@@ -645,43 +623,35 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Submission not found." });
                 }
 
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
-                var targetDir = Path.Combine(uploadsRoot, "submissions", submissionDb.FileName);
+                string containerName = "submissions";
+                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-                if (!Directory.Exists(targetDir))
-                {
-                    return NotFound(new { message = "Submission directory not found." });
-                }
+                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName).Replace("\\", "/");
 
-                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName);
-                var filePath = Path.Combine(targetDir, decodedFileName);
-                var resolvedFullPath = Path.GetFullPath(filePath);
-                var targetDirFullPath = Path.GetFullPath(targetDir);
-                if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                {
-                    return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                }
+                string blobName = $"{submissionDb.FileName.TrimEnd('/')}/{decodedFileName}";
 
-                if (!System.IO.File.Exists(filePath))
+                var blobClient = containerClient.GetBlobClient(blobName);
+
+                if (!await blobClient.ExistsAsync())
                 {
                     return NotFound(new { message = "File not found." });
                 }
 
-                var memory = new MemoryStream();
-                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                var downloadResponse = await blobClient.DownloadContentAsync();
+                var blobStream = downloadResponse.Value.Content.ToStream();
+
+                // Get content type
+                string contentType = downloadResponse.Value.Details.ContentType;
+                if (string.IsNullOrEmpty(contentType))
                 {
-                    await stream.CopyToAsync(memory);
-                }
-                memory.Position = 0;
-
-                var provider = new FileExtensionContentTypeProvider();
-
-                if (!provider.TryGetContentType(filePath, out string contentType))
-                {
-                    contentType = "text/plain";
+                    var provider = new FileExtensionContentTypeProvider();
+                    if (!provider.TryGetContentType(decodedFileName, out contentType))
+                    {
+                        contentType = "application/octet-stream";
+                    }
                 }
 
-                return File(memory, contentType, Path.GetFileName(filePath));
+                return File(blobStream, contentType, Path.GetFileName(decodedFileName));
             }
             catch (Exception ex)
             {

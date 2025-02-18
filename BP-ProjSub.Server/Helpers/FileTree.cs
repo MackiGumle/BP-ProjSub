@@ -1,4 +1,6 @@
 using System;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace BP_ProjSub.Server.Helpers;
 
@@ -67,5 +69,39 @@ public class FileTreeNode
         {
             throw;
         }
+    }
+
+
+    public static async Task<FileTreeNode> BuildFileTreeFromBlobStorageAsync(BlobContainerClient containerClient, string prefix)
+    {
+        int id = 1;
+
+        var root = new FileTreeNode(id, prefix.TrimEnd('/'));
+
+        id = await PopulateTreeAsync(containerClient, prefix, root, id);
+        return root;
+    }
+
+    public static async Task<int> PopulateTreeAsync(BlobContainerClient containerClient, string prefix, FileTreeNode parentNode, int currentId)
+    {
+        // List blobs and virtual directories under the prefix
+        await foreach (BlobHierarchyItem item in containerClient.GetBlobsByHierarchyAsync(prefix: prefix, delimiter: "/"))
+        {
+            if (item.IsPrefix)
+            { // Check if it's a virtual directory
+                string folderName = item.Prefix.TrimEnd('/').Split('/').Last();
+                var folderNode = new FileTreeNode(++currentId, folderName);
+                parentNode.AddChild(folderNode);
+
+                currentId = await PopulateTreeAsync(containerClient, item.Prefix, folderNode, currentId);
+            }
+            else
+            {
+                string fileName = item.Blob.Name.Split('/').Last();
+                parentNode.AddChild(new FileTreeNode(++currentId, fileName));
+            }
+        }
+
+        return currentId;
     }
 }

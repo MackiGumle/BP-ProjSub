@@ -8,6 +8,7 @@ using System.Text;
 using BP_ProjSub.Server.Services;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
+using Azure.Storage.Blobs;
 
 
 namespace BP_ProjSub.Server
@@ -51,6 +52,7 @@ namespace BP_ProjSub.Server
             ValidateEnvironmentVariable("ApiKeys__SendGrid");
             ValidateEnvironmentVariable("ConnectionStrings__BakalarkaDB");
             ValidateEnvironmentVariable("WebsiteUrl");
+            ValidateEnvironmentVariable("ConnectionStrings__BakalarkaBlob");
 
             // Validating appsettings.json configurations
             ValidateAppSettings(builder.Configuration, "Uploads:MaxFileSize");
@@ -146,7 +148,6 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<StudentService>();
             builder.Services.AddScoped<ResourceAccessService>();
-
 
 
 
