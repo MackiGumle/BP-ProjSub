@@ -40,14 +40,14 @@ namespace BP_ProjSub.Server.Controllers
 
                 if (user == null)
                 {
-                    return Unauthorized("Invalid credentials");
+                    return Unauthorized(new { message = "Invalid credentials" });
                 }
 
                 var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
 
                 if (!result.Succeeded)
                 {
-                    return Unauthorized("Invalid credentials");
+                    return Unauthorized(new { message = "Invalid credentials" });
                 }
 
                 var roles = await _userManager.GetRolesAsync(user);
@@ -66,7 +66,7 @@ namespace BP_ProjSub.Server.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Unexpected server error" });
             }
         }
 

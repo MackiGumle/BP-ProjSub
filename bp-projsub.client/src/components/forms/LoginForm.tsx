@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/UserContext"
 import { useEffect, useState } from "react"
+import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   email: z.string().email({
@@ -24,7 +25,8 @@ const formSchema = z.object({
 
 
 export default function LoginForm() {
-  const { login } = useAuth();  
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -37,9 +39,17 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      login(values.email, values.password);
+      setIsLoading(true);
+      await login(values.email, values.password);
     } catch (error) {
+      const errorMessage = (error as any).response?.data?.message || "An unexpected error occurred";
+      form.setError("root", {
+        type: "manual",
+        message: errorMessage,
+      });
       console.error("Login failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -75,8 +85,22 @@ export default function LoginForm() {
 
           )}
         />
-        {/* <FormMessage>Form message</FormMessage> */}
-        <Button type="submit">Login</Button>
+
+        {form.formState.errors.root && (
+          <FormMessage>{form.formState.errors.root.message}</FormMessage>
+        )}
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Logging in...
+            </div>
+          ) : "Login"}
+        </Button>
       </form>
     </Form>
   )

@@ -16,6 +16,8 @@ import { MarkdownRenderer } from "../MarkdownRenderer";
 import { Button } from "@/components/ui/button";
 import { Save, Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator"
+import TOCWrapper from "./TOCWrapper";
+import { UppyDragDrop } from "../UppyDragDrop";
 
 
 export function AssignmentEdit() {
@@ -41,7 +43,16 @@ export function AssignmentEdit() {
             <ResizablePanelGroup direction="horizontal" className="w-full h-full">
 
                 <ResizablePanel defaultSize={10}>
-                    fileTree
+                    <div className="flex flex-col h-full">
+                        <div className="flex-grow min-h-0 overflow-y-auto">
+                            <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
+                        </div>
+
+                        <div className="h-fit overflow-hidden">
+                            <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]} />
+                        </div>
+                    </div>
                 </ResizablePanel>
                 <ResizableHandle />
                 <ResizablePanel defaultSize={45}>

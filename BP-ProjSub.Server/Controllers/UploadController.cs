@@ -58,8 +58,6 @@ namespace BP_ProjSub.Server.Controllers
         [Authorize(Roles = "Student")]
         public async Task<IActionResult> UploadSubmissionFiles(int assignmentId, [FromForm] List<IFormFile> files)
         {
-            string blobName = string.Empty;
-
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -108,6 +106,8 @@ namespace BP_ProjSub.Server.Controllers
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
+                string blobName = string.Empty;
+
                 // Upload each file
                 foreach (var file in files)
                 {
@@ -137,6 +137,17 @@ namespace BP_ProjSub.Server.Controllers
                     {
                         return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
                     }
+
+                    var targetDir = $"submissions/{assignmentId}/{userId}/{uploadId}";
+                    var fullPath = Path.Combine(targetDir, file.FileName);
+                    // Absolute path check for directory traversal
+                    var resolvedFullPath = Path.GetFullPath(fullPath);
+                    var targetDirFullPath = Path.GetFullPath(targetDir);
+                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                    {
+                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                    }
+
 
                     // Construct the blob name from folder structure: 
                     // assignmentId/userId/uploadId/[subfolders]/filename
@@ -241,11 +252,15 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found" });
                 }
 
-                // Save the files
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
+                // // Save the files
+                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
 
-                // The directory structure is: uploads/assignmentId/
-                var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+                // // The directory structure is: uploads/assignmentId/
+                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+                string blobName = string.Empty;
 
                 // Check for directory traversal
                 foreach (var file in files)
@@ -276,36 +291,54 @@ namespace BP_ProjSub.Server.Controllers
                         return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
                     }
 
-                    // recreate the user path for checking
-                    var fullPath = targetDir;
-                    foreach (var dirPart in directoryParts)
+                    // Construct the blob name from folder structure: 
+                    // assignmentId/[subfolders]/filename
+                    blobName = $"{assignmentId}";
+                    if (directoryParts.Length > 0)
                     {
-                        fullPath = Path.Combine(fullPath, dirPart);
+                        blobName += "/" + string.Join("/", directoryParts);
                     }
+                    blobName += "/" + fileName;
 
-                    fullPath = Path.Combine(fullPath, fileName);
-
-                    // Absolute path check for directory traversal
-                    var resolvedFullPath = Path.GetFullPath(fullPath);
-                    var targetDirFullPath = Path.GetFullPath(targetDir);
-                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                    // Upload the file stream and set file content type
+                    var blobClient = containerClient.GetBlobClient(blobName);
+                    var blobHttpHeaders = new BlobHttpHeaders
                     {
-                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    }
+                        ContentType = file.ContentType
+                    };
 
-                    Directory.CreateDirectory(targetDir);
+                    await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
 
-                    var currentDir = targetDir;
-                    foreach (var dirPart in directoryParts)
-                    {
-                        currentDir = Path.Combine(currentDir, dirPart);
-                        Directory.CreateDirectory(currentDir);
-                    }
+                    // // recreate the user path for checking
+                    // var fullPath = targetDir;
+                    // foreach (var dirPart in directoryParts)
+                    // {
+                    //     fullPath = Path.Combine(fullPath, dirPart);
+                    // }
 
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
+                    // fullPath = Path.Combine(fullPath, fileName);
+
+                    // // Absolute path check for directory traversal
+                    // var resolvedFullPath = Path.GetFullPath(fullPath);
+                    // var targetDirFullPath = Path.GetFullPath(targetDir);
+                    // if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                    // {
+                    //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                    // }
+
+                    // Directory.CreateDirectory(targetDir);
+
+                    // var currentDir = targetDir;
+                    // foreach (var dirPart in directoryParts)
+                    // {
+                    //     currentDir = Path.Combine(currentDir, dirPart);
+                    //     Directory.CreateDirectory(currentDir);
+                    // }
+
+                    // using (var stream = new FileStream(fullPath, FileMode.Create))
+                    // {
+                    //     await file.CopyToAsync(stream);
+                    // }
                 }
 
                 return Ok(new
@@ -345,10 +378,7 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found" });
                 }
 
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
-
-                // The directory structure is: uploads/assignmentId/
-                var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+                var targetDir = $"assignments/{assignmentId}/";
 
                 var fullPath = Path.Combine(targetDir, fileName);
 
@@ -360,12 +390,45 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid file path due to directory traversal." });
                 }
 
-                if (!System.IO.File.Exists(fullPath))
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+                var blobName = $"{assignmentId}/{fileName}";
+
+                var blobClient = containerClient.GetBlobClient(blobName);
+                if (!await blobClient.ExistsAsync())
                 {
                     return NotFound(new { message = "File not found." });
                 }
 
-                System.IO.File.Delete(fullPath);
+                var res = await blobClient.DeleteAsync();
+                if (res.IsError)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        Message = "An error occurred during file removal.",
+                    });
+                }
+
+                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
+
+                // // The directory structure is: uploads/assignmentId/
+                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+
+                // var fullPath = Path.Combine(targetDir, fileName);
+
+                // // Absolute path check for directory traversal
+                // var resolvedFullPath = Path.GetFullPath(fullPath);
+                // var targetDirFullPath = Path.GetFullPath(targetDir);
+                // if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                // {
+                //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                // }
+
+                // if (!System.IO.File.Exists(fullPath))
+                // {
+                //     return NotFound(new { message = "File not found." });
+                // }
+
+                // System.IO.File.Delete(fullPath);
 
                 return Ok(new
                 {
@@ -381,7 +444,7 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpPost("RenameAttachmentFile/{assignmentId}")]
+        [HttpPut("RenameAttachmentFile/{assignmentId}")]
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> RenameAttachmentFile(int assignmentId, [FromBody] RenameAttachmentFileDto model)
         {
@@ -409,12 +472,13 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found" });
                 }
 
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
+                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
 
                 // The directory structure is: uploads/assignmentId/
-                var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+                var targetDir = $"assignments/{assignmentId}/";
 
-                var fullPath = Path.Combine(targetDir, model.OldFileName);
+                var fullPath = Path.Combine(targetDir, model.NewFileName);
 
                 // Absolute path check for directory traversal
                 var resolvedFullPath = Path.GetFullPath(fullPath);
@@ -424,26 +488,61 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid file path due to directory traversal." });
                 }
 
-                if (!System.IO.File.Exists(fullPath))
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+
+                string oldBlobName = $"{assignmentId}/{model.OldFileName}";
+                string newBlobName = $"{assignmentId}/{model.NewFileName}";
+
+                var oldBlobClient = containerClient.GetBlobClient(oldBlobName);
+                var newBlobClient = containerClient.GetBlobClient(newBlobName);
+
+                // Check if the original blob exists
+                if (!await oldBlobClient.ExistsAsync())
                 {
                     return NotFound(new { message = "File not found." });
                 }
 
-                var newFullPath = Path.Combine(targetDir, model.NewFileName);
+                var copyOperation = await newBlobClient.StartCopyFromUriAsync(oldBlobClient.Uri);
 
-                // Absolute path check for directory traversal
-                var resolvedNewFullPath = Path.GetFullPath(newFullPath);
-                if (!resolvedNewFullPath.StartsWith(targetDirFullPath))
+                BlobProperties newBlobProperties = await newBlobClient.GetPropertiesAsync();
+                while (newBlobProperties.CopyStatus == CopyStatus.Pending)
                 {
-                    return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                    await Task.Delay(500);
+                    newBlobProperties = await newBlobClient.GetPropertiesAsync();
+                }
+                if (newBlobProperties.CopyStatus != CopyStatus.Success)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        message = "Blob copy failed.",
+                        copyStatus = newBlobProperties.CopyStatus
+                    });
                 }
 
-                System.IO.File.Move(fullPath, newFullPath);
+                await oldBlobClient.DeleteAsync();
 
-                return Ok(new
-                {
-                    Message = "File renamed successfully.",
-                });
+                return Ok(new { Message = "File renamed successfully." });
+
+                // if (!System.IO.File.Exists(fullPath))
+                // {
+                //     return NotFound(new { message = "File not found." });
+                // }
+
+                // var newFullPath = Path.Combine(targetDir, model.NewFileName);
+
+                // // Absolute path check for directory traversal
+                // var resolvedNewFullPath = Path.GetFullPath(newFullPath);
+                // if (!resolvedNewFullPath.StartsWith(targetDirFullPath))
+                // {
+                //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                // }
+
+                // System.IO.File.Move(fullPath, newFullPath);
+
+                // return Ok(new
+                // {
+                //     Message = "File renamed successfully.",
+                // });
             }
             catch (Exception ex)
             {
@@ -460,13 +559,15 @@ namespace BP_ProjSub.Server.Controllers
         {
             try
             {
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
-                var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
+                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
+                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
 
-                if (!Directory.Exists(targetDir))
-                {
-                    return NotFound(new { message = "Assignment directory not found." });
-                }
+                // if (!Directory.Exists(targetDir))
+                // {
+                //     return NotFound(new { message = "Assignment directory not found." });
+                // }
+
+                var targetDir = $"assignments/{assignmentId}/";
 
                 var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName);
                 var filePath = Path.Combine(targetDir, decodedFileName);
@@ -477,26 +578,52 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid file path due to directory traversal." });
                 }
 
-                if (!System.IO.File.Exists(filePath))
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+
+                var blobName = $"{assignmentId}/{decodedFileName}";
+                var blobClient = containerClient.GetBlobClient(blobName);
+
+                if (!await blobClient.ExistsAsync())
                 {
                     return NotFound(new { message = "File not found." });
                 }
 
-                var memory = new MemoryStream();
-                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                var downloadResponse = await blobClient.DownloadContentAsync();
+                var blobStream = downloadResponse.Value.Content.ToStream();
+
+                // Get content type
+                string contentType = downloadResponse.Value.Details.ContentType;
+                if (string.IsNullOrEmpty(contentType))
                 {
-                    await stream.CopyToAsync(memory);
-                }
-                memory.Position = 0;
-
-                var provider = new FileExtensionContentTypeProvider();
-
-                if (!provider.TryGetContentType(filePath, out string contentType))
-                {
-                    contentType = "text/plain";
+                    var provider = new FileExtensionContentTypeProvider();
+                    if (!provider.TryGetContentType(decodedFileName, out contentType))
+                    {
+                        contentType = "application/octet-stream";
+                    }
                 }
 
-                return File(memory, contentType, Path.GetFileName(filePath));
+                return File(blobStream, contentType, Path.GetFileName(decodedFileName));
+
+                // if (!System.IO.File.Exists(filePath))
+                // {
+                //     return NotFound(new { message = "File not found." });
+                // }
+
+                // var memory = new MemoryStream();
+                // using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true))
+                // {
+                //     await stream.CopyToAsync(memory);
+                // }
+                // memory.Position = 0;
+
+                // var provider = new FileExtensionContentTypeProvider();
+
+                // if (!provider.TryGetContentType(filePath, out string contentType))
+                // {
+                //     contentType = "text/plain";
+                // }
+
+                // return File(memory, contentType, Path.GetFileName(filePath));
             }
             catch (Exception ex)
             {
@@ -567,15 +694,21 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
-                var targetDir = Path.Combine(uploadsRoot, "assignments", assignmentId.ToString());
+                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads");
+                // var targetDir = Path.Combine(uploadsRoot, "assignments", assignmentId.ToString());
 
-                if (!Directory.Exists(targetDir))
-                {
-                    return NotFound(new { message = "Assignment directory not found." });
-                }
+                // if (!Directory.Exists(targetDir))
+                // {
+                //     return NotFound(new { message = "Assignment directory not found." });
+                // }
 
-                var fileTree = FileTreeNode.CreateFromPath(targetDir);
+                // var fileTree = FileTreeNode.CreateFromPath(targetDir);
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+
+                string prefix = $"{assignmentId}/";
+
+                var fileTree = await FileTreeNode.BuildFileTreeFromBlobStorageAsync(containerClient, prefix);
 
                 return Ok(fileTree.Children);
             }

@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
@@ -14,14 +14,14 @@ import React, {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
- 
+
 type TreeViewElement = {
   id: string;
   name: string;
   isSelectable?: boolean;
   children?: TreeViewElement[];
 };
- 
+
 type TreeContextProps = {
   selectedId: string | undefined;
   expendedItems: string[] | undefined;
@@ -33,9 +33,9 @@ type TreeContextProps = {
   closeIcon?: React.ReactNode;
   direction: "rtl" | "ltr";
 };
- 
+
 const TreeContext = createContext<TreeContextProps | null>(null);
- 
+
 const useTree = () => {
   const context = useContext(TreeContext);
   if (!context) {
@@ -43,11 +43,11 @@ const useTree = () => {
   }
   return context;
 };
- 
-interface TreeViewComponentProps extends React.HTMLAttributes<HTMLDivElement> {}
- 
+
+interface TreeViewComponentProps extends React.HTMLAttributes<HTMLDivElement> { }
+
 type Direction = "rtl" | "ltr" | undefined;
- 
+
 type TreeViewProps = {
   initialSelectedId?: string;
   indicator?: boolean;
@@ -56,11 +56,11 @@ type TreeViewProps = {
   openIcon?: React.ReactNode;
   closeIcon?: React.ReactNode;
 } & TreeViewComponentProps;
- 
+
 /**
  * Tree View Docs: {@link: https://shadcn-extension.vercel.app/docs/tree-view}
  */
- 
+
 const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
   (
     {
@@ -83,11 +83,11 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
     const [expendedItems, setExpendedItems] = useState<string[] | undefined>(
       initialExpendedItems,
     );
- 
+
     const selectItem = useCallback((id: string) => {
       setSelectedId(id);
     }, []);
- 
+
     const handleExpand = useCallback((id: string) => {
       setExpendedItems((prev) => {
         if (prev?.includes(id)) {
@@ -96,7 +96,7 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
         return [...(prev ?? []), id];
       });
     }, []);
- 
+
     const expandSpecificTargetedElements = useCallback(
       (elements?: TreeViewElement[], selectId?: string) => {
         if (!elements || !selectId) return;
@@ -133,16 +133,16 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
       },
       [],
     );
- 
+
     useEffect(() => {
       if (initialSelectedId) {
         expandSpecificTargetedElements(elements, initialSelectedId);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialSelectedId, elements]);
- 
+
     const direction = dir === "rtl" ? "rtl" : "ltr";
- 
+
     return (
       <TreeContext.Provider
         value={{
@@ -182,15 +182,15 @@ const Tree = forwardRef<HTMLDivElement, TreeViewProps>(
     );
   },
 );
- 
+
 Tree.displayName = "Tree";
- 
+
 const TreeIndicator = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   const { direction } = useTree();
- 
+
   return (
     <div
       dir={direction}
@@ -203,19 +203,19 @@ const TreeIndicator = forwardRef<
     />
   );
 });
- 
+
 TreeIndicator.displayName = "TreeIndicator";
- 
+
 interface FolderComponentProps
-  extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> {}
- 
+  extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> { }
+
 type FolderProps = {
   expendedItems?: string[];
   element: string;
   isSelectable?: boolean;
   isSelect?: boolean;
 } & FolderComponentProps;
- 
+
 const Folder = forwardRef<
   HTMLDivElement,
   FolderProps & React.HTMLAttributes<HTMLDivElement>
@@ -241,7 +241,7 @@ const Folder = forwardRef<
       openIcon,
       closeIcon,
     } = useTree();
- 
+
     return (
       <AccordionPrimitive.Item
         {...props}
@@ -285,9 +285,9 @@ const Folder = forwardRef<
     );
   },
 );
- 
+
 Folder.displayName = "Folder";
- 
+
 const File = forwardRef<
   HTMLButtonElement,
   {
@@ -338,9 +338,9 @@ const File = forwardRef<
     );
   },
 );
- 
+
 File.displayName = "File";
- 
+
 const CollapseButton = forwardRef<
   HTMLButtonElement,
   {
@@ -349,7 +349,7 @@ const CollapseButton = forwardRef<
   } & React.HTMLAttributes<HTMLButtonElement>
 >(({ className, elements, expandAll = false, children, ...props }, ref) => {
   const { expendedItems, setExpendedItems } = useTree();
- 
+
   const expendAllTree = useCallback((elements: TreeViewElement[]) => {
     const expandTree = (element: TreeViewElement) => {
       const isSelectable = element.isSelectable ?? true;
@@ -358,16 +358,16 @@ const CollapseButton = forwardRef<
         element.children.forEach(expandTree);
       }
     };
- 
+
     elements.forEach(expandTree);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
- 
+
   const closeAll = useCallback(() => {
     setExpendedItems?.([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
- 
+
   useEffect(() => {
     console.log(expandAll);
     if (expandAll) {
@@ -375,7 +375,7 @@ const CollapseButton = forwardRef<
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandAll]);
- 
+
   return (
     <Button
       variant={"ghost"}
@@ -393,7 +393,7 @@ const CollapseButton = forwardRef<
     </Button>
   );
 });
- 
+
 CollapseButton.displayName = "CollapseButton";
- 
+
 export { Tree, Folder, File, CollapseButton, type TreeViewElement };

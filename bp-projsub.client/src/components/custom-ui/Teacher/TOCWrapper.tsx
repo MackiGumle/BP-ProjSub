@@ -1,137 +1,3 @@
-// import React from "react";
-// import axios from "axios";
-// import { useQuery } from "@tanstack/react-query";
-
-
-// interface FileTreeItem {
-//     name: string;
-//     isFolder: boolean;
-//     children: FileTreeItem[];
-// }
-
-// async function fetchSubmissionFileTree(submissionId: string): Promise<FileTreeItem[]> {
-//     const response = await axios.get(`/api/Upload/GetSubmissionFileTree/${submissionId}`);
-//     return response.data;
-// }
-
-
-
-// export function Nevim({ submissionId }: { submissionId: string }) {
-//     const {
-//         data: fileTree,
-//         isLoading,
-//         error,
-//     } = useQuery<FileTreeItem[], Error>(
-//         ["submissionFileTree", submissionId],
-//         () => fetchSubmissionFileTree(submissionId)
-//     );
-
-//     if (isLoading) {
-//         return <div>Loading file tree...</div>;
-//     }
-
-//     if (error) {
-//         return <div>Error loading file tree.</div>;
-//     }
-
-//     return (
-//         <TreeView
-//             elements={fileTree}
-//             initialSelectedId="3"
-//             initialExpendedItems={["1", "2"]}
-//         />
-//         // <SidebarProvider>
-//         //   <SidebarContent>
-//         //     <SidebarGroup>
-//         //       <SidebarGroupLabel>Files</SidebarGroupLabel>
-//         //       <SidebarGroupContent>
-//         //         <SidebarMenu>
-//         //           {fileTree?.map((item, index) => (
-//         //             <Tree key={index} item={item} />
-//         //           ))}
-//         //         </SidebarMenu>
-//         //       </SidebarGroupContent>
-//         //     </SidebarGroup>
-//         //   </SidebarContent>
-//         // </SidebarProvider>
-//     );
-// }
-
-
-
-// import { TreeView } from "@/components/extension/tree-view";
-// import { useQuery } from "@tanstack/react-query";
-// import axios from "axios";
-
-
-// interface FileTreeItem {
-//   id: string;
-//   name: string;
-//   isFolder: boolean;
-//   children: FileTreeItem[];
-// }
-
-// async function fetchSubmissionFileTree(submissionId: string): Promise<FileTreeItem[]> {
-//   const response = await axios.get(`/api/Upload/GetSubmissionFileTree/${submissionId}`);
-//   return response.data;
-// }
-
-
-// const elements = [
-//   {
-//     id: "1",
-//     name: "components",
-//     children: [
-//       {
-//         id: "2",
-//         name: "extension",
-//         children: [
-//           {
-//             id: "3",
-//             name: "tree-view.tsx",
-//           },
-//           {
-//             id: "4",
-//             name: "tree-view-api.tsx",
-//           },
-//         ],
-//       },
-//       {
-//         id: "5",
-//         name: "dashboard-tree.tsx",
-//       },
-//     ],
-//   },
-// ];
-
-// export default function TreeViewExample({submissionId}: {submissionId: string}) {
-// const {
-//   data: fileTree,
-//   isLoading,
-//   error,
-// } = useQuery<FileTreeItem[], Error>(
-//   ["submissionFileTree", submissionId],
-//   () => fetchSubmissionFileTree(submissionId)
-// );
-
-//   if (isLoading) {
-//     return <div>Loading file tree...</div>;
-//   }
-
-//   if (error) {
-//     return <div>Error loading file tree.</div>;
-//   }
-
-//   return (
-//     <TreeView
-//       elements={fileTree}
-//       initialSelectedId="3"
-//       initialExpendedItems={["1", "2"]}
-//     />
-//   );
-// }
-
-
 import {
   Tree,
   TreeViewElement,
@@ -139,26 +5,23 @@ import {
   Folder,
   CollapseButton,
 } from "@/components/extension/tree-view-api";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { se } from "date-fns/locale";
+import { Check, Ellipsis, LinkIcon, PenIcon, Save, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 type TOCProps = {
   toc: TreeViewElement[];
+  contextMenu?: boolean;
 };
 
-// const TOC = ({ toc }: TOCProps) => {
-//   return (
-//     <Tree className="min-w-full min-h-full bg-background p-2 rounded-md" indicator={true}>
-//       {toc.map((element, _) => (
-//         <TreeItem key={element.id} elements={[element]} />
-//       ))}
-//       <CollapseButton elements={toc} expandAll={true} />
-//     </Tree>
-//   );
-// };
-
-const TOC = ({ toc }: TOCProps) => {
+const TOC = ({ toc, contextMenu = false }: TOCProps) => {
   return (
     <Tree className="bg-background p-2 rounded-md" indicator={true}>
       {toc.map((element) => (
@@ -166,17 +29,18 @@ const TOC = ({ toc }: TOCProps) => {
           key={element.id}
           elements={[element]}
           parentPath=""
+          contextMenu={contextMenu}
         />
       ))}
-      <CollapseButton elements={toc} expandAll={false} />
+      {/* <CollapseButton elements={toc} expandAll={false} /> */}
     </Tree>
   );
 };
 
-
 type TreeItemProps = {
   elements: TreeViewElement[];
   parentPath?: string;
+  contextMenu?: boolean;
 };
 
 interface FileTreeItem {
@@ -186,97 +50,173 @@ interface FileTreeItem {
   children: FileTreeItem[];
 }
 
-async function fetchSubmissionFileTree(submissionId: string): Promise<FileTreeItem[]> {
-  const response = await axios.get(`/api/Upload/GetSubmissionFileTree/${submissionId}`);
+async function fetchSubmissionFileTree(endpoint: string): Promise<FileTreeItem[]> {
+  const response = await axios.get(endpoint);
   return response.data;
 }
 
-// export const TreeItem = ({ elements }: TreeItemProps) => {
-//   const [searchParams, setSearchParams] = useSearchParams()
-//   // const { selectedFile } = useParams();
 
-//   return (
-//     <ul className="w-full space-y-1">
-//       {elements.map((element) => (
-//         <li key={element.id} className="w-full space-y-2">
-//           {element.children && element.children?.length > 0 ? (
-//             <Folder
-//               element={element.name}
-//               value={element.id}
-//               isSelectable={element.isSelectable}
-//               className="px-px pr-1"
-//             >
-//               <TreeItem
-//                 key={element.id}
-//                 aria-label={`folder ${element.name}`}
-//                 elements={element.children}
-//               />
-//             </Folder>
-//           ) : (
-//             <File
-//               key={element.id}
-//               value={element.id}
-//               isSelectable={element.isSelectable}
-//             >
-//               <span onClick={() => {
-//                 setSearchParams({ file: element?.name }, { replace: true });
-//               }}>{element?.name}</span>
-//             </File>
-//           )}
-//         </li>
-//       ))}
-//     </ul>
-//   );
-// };
-
-export const TreeItem = ({ elements, parentPath = '' }: TreeItemProps) => {
+export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [newFileName, setNewFileName] = useState<string>('');
+  const { assignmentId } = useParams<{ assignmentId: string }>()
+  const queryClient = useQueryClient();
+
+
+  const handleRename = async (element: TreeViewElement) => {
+    try {
+      const response = await axios.put(`/api/Upload/RenameAttachmentFile/${assignmentId}`, {
+        oldFileName: `${parentPath}${element.name}`,
+        newFileName: `${parentPath}${newFileName}`
+      }
+      );
+
+      toast({ title: "Success", description: "File renamed successfully.", variant: "success" })
+      console.log('File renamed successfully');
+      queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
+      setNewFileName('');
+    } catch (error) {
+      toast({ title: "Error", description: "Error renaming file.", variant: "destructive" })
+      console.error('Error renaming file:', error);
+      setNewFileName(element.name);
+    }
+  };
+
+  const handleDelete = async (element: TreeViewElement) => {
+    try {
+      const response = await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      );
+
+      toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "success" })
+      console.log('File deleted successfully');
+      queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
+    } catch (error) {
+      toast({ title: "Error", description: "Error deleting file.", variant: "destructive" })
+      console.error('Error deleting file:', error);
+    }
+  };
 
   return (
     <ul className="w-full space-y-1">
       {elements.map((element) => {
         const currentPath = `${parentPath}${element.name}`;
         return (
-          <li key={element.id} className="w-full space-y-2">
-            {(element.children ?? []).length > 0 ? (
-              <Folder
-                element={element.name}
-                value={element.id}
-                isSelectable={element.isSelectable}
-                className="px-px pr-1"
-              >
-                <TreeItem
-                  elements={element.children ?? []}
-                  parentPath={`${currentPath}/`}
-                  aria-label={`folder ${element.name}`}
-                />
-              </Folder>
-            ) : (
-              <File
-                key={element.id}
-                value={element.id}
-                isSelectable={element.isSelectable}
-              >
-                <span onClick={() => {
-                  setSearchParams({ file: currentPath }, { replace: true });
-                }}>{element.name}</span>
-              </File>
-            )}
-          </li>
+          contextMenu ? (
+            <li key={element.id} className="w-full space-y-2 flex items-center">
+              {(element.children ?? []).length > 0 ? (
+                <Folder
+                  element={element.name}
+                  value={element.id}
+                  isSelectable={element.isSelectable}
+                  className="px-px pr-1"
+                >
+                  <TreeItem
+                    elements={element.children ?? []}
+                    parentPath={`${currentPath}/`}
+                    aria-label={`folder ${element.name}`}
+                    contextMenu={contextMenu}
+                  />
+                </Folder>
+              ) : (
+                <>
+                  <DropdownMenu
+                    // onOpenChange={() => { setNewFileName(element.name) }}
+                    modal={false}
+                    key={element.id}
+                  >
+                    <DropdownMenuTrigger>
+                      <File
+                        key={element.id}
+                        value={element.id}
+                        isSelectable={element.isSelectable}
+                        onClick={() => { setNewFileName(element.name) }}
+                      >
+                        <span onClick={() => {
+                          setSearchParams({ file: currentPath }, { replace: true });
+                        }}>{element.name}</span>
+                      </File>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      // https://github.com/radix-ui/primitives/discussions/2198
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onKeyDownCapture={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuLabel className="flex items-center">
+                        <input
+                          type="text"
+                          className="w-full"
+                          value={newFileName || element.name}
+                          onChange={(e) => { setNewFileName(e.target.value) }}
+                        // onKeyDown={(e) => e.key === 'Enter' && handleRename(element)}
+                        />
+                        <Button className="ml-1 p-1 h-fit w-fit" onClick={() => handleRename(element)} variant={"default"}><Save /></Button>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="cursor-pointer flex items-center"
+                        onClick={() => handleDelete(element)}
+
+                      >
+                        <Trash2 className="mr-2 w-4 h-4 inline-block" />
+                        Delete
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer flex items-center"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/${encodeURIComponent(currentPath)})`);
+                          toast({ title: "Copied", description: "Path copied to clipboard.", variant: "success" });
+                        }}
+                      >
+                        <LinkIcon className="mr-2 w-4 h-4 inline-block" /> Copy link
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </li>
+
+          ) : ( // No context menu
+            <li key={element.id} className="w-full space-y-2 flex items-center">
+              {(element.children ?? []).length > 0 ? (
+                <Folder
+                  element={element.name}
+                  value={element.id}
+                  isSelectable={element.isSelectable}
+                  className="px-px pr-1"
+                >
+                  <TreeItem
+                    elements={element.children ?? []}
+                    parentPath={`${currentPath}/`}
+                    aria-label={`folder ${element.name}`}
+                  />
+                </Folder>
+              ) : (
+                <File
+                  key={element.id}
+                  value={element.id}
+                  isSelectable={element.isSelectable}
+                >
+                  <span onClick={() => {
+                    setSearchParams({ file: currentPath }, { replace: true });
+                  }}>{element.name}</span>
+                </File>
+              )}
+            </li>
+          )
         );
       })}
-    </ul>
+    </ul >
   );
 };
 
-const TOCWrapper = ({ submissionId }: { submissionId: string }) => {
+const TOCWrapper = ({ endpoint, contextMenu = false }: { endpoint: string, contextMenu?: boolean }) => {
   const {
     data: fileTree,
     isLoading,
     error,
   } = useQuery<FileTreeItem[], Error>(
-    ["submissionFileTree", submissionId],
-    () => fetchSubmissionFileTree(submissionId)
+    ["fileTree", endpoint],
+    () => fetchSubmissionFileTree(endpoint)
   );
 
   if (error) {
@@ -294,7 +234,7 @@ const TOCWrapper = ({ submissionId }: { submissionId: string }) => {
     return <div>Error file tree is null?.</div>;
   }
 
-  return <TOC toc={fileTree} />;
+  return <TOC toc={fileTree} contextMenu={contextMenu} />;
 };
 
 export default TOCWrapper;

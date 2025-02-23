@@ -6,9 +6,15 @@ import XHR from '@uppy/xhr-upload';
 import '@uppy/core/dist/style.css'
 import '@uppy/dashboard/dist/style.css'
 import { useTheme } from '@/components/theme-components/theme-provider';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface UppyDragDropProps {
+    endpoint: string;
+    invalidateQueries?: Array<Array<string | number>>;
+}
 
 
-export function UppyDragDrop({ endpoint }: { endpoint: string }) {
+export function UppyDragDrop({ endpoint, invalidateQueries }: UppyDragDropProps) {
     // console.log('UppyDragDrop rendered endpoint:', endpoint)
     function createUppy() {
         const uppy = new Uppy({
@@ -36,6 +42,14 @@ export function UppyDragDrop({ endpoint }: { endpoint: string }) {
                 },
             })
 
+        uppy.on('complete', () => {
+            if (invalidateQueries) {
+                invalidateQueries.forEach(queryKey => {
+                    queryClient.invalidateQueries({ queryKey });
+                });
+            }
+        });
+
         return uppy
     }
 
@@ -50,6 +64,7 @@ export function UppyDragDrop({ endpoint }: { endpoint: string }) {
     // )
     // const totalProgress = useUppyState(uppy, (state) => state.totalProgress)
     const { theme } = useTheme()
+    const queryClient = useQueryClient();
 
     return (
         <>

@@ -237,7 +237,7 @@ export function SubmissionBrowser() {
                                         </>
                                     )}
                                 </div>
-                                <TOCWrapper submissionId={submissionId} />
+                                <TOCWrapper endpoint={`/api/Upload/GetSubmissionFileTree/${submissionId}`} />
                                 {/* <div className="p-4">bottom 1</div> */}
                             </ResizablePanel>
                             <ResizableHandle />
