@@ -25,4 +25,7 @@ public partial class Submission
     public virtual Student Student { get; set; } = null!;
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+    
+    [InverseProperty("Submission")]
+    public virtual ICollection<SubmissionComment> Comments { get; set; } = new List<SubmissionComment>();
 }

@@ -29,7 +29,7 @@ namespace BP_ProjSub.Server.Migrations
 
                     b.HasKey("PersonId");
 
-                    b.ToTable("Admin");
+                    b.ToTable("Admin", (string)null);
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Assignment", b =>
@@ -142,17 +142,17 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "62d9f896-a700-46f5-acf5-b42953b79c8d",
+                            Id = "3324d9a7-35c9-4ea6-86a5-3855e791cc48",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "b397006e-8487-4ade-8257-7b6c1f197681",
+                            ConcurrencyStamp = "dfa50993-4e4e-407f-8563-4a08b6e9d255",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPZZ7a5EWZ1jdG2coyhyvrNsBbsL3O6LFA8aT1Ev/b8uD7eaS8wfLZmia5Cl2BuqZg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEB+VJ2mauzpimrheQNghjGhn2/qt9lDcjn0bsJYkqZNDMN5yvoonWqFZ8LHW1RVdQg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "f3050010-78e5-410b-9ce0-4fa833e7beae",
+                            SecurityStamp = "7f108645-b982-4fb4-9c45-699676f5b00b",
                             TwoFactorEnabled = false,
                             UserName = "Admin"
                         });
@@ -260,6 +260,44 @@ namespace BP_ProjSub.Server.Migrations
                     b.ToTable("Submission", (string)null);
                 });
 
+            modelBuilder.Entity("BP_ProjSub.Server.Models.SubmissionComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CommentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LineCommented")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PersonId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("SubmissionComment");
+                });
+
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
                 {
                     b.Property<string>("PersonId")
@@ -299,19 +337,19 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc",
+                            Id = "a1eed8ea-58bf-40a9-9578-26352aaf20a9",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "e57aed6a-ef40-4b9b-91c1-8928e114f11d",
+                            Id = "f5a297a0-7411-41eb-9b68-cbfa7c90c1b2",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "32a8b951-9926-4def-8e77-3248e75443ac",
+                            Id = "076d001b-f25d-4546-8507-e42d5415fa3d",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -406,8 +444,8 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "62d9f896-a700-46f5-acf5-b42953b79c8d",
-                            RoleId = "a447f8fe-1b39-46a3-8c49-c8e80f13f2dc"
+                            UserId = "3324d9a7-35c9-4ea6-86a5-3855e791cc48",
+                            RoleId = "a1eed8ea-58bf-40a9-9578-26352aaf20a9"
                         });
                 });
 
@@ -537,6 +575,25 @@ namespace BP_ProjSub.Server.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("BP_ProjSub.Server.Models.SubmissionComment", b =>
+                {
+                    b.HasOne("BP_ProjSub.Server.Models.Teacher", "Teacher")
+                        .WithMany("Comments")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+
+                    b.HasOne("BP_ProjSub.Server.Models.Submission", "Submission")
+                        .WithMany("Comments")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Submission");
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
                 {
                     b.HasOne("BP_ProjSub.Server.Models.Person", "Person")
@@ -655,12 +712,16 @@ namespace BP_ProjSub.Server.Migrations
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Submission", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Teacher", b =>
                 {
                     b.Navigation("AssignmentsCreated");
+
+                    b.Navigation("Comments");
 
                     b.Navigation("Ratings");
                 });

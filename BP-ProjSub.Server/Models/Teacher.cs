@@ -20,4 +20,7 @@ public class Teacher
 
     [InverseProperty("Teacher")]
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+
+    [InverseProperty("Teacher")]
+    public virtual ICollection<SubmissionComment> Comments { get; set; } = new List<SubmissionComment>();
 }

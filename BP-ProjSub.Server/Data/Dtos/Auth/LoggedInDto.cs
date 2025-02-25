@@ -1,6 +1,6 @@
 using System;
 
-namespace BP_ProjSub.Server.Models.Auth;
+namespace BP_ProjSub.Server.Data.Dtos.Auth;
 
 public class LoggedInDto
 {
@@ -9,4 +9,5 @@ public class LoggedInDto
     public required string Email { get; set; }
     public required string Token { get; set; }
     public required IList<string> Roles { get; set; }
+    public required DateTime Expires { get; set; }
 }

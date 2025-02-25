@@ -1,4 +1,5 @@
 using System;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using SendGrid;
 using SendGrid.Helpers.Mail;
@@ -9,22 +10,32 @@ public class EmailService
 {
     private SendGridClient _client;
     private readonly string _apiKey;
+    private readonly IConfiguration _config;
     private readonly TokenService _tokenService;
 
     public EmailService(IConfiguration config)
     {
+        _config = config;
         _apiKey = config["ApiKeys:SendGrid"];
         _client = new SendGridClient(_apiKey);
     }
-
-    public async Task<Response> SendAccountActivation(string recipient, string token)
+    
+    /// <summary>
+    /// Sends an email to the recipient with the activation link.
+    /// </summary>
+    /// <param name="recipient"></param>
+    /// <param name="token">Token with email confirmation</param>
+    /// <returns></returns>
+    public async Task<Response> SendAccountActivationAsync(string recipient, string token)
     {
         // var client = new SendGridClient(_apiKey);
+        // var encodedToken = Uri.EscapeDataString(token);
+        //var encodedToken = Base64UrlEncoder.Encode(token);
         var from = new EmailAddress("projsubsender@gmail.com", "ProjSub");
-        var subject = "Sending with SendGrid is Fun";
+        var subject = "ProjSub Account activation";
         var to = new EmailAddress(recipient);
-        var plainTextContent = "and easy to do anywhere, even with C#";
-        var htmlContent = $"<h1>{token}</h1><strong>and easy to do anywhere, even with C#</strong>";
+        var plainTextContent = "";
+        var htmlContent = $"<h1><a href=\"{_config["WebsiteUrl"]}/auth/ActivateAccount/{token}\">Activate your account<\\a></h1>";
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
         return await _client.SendEmailAsync(msg);
     }

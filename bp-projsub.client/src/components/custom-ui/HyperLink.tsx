@@ -5,11 +5,16 @@ interface HyperlinkProps {
     text: string;
 }
 
-export default function Hyperlink({link, text}: HyperlinkProps) {
+export function ReactRouterLink({link, text}: HyperlinkProps) {
     return ( 
         <Link className="underline underline-offset-4 hover:text-primary pl-1" to={link}>{text}</Link>
      );
 }
 
+export function HrefLink({link, text}: HyperlinkProps) {
+    return ( 
+        <a className="underline underline-offset-4 hover:text-primary pl-1" href={link}>{text}</a>
+     );
+}
 
 

@@ -7,7 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import Hyperlink from "@/components/custom-ui/HyperLink";
+import ReactRouterLink from "@/components/custom-ui/HyperLink";
 import { useAuth } from "@/context/UserContext";
 
 

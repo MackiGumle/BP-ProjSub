@@ -7,19 +7,65 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BP_ProjSub.Server.Services;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Configuration.EnvironmentVariables;
+using Azure.Storage.Blobs;
+
 
 namespace BP_ProjSub.Server
 {
     public class Program
     {
+        private static void ValidateEnvironmentVariable(string variableName)
+        {
+            var value = Environment.GetEnvironmentVariable(variableName);
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"Environment variable '{variableName}' is not set.");
+            }
+        }
+
+        private static void ValidateAppSettings(IConfiguration configuration, string key)
+        {
+            var value = configuration[key];
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"App setting '{key}' is not set.");
+            }
+        }
+
+        private static void ValidateAppSettingsArray(IConfiguration configuration, string key)
+        {
+            var values = configuration.GetSection(key).Get<string[]>();
+            if (values == null || values.Length == 0)
+            {
+                throw new InvalidOperationException($"App setting '{key}' is not set or is empty.");
+            }
+        }
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // builder.Configuration.Sources.Clear();
-            // builder.Configuration.AddEnvironmentVariables();
-            // var ApiKey = builder.Configuration["ApiKeys:SendGrid"]; 
-            // var conn = builder.Configuration["ConnectionStrings:BakalarkaDB"]; 
-            // var defconn = builder.Configuration.GetConnectionString("BakalarkaDB"); 
+
+            // var api = builder.Configuration["ApiKeys:SendGrid"];
+
+            // Validating environment variables
+            ValidateEnvironmentVariable("ApiKeys__SendGrid");
+            ValidateEnvironmentVariable("ConnectionStrings__BakalarkaDB");
+            ValidateEnvironmentVariable("WebsiteUrl");
+            ValidateEnvironmentVariable("ConnectionStrings__BakalarkaBlob");
+
+            // Validating appsettings.json configurations
+            ValidateAppSettings(builder.Configuration, "Uploads:MaxFileSize");
+            ValidateAppSettings(builder.Configuration, "Uploads:MaxTotalSize");
+            ValidateAppSettingsArray(builder.Configuration, "Uploads:AllowedFileExtensions");
+            ValidateAppSettings(builder.Configuration, "Jwt:Issuer");
+            ValidateAppSettings(builder.Configuration, "Jwt:Audience");
+            ValidateAppSettings(builder.Configuration, "Jwt:Key");
+            ValidateAppSettings(builder.Configuration, "Jwt:ExpirationInMinutes");
+
+
+            var debugView = builder.Configuration.GetDebugView();
+            Console.WriteLine($"[i] Debug view: {debugView}");
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -55,7 +101,7 @@ namespace BP_ProjSub.Server
 
             // DB connection
             builder.Services.AddDbContext<BakalarkaDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration["ConnectionStrings__BakalarkaDB"]));
 
             // Identity service configuration
             builder.Services.AddIdentity<Person, IdentityRole>(options =>
@@ -86,7 +132,7 @@ namespace BP_ProjSub.Server
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                 };
             });
 
@@ -95,8 +141,15 @@ namespace BP_ProjSub.Server
                 options.AddPolicy("AccountActivation", policy => policy.RequireClaim("AccountActivation"));
             });
 
-            builder.Services.AddScoped<TokenService>();
+
             builder.Services.AddSingleton<EmailService>();
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<AccountService>();
+            builder.Services.AddScoped<SubjectService>();
+            builder.Services.AddScoped<StudentService>();
+            builder.Services.AddScoped<ResourceAccessService>();
+
+
 
 
             var app = builder.Build();
@@ -109,11 +162,18 @@ namespace BP_ProjSub.Server
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseCors(options =>
+                {
+                    options.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .WithOrigins("http://localhost:5173");
+                });
             }
 
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+            app.UseMiddleware<LockoutMiddleware>();
             app.UseAuthorization();
 
             app.MapControllers();

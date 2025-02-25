@@ -6,7 +6,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import Hyperlink from "@/components/custom-ui/HyperLink";
+import ReactRouterLink from "@/components/custom-ui/HyperLink";
 import CreateAccountForm from "@/components/forms/admin/createAccountForm";
 
 
@@ -17,7 +17,7 @@ export default function RegisterPage() {
                 <CardHeader>
                     <CardTitle>Register</CardTitle>
                     <CardDescription>Already have an account?
-                        <Hyperlink link="/login" text="Login here." />
+                        <ReactRouterLink link="/login" text="Login here." />
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
