@@ -6,8 +6,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import CurrentUserButton from "@/components/custom-ui/CurrentUserButton"
-import { ThemeToggle } from "./theme-components/theme-toggle"
-import { useState } from "react"
 
 export default function AppPage({ children }: { children: React.ReactNode }) {
   // const [isAssignmentOpen] = useState<boolean | undefined>(true)

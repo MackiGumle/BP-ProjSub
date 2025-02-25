@@ -1,6 +1,6 @@
-import { QueryClient, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { createContext, useCallback, useEffect, useState, useRef } from "react";
+import React, { createContext, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export type UserProfile = {
@@ -163,7 +163,7 @@ export const UserProvider = ({ children }: Props) => {
           }
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           refreshSubscribers.push((newToken: string) => {
             config.headers.Authorization = `Bearer ${newToken}`;
             resolve(axios(config));

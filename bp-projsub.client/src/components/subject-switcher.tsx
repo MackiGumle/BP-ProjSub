@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Check, ChevronsUpDown, BookOpen, Wrench, Plus } from "lucide-react"
 import {
   DropdownMenu,

@@ -3,19 +3,19 @@ import TOCWrapper from "@/components/custom-ui/Teacher/TOCWrapper"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "../ui/button";
-import { ArrowBigLeft, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { PartialSubmissionDto } from "@/Dtos/SubmissionDto";
 import { useAuth } from "@/context/UserContext";
 import { getAssignmentFromCache } from "@/utils/cacheUtils";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "../ui/dialog";
 import { toast } from "../ui/use-toast";
 import { Separator } from "../ui/separator";
 
 export function SubmissionBrowser() {
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const { subjectId, assignmentId, submissionId } = useParams();
     const fileName = searchParams.get('file');
     const { getRole } = useAuth();
@@ -35,7 +35,7 @@ export function SubmissionBrowser() {
         return response.data;
     }
 
-    const { data: submissionIds, isLoading: isLoadingIds, error: errorIds } = useQuery<number[], Error>(
+    const { data: submissionIds } = useQuery<number[], Error>(
         ["submissionVersionsIds", submissionId],
         GetSubmissionVersionIds,
         {

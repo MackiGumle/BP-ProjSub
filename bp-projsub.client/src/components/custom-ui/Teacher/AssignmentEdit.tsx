@@ -1,14 +1,7 @@
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
-import Markdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-// import SyntaxHighlighter from 'react-syntax-highlighter';
-import remarkGfm from 'remark-gfm'
-import rehypeKatex from 'rehype-katex'
-import remarkMath from 'remark-math'
-import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import { useAssignmentQuery } from "@/hooks/useCustomQuery";
-import { replace, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import 'katex/dist/katex.min.css'; // Keeps unformated text hidden
@@ -40,7 +33,7 @@ export function AssignmentEdit() {
         try {
             if (assignment) {
                 assignment.description = description;
-                const response = await axios.put(`/api/Teacher/EditAssignment`,
+                await axios.put(`/api/Teacher/EditAssignment`,
                     assignment
                 );
 
@@ -54,7 +47,7 @@ export function AssignmentEdit() {
 
     const handleAssignmentDelete = async () => {
         try {
-            const response = await axios.delete(`/api/Teacher/DeleteAssignment/${assignmentId}`);
+            await axios.delete(`/api/Teacher/DeleteAssignment/${assignmentId}`);
             toast({ title: "Success", description: "Assignment deleted successfully.", variant: "default" })
             navigate("../..", { replace: true });
         } catch (error) {
@@ -64,67 +57,75 @@ export function AssignmentEdit() {
 
     return (
         <>
-            <div className="flex justify-between items-center">
-                <div className="ml-auto mr-2 space-x-2">
+            {isAssignmentLoading ? (
+                <p>Loading...</p>
+            ) : errorAssignment ? (
+                <p className="text-red-500">Failed to load assignment.</p>
+            ) : (
+                <>
+                    <div className="flex justify-between items-center">
+                        <div className="ml-auto mr-2 space-x-2">
 
 
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive"
-                            ><Trash /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Confirm removal of '{assignment?.title}'</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Are you sure you want to remove the assignment from the subject?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={() => handleAssignmentDelete()}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                    Confirm Removal
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    <Button variant="default"
-                        onClick={handleAssignmentEdit}
-                    ><Save /></Button>
-                </div>
-            </div>
-            <Separator />
-            <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-
-                <ResizablePanel defaultSize={10}>
-                    <div className="flex flex-col h-full">
-                        <div className="flex-grow min-h-0 overflow-y-auto">
-                            <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
-                        </div>
-
-                        <div className="h-fit overflow-hidden">
-                            <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
-                                invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]} />
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive"
+                                    ><Trash /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm removal of '{assignment?.title}'</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to remove the assignment from the subject?
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => handleAssignmentDelete()}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            Confirm Removal
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            <Button variant="default"
+                                onClick={handleAssignmentEdit}
+                            ><Save /></Button>
                         </div>
                     </div>
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={45}>
-                    <Textarea
-                        // autoFocus
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="min-h-full border-none rounded-none"
-                    />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={45}>
-                    <MarkdownRenderer content={description} />
-                </ResizablePanel>
-            </ResizablePanelGroup>
+                    <Separator />
+                    <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+
+                        <ResizablePanel defaultSize={10}>
+                            <div className="flex flex-col h-full">
+                                <div className="flex-grow min-h-0 overflow-y-auto">
+                                    <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
+                                </div>
+
+                                <div className="h-fit overflow-hidden">
+                                    <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                        invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]} />
+                                </div>
+                            </div>
+                        </ResizablePanel>
+                        <ResizableHandle />
+                        <ResizablePanel defaultSize={45}>
+                            <Textarea
+                                // autoFocus
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="min-h-full border-none rounded-none"
+                            />
+                        </ResizablePanel>
+                        <ResizableHandle />
+                        <ResizablePanel defaultSize={45}>
+                            <MarkdownRenderer content={description} />
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </>
+            )}
         </>
     );
 }

@@ -3,17 +3,14 @@ import {
   TreeViewElement,
   File,
   Folder,
-  CollapseButton,
 } from "@/components/extension/tree-view-api";
 import { Button } from "@/components/ui/button";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { se } from "date-fns/locale";
-import { Check, Ellipsis, LinkIcon, PenIcon, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LinkIcon, Save, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 type TOCProps = {
@@ -57,7 +54,7 @@ async function fetchSubmissionFileTree(endpoint: string): Promise<FileTreeItem[]
 
 
 export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemProps) => {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
   const [newFileName, setNewFileName] = useState<string>('');
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const queryClient = useQueryClient();
@@ -65,7 +62,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
 
   const handleRename = async (element: TreeViewElement) => {
     try {
-      const response = await axios.put(`/api/Upload/RenameAttachmentFile/${assignmentId}`, {
+      await axios.put(`/api/Upload/RenameAttachmentFile/${assignmentId}`, {
         oldFileName: `${parentPath}${element.name}`,
         newFileName: `${parentPath}${newFileName}`
       }
@@ -84,7 +81,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
 
   const handleDelete = async (element: TreeViewElement) => {
     try {
-      const response = await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
       );
 
       toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "default" })

@@ -1,6 +1,5 @@
-import { Pencil, Upload, Trash, MoreHorizontal, Edit } from "lucide-react"
+import {  Upload,  MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SidebarMenuAction } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
 
 

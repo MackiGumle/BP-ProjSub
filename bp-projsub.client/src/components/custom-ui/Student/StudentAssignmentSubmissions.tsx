@@ -28,7 +28,7 @@ export function StudentAssignmentSubmissions() {
     const [isAssignmentOpen, setAssignmentOpen] = useState<boolean>(true);
     const queryClient = useQueryClient()
 
-    const { data: submission, isLoading, isError, error } = useQuery<PartialSubmissionDto>({
+    const { data: submission, isLoading, isError } = useQuery<PartialSubmissionDto>({
         queryKey: ["parialsubmissions", assignmentId],
         queryFn: () => fetchSubmission(assignmentId!),
         enabled: !!assignmentId,

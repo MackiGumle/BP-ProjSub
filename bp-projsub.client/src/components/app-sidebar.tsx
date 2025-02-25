@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { Pencil, Plus } from "lucide-react"
+import { Pencil } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -26,7 +26,6 @@ import { ChevronDown } from "lucide-react"
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
-import { Button } from "./ui/button"
 
 
 // Sidebar component for displaying assignments

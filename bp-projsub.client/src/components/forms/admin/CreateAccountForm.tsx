@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { useAuth } from "@/context/UserContext"
 import axios from "axios"
 import { toast } from "@/components/ui/use-toast"
 
@@ -36,7 +35,6 @@ const formSchema = z.object({
 
 
 export default function CreateAccountForm() {
-  const { user } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),

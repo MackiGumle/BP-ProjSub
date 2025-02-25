@@ -1,13 +1,12 @@
-import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeKatex from 'rehype-katex'
 import remarkMath from 'remark-math'
-import 'katex/dist/katex.min.css'; // Keeps unformated text hidden
-import { ProtectedImage } from './ProtectedImage';
-import { ProtectedFileLink } from './ProtectedFileLink';
+import 'katex/dist/katex.min.css'; // Keeps unformated text hidden (something to do with the mathematical formulas?)
+// import { ProtectedImage } from './ProtectedImage';
+// import { ProtectedFileLink } from './ProtectedFileLink';
 
 
 export const MarkdownRenderer = ({ content }: { content: string }) => {

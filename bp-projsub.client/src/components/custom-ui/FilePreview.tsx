@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
 import { toast } from "../ui/use-toast";
-import { te } from "date-fns/locale";
 import { useAuth } from "@/context/UserContext";
 
 const getFileLanguage = (fileName: string): string => {
@@ -66,7 +65,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
     );
 
     const [fileType, setFileType] = useState<string | null>(null);
-    const [selectedLines, setSelectedLines] = useState<number[]>([]);
+    // const [selectedLines, setSelectedLines] = useState<number[]>([]);
     // State for controlling the comment dialog and tracking selected line
     const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     const [selectedLineForComment, setSelectedLineForComment] = useState<number | null>(null);
@@ -77,9 +76,9 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
     // Query to fetch the submission comments.
     const {
         data: comments,
-        isLoading: commentsLoading,
-        error: commentsError,
-        refetch: refetchComments,
+        // isLoading: commentsLoading,
+        // error: commentsError,
+        // refetch: refetchComments,
     } = useQuery<SubmissionCommentDto[], Error>(
         ["submissionComments", submissionId],
         async () => {
@@ -141,16 +140,16 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
     }
 
     // This function is now kept for possible future use, e.g. to track line selections
-    const handleLineClick = (lineNumber: number, fileContent: string) => {
-        console.log(`${lineNumber}, ${fileContent.split("\n")[lineNumber]}`);
-        setSelectedLines((prev) => {
-            if (prev.includes(lineNumber)) {
-                return prev.filter((line) => line !== lineNumber);
-            } else {
-                return [...prev, lineNumber];
-            }
-        });
-    };
+    // const handleLineClick = (lineNumber: number, fileContent: string) => {
+    //     console.log(`${lineNumber}, ${fileContent.split("\n")[lineNumber]}`);
+    //     setSelectedLines((prev) => {
+    //         if (prev.includes(lineNumber)) {
+    //             return prev.filter((line) => line !== lineNumber);
+    //         } else {
+    //             return [...prev, lineNumber];
+    //         }
+    //     });
+    // };
 
     // const [hoveredLine, setHoveredLine] = React.useState<number | null>(null);
 

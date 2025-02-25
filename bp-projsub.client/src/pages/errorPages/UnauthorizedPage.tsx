@@ -1,5 +1,4 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLocation } from "react-router-dom";
 
 export function UnauthorizedPage() {
 

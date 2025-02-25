@@ -1,11 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
 import { StudentDto } from "@/Dtos/StudentDto";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import axios from "axios";
-import { ArrowUpDown, Trash2, User } from "lucide-react";
-import { useParams } from "react-router-dom";
 
 
 export const StudentColumns: ColumnDef<StudentDto>[] = [
