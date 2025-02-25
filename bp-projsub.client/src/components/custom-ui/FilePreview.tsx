@@ -95,7 +95,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
             return response.data;
         },
         onSuccess: (newComment) => {
-            toast({ title: "Comment added", variant: "success" });
+            toast({ title: "Comment added", variant: "default" });
             setCommentText("");
             setCommentDialogOpen(false);
             queryClient.setQueryData<SubmissionCommentDto[]>

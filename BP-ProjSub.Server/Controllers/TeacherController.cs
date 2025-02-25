@@ -524,6 +524,54 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpDelete("DeleteAssignment/{assignmentId}")]
+        public async Task<IActionResult> DeleteAssignment(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(personId, assignmentId, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    // .Include(a => a.Submissions)
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                // if (assignment.Submissions.Count > 0)
+                // {
+                //     return BadRequest(new { message = "Assignment has submissions." });
+                // }
+
+                _dbContext.Assignments.Remove(assignment);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok(new { message = "Assignment deleted." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
+
         [HttpGet("GetAssignments/{subjectId}")]
         public async Task<IActionResult> GetAssignments(int subjectId)
         {

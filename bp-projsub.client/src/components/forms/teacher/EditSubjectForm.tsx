@@ -53,7 +53,7 @@ export function EditSubjectForm({ subject, onSuccess }: EditSubjectFormProps) {
             toast({
                 title: "Success!",
                 description: `Subject '${data.name}' updated successfully`,
-                variant: "success",
+                variant: "default",
             });
 
             queryClient.setQueryData<SubjectDto[]>(['subjects'], (oldData) => {

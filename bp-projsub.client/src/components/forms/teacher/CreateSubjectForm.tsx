@@ -64,7 +64,7 @@ export function CreateSubjectForm({
       toast({
         title: "Success!",
         description: "Subject created successfully",
-        variant: "success",
+        variant: "default",
       })
       // form.reset()
 

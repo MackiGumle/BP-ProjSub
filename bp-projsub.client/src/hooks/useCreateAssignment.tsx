@@ -29,7 +29,7 @@ export function useCreateAssignment<CreateAssignmentDto>({
       toast({
         title: "Assignment created",
         description: "Assignment was created successfully.",
-        variant: "success",
+        variant: "default",
       })
     },
     onError: (error) => {

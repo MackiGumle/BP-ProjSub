@@ -162,6 +162,12 @@ namespace BP_ProjSub.Server
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseCors(options =>
+                {
+                    options.AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .WithOrigins("http://localhost:5173");
+                });
             }
 
             app.UseHttpsRedirection();

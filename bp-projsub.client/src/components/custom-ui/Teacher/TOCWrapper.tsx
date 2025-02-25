@@ -71,7 +71,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
       }
       );
 
-      toast({ title: "Success", description: "File renamed successfully.", variant: "success" })
+      toast({ title: "Success", description: "File renamed successfully.", variant: "default" })
       console.log('File renamed successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
       setNewFileName('');
@@ -87,7 +87,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
       const response = await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
       );
 
-      toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "success" })
+      toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "default" })
       console.log('File deleted successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
     } catch (error) {
@@ -164,7 +164,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
                         className="cursor-pointer flex items-center"
                         onClick={() => {
                           navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/${encodeURIComponent(currentPath)})`);
-                          toast({ title: "Copied", description: "Path copied to clipboard.", variant: "success" });
+                          toast({ title: "Copied", description: "Path copied to clipboard.", variant: "default" });
                         }}
                       >
                         <LinkIcon className="mr-2 w-4 h-4 inline-block" /> Copy link
