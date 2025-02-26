@@ -57,6 +57,10 @@ export default defineConfig({
                 target,
                 secure: false
             },
+            '^/auth/.*': {
+                target,
+                secure: false
+            },
         },
         port: 5173,
         https: {

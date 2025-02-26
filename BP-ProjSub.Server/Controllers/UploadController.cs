@@ -553,9 +553,9 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpGet("GetAttachmentFile/{assignmentId}/{requestedFileName}")]
+        [HttpGet("GetAttachmentFile/{assignmentId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAttachmentFile(int assignmentId, string requestedFileName)
+        public async Task<IActionResult> GetAttachmentFile(int assignmentId, [FromQuery] string file)
         {
             try
             {
@@ -569,7 +569,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var targetDir = $"assignments/{assignmentId}/";
 
-                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName);
+                var decodedFileName = System.Net.WebUtility.UrlDecode(file);
                 var filePath = Path.Combine(targetDir, decodedFileName);
                 var resolvedFullPath = Path.GetFullPath(filePath);
                 var targetDirFullPath = Path.GetFullPath(targetDir);
@@ -735,9 +735,9 @@ namespace BP_ProjSub.Server.Controllers
         }
 
 
-        [HttpGet("DownloadSubmissionFile/{submissionId}/{requestedFileName}")]
+        [HttpGet("DownloadSubmissionFile/{submissionId}")]
         [Authorize(Roles = "Student, Teacher")]
-        public async Task<IActionResult> DownloadSubmissionFile(int submissionId, string requestedFileName)
+        public async Task<IActionResult> DownloadSubmissionFile(int submissionId, [FromQuery] string file)
         {
             try
             {
@@ -759,7 +759,7 @@ namespace BP_ProjSub.Server.Controllers
                 string containerName = "submissions";
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName).Replace("\\", "/");
+                var decodedFileName = System.Net.WebUtility.UrlDecode(file).Replace("\\", "/");
 
                 string blobName = $"{submissionDb.FileName.TrimEnd('/')}/{decodedFileName}";
 

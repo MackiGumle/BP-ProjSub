@@ -160,7 +160,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
                       <DropdownMenuItem
                         className="cursor-pointer flex items-center"
                         onClick={() => {
-                          navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/${encodeURIComponent(currentPath)})`);
+                          navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/?file=${encodeURIComponent(currentPath)})`);
                           toast({ title: "Copied", description: "Path copied to clipboard.", variant: "default" });
                         }}
                       >

@@ -71,6 +71,10 @@ namespace BP_ProjSub.Server.Controllers
             {
                 query = query.Where(u => u.UserName.Contains(searchTerm));
             }
+            else
+            {
+                query = query.Take(50);
+            }
 
             var users = await query.ToListAsync();
 
