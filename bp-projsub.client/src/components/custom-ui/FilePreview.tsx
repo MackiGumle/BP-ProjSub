@@ -1,20 +1,12 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import { createElement } from "react-syntax-highlighter";
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
-import { toast } from "../ui/use-toast";
+import { SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
 import { useAuth } from "@/context/UserContext";
 import CommentDialog from "./CommentDialog";
 
@@ -70,8 +62,6 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
     // State for controlling the comment dialog and tracking selected line
     const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     const [selectedLineForComment, setSelectedLineForComment] = useState<number | null>(null);
-    const [commentText, setCommentText] = useState("");
-    const queryClient = useQueryClient();
 
 
     // Query to fetch the submission comments.
@@ -88,26 +78,6 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
         },
         { enabled: !!submissionId }
     );
-
-    const addCommentMutation = useMutation({
-        mutationFn: async (newComment: AddSubmissionCommentDto) => {
-            const response = await axios.post<SubmissionCommentDto>("/api/Teacher/AddSubmissionComment", newComment);
-            return response.data;
-        },
-        onSuccess: (newComment) => {
-            toast({ title: "Comment added", variant: "default" });
-            setCommentText("");
-            setCommentDialogOpen(false);
-            queryClient.setQueryData<SubmissionCommentDto[]>
-                (["submissionComments", submissionId], (oldData = []) => [...oldData, newComment]);
-
-
-        },
-        onError: (error) => {
-            console.error("Error adding comment", error);
-            toast({ title: "Error adding comment", variant: "destructive" });
-        },
-    });
 
     async function fetchSubmissionFile() {
         const response = await axios.get(
