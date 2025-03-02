@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
@@ -954,6 +955,62 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+
+        [HttpGet("ExportSubmissionsRating/{assignmentId}")]
+        public async Task<IActionResult> ExportSubmissionsRating(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    .Include(a => a.Teacher)
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Teacher.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Include(s => s.Student.Person)
+                    .Where(s => s.AssignmentId == assignmentId && s.Ratings.Count > 0)
+                    .ToListAsync();
+
+                var ratings = submissions
+                    .Select(s => new
+                    {
+                        Student = s.Student.Person.UserName,
+                        Rating = s.Ratings.FirstOrDefault(r => r.Time == s.Ratings.Max(rt => rt.Time))?.Value
+                    }).ToList();
+
+                var csv = new StringBuilder();
+                csv.AppendLine("Student;Rating");
+
+                foreach (var rating in ratings)
+                {
+                    csv.AppendLine($"{rating.Student};{rating.Rating}");
+                }
+
+                var fileName = $"ratings_{assignmentId}.csv";
+                var fileBytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(fileBytes, "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
 

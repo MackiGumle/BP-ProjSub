@@ -1,4 +1,5 @@
 using System;
+using System.IO.Compression;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -103,5 +104,27 @@ public class FileTreeNode
         }
 
         return currentId;
+    }
+
+    public async Task ZipFilesAsync(ZipArchive zipArchive, BlobContainerClient containerClient, string currentPath = "")
+    {
+        foreach (var child in Children)
+        {
+            var childPath = string.IsNullOrEmpty(currentPath) ? child.Name : $"{currentPath}/{child.Name}";
+            if (child.IsFolder)
+            {
+                await child.ZipFilesAsync(zipArchive, containerClient, childPath);
+            }
+            else
+            {
+                var blobClient = containerClient.GetBlobClient(childPath);
+                var downloadResponse = await blobClient.DownloadContentAsync();
+                var entry = zipArchive.CreateEntry(childPath);
+                using (var entryStream = entry.Open())
+                {
+                    await downloadResponse.Value.Content.ToStream().CopyToAsync(entryStream);
+                }
+            }
+        }
     }
 }

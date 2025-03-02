@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Claims;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -844,5 +845,50 @@ namespace BP_ProjSub.Server.Controllers
         }
 
 
+        [HttpGet("ExportSubmissionFiles/{assignmentId}")]
+        public async Task<IActionResult> ExportSubmissionFiles(int assignmentId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                .Include(a => a.Subject.Teachers)
+                .FirstOrDefaultAsync(a => a.Id == assignmentId && a.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+
+                var prefix = $"{assignmentId}";
+
+                var fileTree = await FileTreeNode.BuildFileTreeFromBlobStorageAsync(containerClient, prefix);
+
+                var zipStream = new MemoryStream();
+                using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+                {
+                    await fileTree.ZipFilesAsync(zipArchive, containerClient);
+                }
+
+                zipStream.Position = 0;
+
+                return File(zipStream, "application/zip", $"assignment_{assignmentId}_submissions.zip");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "An error occurred during file export.",
+                    Error = ex.Message
+                });
+            }
+        }
     }
 }

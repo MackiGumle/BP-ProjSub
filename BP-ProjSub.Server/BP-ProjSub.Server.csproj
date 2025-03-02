@@ -34,4 +34,10 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="moss.pl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+</ItemGroup>
 </Project>
