@@ -1,21 +1,24 @@
 import React from 'react'
 import Uppy from '@uppy/core'
-import { Dashboard } from '@uppy/react'
+import { Dashboard, useUppyEvent } from '@uppy/react'
 import XHR from '@uppy/xhr-upload';
 
 import '@uppy/core/dist/style.css'
 import '@uppy/dashboard/dist/style.css'
 import { useTheme } from '@/components/theme-components/theme-provider';
 import { useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 
 interface UppyDragDropProps {
     endpoint: string;
     invalidateQueries?: Array<Array<string | number>>;
+    onUploadComplete?: () => void;
 }
 
 
-export function UppyDragDrop({ endpoint, invalidateQueries }: UppyDragDropProps) {
+export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: UppyDragDropProps) {
     // console.log('UppyDragDrop rendered endpoint:', endpoint)
+
     function createUppy() {
         const uppy = new Uppy({
             restrictions: { maxFileSize: 5 * 1024 * 1024, maxTotalFileSize: 20 * 1024 * 1024 },
@@ -65,6 +68,39 @@ export function UppyDragDrop({ endpoint, invalidateQueries }: UppyDragDropProps)
     // const totalProgress = useUppyState(uppy, (state) => state.totalProgress)
     const { theme } = useTheme()
     const queryClient = useQueryClient();
+
+    const [results] = useUppyEvent(uppy, 'upload-success');
+    React.useEffect(() => {
+        if (results) {
+            if (onUploadComplete) {
+                onUploadComplete();
+            }
+        }
+    }, [results, onUploadComplete]);
+
+    React.useEffect(() => {
+        const fetchUploadSettings = async () => {
+            try {
+                const response = await axios.get('/api/upload/GetUploadSettings')
+                const settings = response.data
+
+                if (settings.allowedExtensions == '*')
+                    settings.allowedExtensions = null
+
+                uppy.setOptions({
+                    restrictions: {
+                        maxFileSize: settings.maxFileSize,
+                        maxTotalFileSize: settings.maxTotalSize,
+                        allowedFileTypes: settings.allowedExtensions,
+                    },
+                })
+            } catch (error) {
+                console.error('Error fetching upload settings:', error)
+            }
+        }
+
+        fetchUploadSettings()
+    }, [uppy])
 
     return (
         <>

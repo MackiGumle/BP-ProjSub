@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, FolderArchive, Star, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -14,6 +14,8 @@ import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/materi
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 
@@ -43,13 +45,45 @@ export function TeacherAssignmentSubmissions() {
         }
     };
 
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: parseInt(assignmentId || "") })
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" })
 
     const { data: submissions, isLoading, isError } = useQuery<PartialSubmissionDto[]>({
         queryKey: ["parialsubmissions", assignmentId],
         queryFn: () => fetchSubmissions(assignmentId!),
         enabled: !!assignmentId,
     });
+
+    const getExportSubmissionRatings = () => {
+        axios.get(`/api/Teacher/ExportSubmissionsRating/${assignmentId}`, { responseType: 'blob' })
+            .then((response) => {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'submissions_ratings.csv');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            })
+            .catch((error) => {
+                console.error('Error exporting ratings:', error);
+            });
+    }
+
+    const getExportSubmissionsFiles = () => {
+        axios.get(`/api/upload/ExportSubmissionFiles/${assignmentId}`, { responseType: 'blob' })
+            .then((response) => {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'submissions_files.zip');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            })
+            .catch((error) => {
+                console.error('Error exporting submissions:', error);
+            });
+    }
 
     return (
         <div className="w-full mx-auto p-6 space-y-4">
@@ -99,19 +133,36 @@ export function TeacherAssignmentSubmissions() {
                 </Collapsible>
             )}
 
-            {/* <Collapsible open={isAssignmentOpen} onOpenChange={() => setAssignmentOpen(!isAssignmentOpen)}>
-                <Card className="p-4 shadow-md border rounded-2xl">
-                    <CollapsibleTrigger className="w-full flex items-center justify-between p-2 border-b cursor-pointer">
-                        <h2 className="text-lg font-semibold">Assignment Details</h2>
-                        <ChevronDown className={`h-5 w-5 transition-transform ${isAssignmentOpen ? 'rotate-180' : ''}`} />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <p className="text-muted-foreground p-2">Detailed description of the assignment goes here.</p>
-                    </CollapsibleContent>
-                </Card>
-            </Collapsible> */}
-
-            <h2 className="text-xl font-semibold mt-4">Submissions</h2>
+            <h2 className="text-xl font-semibold mt-4 flex">Submissions
+                {
+                    submissions && submissions.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild className="ml-auto">
+                                <Button variant="ghost" size={'sm'}>
+                                    <Upload /> Export
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center" className="w-auto">
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        getExportSubmissionRatings();
+                                    }}>
+                                    <Star className="mr-2" />
+                                    Export Ratings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={() => {
+                                        getExportSubmissionsFiles();
+                                    }}>
+                                    <FolderArchive className="mr-2" />
+                                    Export Submissions
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )
+                }
+            </h2>
+            <Separator />
             <div className="space-y-2">
                 {isLoading ? (
                     <Skeleton className="h-20 w-full rounded-md" />

@@ -67,6 +67,12 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized(new { message = "User ID not found in token." });
                 }
 
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (userName == null)
+                {
+                    return Unauthorized(new { message = "User login not found in token." });
+                }
+
                 if (files == null || files.Count == 0)
                 {
                     return BadRequest(new { message = "No files received from the upload." });
@@ -102,7 +108,8 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found" });
                 }
 
-                var uploadId = Guid.NewGuid().ToString();
+                // var uploadId = Guid.NewGuid().ToString();
+                var uploadId = DateTime.Now.ToString("dd.MM.yyyy_HH:mm:ss");
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -139,7 +146,7 @@ namespace BP_ProjSub.Server.Controllers
                         return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
                     }
 
-                    var targetDir = $"submissions/{assignmentId}/{userId}/{uploadId}";
+                    var targetDir = $"submissions/{assignmentId}/{userName}/{uploadId}";
                     var fullPath = Path.Combine(targetDir, file.FileName);
                     // Absolute path check for directory traversal
                     var resolvedFullPath = Path.GetFullPath(fullPath);
@@ -151,8 +158,8 @@ namespace BP_ProjSub.Server.Controllers
 
 
                     // Construct the blob name from folder structure: 
-                    // assignmentId/userId/uploadId/[subfolders]/filename
-                    blobName = $"{assignmentId}/{userId}/{uploadId}";
+                    // assignmentId/userName/uploadId/[subfolders]/filename
+                    blobName = $"{assignmentId}/{userName}/{uploadId}";
                     if (directoryParts.Length > 0)
                     {
                         blobName += "/" + string.Join("/", directoryParts);
@@ -170,7 +177,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 // Save submission details to the database
-                var relativePath = $"{assignmentId}/{userId}/{uploadId}";
+                var relativePath = $"{assignmentId}/{userName}/{uploadId}";
                 var submission = new Submission
                 {
                     SubmissionDate = DateTime.Now,
@@ -309,37 +316,6 @@ namespace BP_ProjSub.Server.Controllers
                     };
 
                     await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
-
-                    // // recreate the user path for checking
-                    // var fullPath = targetDir;
-                    // foreach (var dirPart in directoryParts)
-                    // {
-                    //     fullPath = Path.Combine(fullPath, dirPart);
-                    // }
-
-                    // fullPath = Path.Combine(fullPath, fileName);
-
-                    // // Absolute path check for directory traversal
-                    // var resolvedFullPath = Path.GetFullPath(fullPath);
-                    // var targetDirFullPath = Path.GetFullPath(targetDir);
-                    // if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                    // {
-                    //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    // }
-
-                    // Directory.CreateDirectory(targetDir);
-
-                    // var currentDir = targetDir;
-                    // foreach (var dirPart in directoryParts)
-                    // {
-                    //     currentDir = Path.Combine(currentDir, dirPart);
-                    //     Directory.CreateDirectory(currentDir);
-                    // }
-
-                    // using (var stream = new FileStream(fullPath, FileMode.Create))
-                    // {
-                    //     await file.CopyToAsync(stream);
-                    // }
                 }
 
                 return Ok(new

@@ -14,14 +14,15 @@ import { UppyDragDrop } from "../UppyDragDrop";
 import axios from "axios";
 import { toast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 export function AssignmentEdit() {
-    const { assignmentId } = useParams<{ assignmentId: string }>()
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: parseInt(assignmentId || "") })
+    const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" })
     const [description, setDescription] = useState("")
     const navigate = useNavigate();
-
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         if (assignment) {
@@ -36,7 +37,7 @@ export function AssignmentEdit() {
                 await axios.put(`/api/Teacher/EditAssignment`,
                     assignment
                 );
-
+                queryClient.invalidateQueries(["assignments", subjectId]);
                 toast({ title: "Success", description: "Assignment edited successfully.", variant: "default" })
             }
         } catch (error) {
@@ -48,6 +49,7 @@ export function AssignmentEdit() {
     const handleAssignmentDelete = async () => {
         try {
             await axios.delete(`/api/Teacher/DeleteAssignment/${assignmentId}`);
+            queryClient.invalidateQueries(["assignments", subjectId]);
             toast({ title: "Success", description: "Assignment deleted successfully.", variant: "default" })
             navigate("../..", { replace: true });
         } catch (error) {
@@ -65,8 +67,6 @@ export function AssignmentEdit() {
                 <>
                     <div className="flex justify-between items-center">
                         <div className="ml-auto mr-2 space-x-2">
-
-
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive"

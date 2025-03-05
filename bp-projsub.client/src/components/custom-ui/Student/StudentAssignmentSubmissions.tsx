@@ -34,7 +34,7 @@ export function StudentAssignmentSubmissions() {
         enabled: !!assignmentId,
     });
 
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: parseInt(assignmentId || "") })
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" });
 
 
     return (
@@ -112,7 +112,11 @@ export function StudentAssignmentSubmissions() {
 
                 {assignmentId && (
                     <Card className="shadow-lg rounded-lg p-6">
-                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`} />
+                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`} onUploadComplete={
+                            () => {
+                                queryClient.invalidateQueries(["parialsubmissions", assignmentId]);
+                            }
+                        } />
                     </Card>
                 )}
             </div>

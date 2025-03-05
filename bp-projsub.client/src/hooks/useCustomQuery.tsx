@@ -26,7 +26,7 @@ export const useSubjectsQuery = (): UseQueryResult<SubjectDto[], Error> => {
     });
 };
 
-export const useAssignmentQuery = ({ assignmentId }: { assignmentId: number }): UseQueryResult<AssignmentDto, Error> => {
+export const useAssignmentQuery = ({ assignmentId }: { assignmentId: string }): UseQueryResult<AssignmentDto, Error> => {
     const { getRole } = useAuth();
 
     return useQuery<AssignmentDto, Error>({

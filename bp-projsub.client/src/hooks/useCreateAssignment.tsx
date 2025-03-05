@@ -22,7 +22,7 @@ export function useCreateAssignment<CreateAssignmentDto>({
     },
     onSuccess: (newAssignment) => {
       queryClient.setQueryData<AssignmentDto[]>(
-        ["assignments", subjectId],
+        ["assignments", `${subjectId}`],
         (old = []) => [...old, newAssignment]
       )
 
