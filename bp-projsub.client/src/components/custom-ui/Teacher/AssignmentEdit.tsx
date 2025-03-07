@@ -65,8 +65,41 @@ export function AssignmentEdit() {
                 <p className="text-red-500">Failed to load assignment.</p>
             ) : (
                 <>
-                    <div className="flex justify-between items-center">
-                        <div className="ml-auto mr-2 space-x-2">
+                    {/* <div className="flex justify-between items-center"> */}
+
+                    {/* </div> */}
+                    {/* <Separator /> */}
+                    <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+                        <ResizablePanel defaultSize={10}>
+                            <div className="flex flex-col">
+                                <div className="flex-grow top-0 overflow-y-auto">
+                                    <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
+                                </div>
+
+                                <div className="">
+                                    <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                        invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]}
+                                    />
+                                </div>
+                            </div>
+                        </ResizablePanel>
+                        <ResizableHandle />
+                        <ResizablePanel defaultSize={45}>
+                            <Textarea
+                                // autoFocus
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="min-h-full border-none rounded-none"
+                            />
+                        </ResizablePanel>
+                        <ResizableHandle />
+                        <ResizablePanel defaultSize={45}>
+                            <MarkdownRenderer content={description} />
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+
+                    <div className="fixed bottom-3 right-3 z-10 flex justify-end items-center gap-4 p-1 bg-secondary rounded-lg shadow-md">
+                        <div className="space-x-2">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive"
@@ -95,35 +128,6 @@ export function AssignmentEdit() {
                             ><Save /></Button>
                         </div>
                     </div>
-                    <Separator />
-                    <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-
-                        <ResizablePanel defaultSize={10}>
-                            <div className="flex flex-col h-full">
-                                <div className="flex-grow min-h-0 overflow-y-auto">
-                                    <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
-                                </div>
-
-                                <div className="h-fit overflow-hidden">
-                                    <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
-                                        invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]} />
-                                </div>
-                            </div>
-                        </ResizablePanel>
-                        <ResizableHandle />
-                        <ResizablePanel defaultSize={45}>
-                            <Textarea
-                                // autoFocus
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="min-h-full border-none rounded-none"
-                            />
-                        </ResizablePanel>
-                        <ResizableHandle />
-                        <ResizablePanel defaultSize={45}>
-                            <MarkdownRenderer content={description} />
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
                 </>
             )}
         </>

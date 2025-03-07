@@ -112,11 +112,8 @@ export function StudentAssignmentSubmissions() {
 
                 {assignmentId && (
                     <Card className="shadow-lg rounded-lg p-6">
-                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`} onUploadComplete={
-                            () => {
-                                queryClient.invalidateQueries(["parialsubmissions", assignmentId]);
-                            }
-                        } />
+                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`}
+                            invalidateQueries={[["parialsubmissions", assignmentId]]} />
                     </Card>
                 )}
             </div>

@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, FolderArchive, Star, Upload } from "lucide-react";
+import { ChevronDown, FolderArchive, Loader2, Star, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -53,9 +53,13 @@ export function TeacherAssignmentSubmissions() {
         enabled: !!assignmentId,
     });
 
+    const [isExportLoading, setExportLoading] = useState<boolean>(false);
+
     const getExportSubmissionRatings = () => {
+        setExportLoading(true);
         axios.get(`/api/Teacher/ExportSubmissionsRating/${assignmentId}`, { responseType: 'blob' })
             .then((response) => {
+                setExportLoading(false);
                 const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
                 link.href = url;
@@ -70,8 +74,10 @@ export function TeacherAssignmentSubmissions() {
     }
 
     const getExportSubmissionsFiles = () => {
+        setExportLoading(true);
         axios.get(`/api/upload/ExportSubmissionFiles/${assignmentId}`, { responseType: 'blob' })
             .then((response) => {
+                setExportLoading(false);
                 const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
                 link.href = url;
@@ -139,7 +145,11 @@ export function TeacherAssignmentSubmissions() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild className="ml-auto">
                                 <Button variant="ghost" size={'sm'}>
-                                    <Upload /> Export
+                                    {
+                                        isExportLoading ?
+                                            (<><Loader2 className="h-4 w-4 animate-spin" /> Exporting...</>) :
+                                            (<><Upload /> Export</>)
+                                    }
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-auto">

@@ -133,6 +133,11 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
+                if(assignment.Type == "Test")
+                { // TODO: log to the database that the student accessed the test
+                    
+                }
+
                 var assignmentDto = new AssignmentDto
                 {
                     Id = assignment.Id,

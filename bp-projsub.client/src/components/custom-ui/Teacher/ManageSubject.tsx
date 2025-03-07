@@ -31,15 +31,17 @@ export function ManageSubject() {
               <TabsTrigger value="subject">Subject</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="students">
+            <TabsContent value="students" className="p-4">
               {subjectId &&
                 <ManageStudents subjectId={parseInt(subjectId || "")} />
               }
             </TabsContent>
 
-            <TabsContent value="assignment"><CreateAssignmentForm subjectId={parseInt(subjectId || "")} /></TabsContent>
+            <TabsContent value="assignment" className="p-4">
+              <CreateAssignmentForm subjectId={parseInt(subjectId || "")} />
+            </TabsContent>
 
-            <TabsContent value="subject">
+            <TabsContent value="subject" className="p-4">
               <EditSubjectForm subject={currentSubject} />
             </TabsContent>
           </Tabs>
