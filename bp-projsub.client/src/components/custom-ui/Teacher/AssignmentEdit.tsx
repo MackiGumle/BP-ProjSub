@@ -8,7 +8,6 @@ import 'katex/dist/katex.min.css'; // Keeps unformated text hidden
 import { MarkdownRenderer } from "../MarkdownRenderer";
 import { Button } from "@/components/ui/button";
 import { Save, Trash } from "lucide-react";
-import { Separator } from "@/components/ui/separator"
 import TOCWrapper from "./TOCWrapper";
 import { UppyDragDrop } from "../UppyDragDrop";
 import axios from "axios";
@@ -19,16 +18,16 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function AssignmentEdit() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" })
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" , disableRefetch: true });
     const [description, setDescription] = useState("")
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     useEffect(() => {
-        if (assignment) {
+        if (assignment?.description) {
             setDescription(assignment.description || "");
         }
-    }, [assignment]);
+    }, [assignment?.description]);
 
     const handleAssignmentEdit = async () => {
         try {
@@ -71,14 +70,19 @@ export function AssignmentEdit() {
                     {/* <Separator /> */}
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                         <ResizablePanel defaultSize={10}>
-                            <div className="flex flex-col">
-                                <div className="flex-grow top-0 overflow-y-auto">
-                                    <TOCWrapper endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`} contextMenu={true} />
+                            <div className="flex flex-col h-full">
+                                <div className="flex-grow overflow-y-auto">
+                                    <TOCWrapper
+                                        endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
+                                        contextMenu={true}
+                                    />
                                 </div>
-
-                                <div className="">
-                                    <UppyDragDrop endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
-                                        invalidateQueries={[["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]]}
+                                <div className="sticky top-5">
+                                    <UppyDragDrop
+                                        endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                        invalidateQueries={[
+                                            ["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
+                                        ]}
                                     />
                                 </div>
                             </div>

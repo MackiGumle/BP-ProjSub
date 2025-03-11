@@ -17,4 +17,7 @@ public class Student
 
     [InverseProperty("Students")]
     public virtual ICollection<Subject> Subjects { get; set; } = new List<Subject>();
+
+    [InverseProperty("Student")]
+    public virtual ICollection<AssignmentViewLog> AssignmentViewLogs { get; set; } = new List<AssignmentViewLog>();
 }

@@ -110,10 +110,12 @@ export function StudentAssignmentSubmissions() {
                     }
                 </div>
 
-                {assignmentId && (
+                {isLoading ? (
+                    <Skeleton className="h-60 w-full rounded-md" />
+                ) : !isError && (
                     <Card className="shadow-lg rounded-lg p-6">
-                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`}
-                            invalidateQueries={[["parialsubmissions", assignmentId]]} />
+                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId!)}`}
+                            invalidateQueries={[["parialsubmissions", assignmentId!]]} />
                     </Card>
                 )}
             </div>

@@ -79,9 +79,9 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
 
-                // TODO: I will have to monitor what assignments the student accesses
                 var assignments = await _dbContext.Assignments
-                    .Where(a => a.SubjectId == subjectId)
+                    .Where(a => a.SubjectId == subjectId && a.DateAssigned <= DateTime.UtcNow)
+                    .OrderBy(a => a.DueDate)
                     .Select(a => new AssignmentDto
                     {
                         Id = a.Id,
@@ -133,9 +133,18 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                if(assignment.Type == "Test")
-                { // TODO: log to the database that the student accessed the test
-                    
+                if (assignment.Type == "Test" && assignment.DueDate > DateTime.UtcNow)
+                {
+                    var assignmentViewLog = new AssignmentViewLog
+                    {
+                        AssignmentId = assignmentId,
+                        UserId = userId,
+                        IpAddress = Request.HttpContext.Connection.RemoteIpAddress?.ToString(),
+                        ViewedOn = DateTime.UtcNow
+                    };
+
+                    _dbContext.AssignmentViewLogs.Add(assignmentViewLog);
+                    await _dbContext.SaveChangesAsync();
                 }
 
                 var assignmentDto = new AssignmentDto

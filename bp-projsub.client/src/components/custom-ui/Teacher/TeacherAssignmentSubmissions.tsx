@@ -16,6 +16,9 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { AssignmentViewLogDto } from "@/Dtos/AssignmentViewLogDto";
 
 
 
@@ -34,7 +37,7 @@ export function TeacherAssignmentSubmissions() {
     const getAssignmentFromCache = () => {
         try {
             const assignments = queryClient.getQueryData<AssignmentDto[]>(['assignments', subjectId]);
-            console.log('Cached Assignment:', assignments);
+            // console.log('Cached Assignment:', assignments);
 
             const assignment = assignments?.find(a => a.id === Number(assignmentId));
 
@@ -190,10 +193,59 @@ export function TeacherAssignmentSubmissions() {
                             <div>
                                 <p className="text-sm text-muted-foreground">{submission.rating || "-"} / {getAssignmentFromCache()?.maxPoints ?? '-'} points</p>
                             </div>
-                            {/* /subject/${subjectId}/assignment/${assignmentId}/submission/${submission.id} */}
-                            <Link to={`submission/${submission.id}`}>
-                                <Button variant="outline">View</Button>
-                            </Link>
+                            <div className="flex items-center space-x-3">
+                                {submission.isSuspicious && (
+                                    <HoverCard>
+                                        <HoverCardTrigger>
+                                            <Badge className="bg-red-500">Suspicious</Badge>
+                                        </HoverCardTrigger>
+                                        <HoverCardContent className="space-y-1 w-fit">
+                                            <div className="max-h-64 overflow-y-auto">
+                                                {submission.assignmentViewLogs?.length > 0 ? (
+                                                    // Group logs by IP address
+                                                    Object.entries(
+                                                        submission.assignmentViewLogs.reduce<Record<string, AssignmentViewLogDto[]>>(
+                                                            (acc, log) => {
+                                                                if (!acc[log.ipAddress])
+                                                                    acc[log.ipAddress] = [];
+
+                                                                acc[log.ipAddress].push(log);
+
+                                                                return acc;
+                                                            },
+                                                            {}
+                                                        )
+                                                    )
+                                                        .map(([ip, logs]) => (
+                                                            <div key={ip} className="mb-1 last:mb-0">
+                                                                <div className="font-mono text-red-500 bg-red-50 px-2 py-0 rounded">
+                                                                    {ip} ({logs.length})
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    {logs.map((log: AssignmentViewLogDto, logIndex: number) => (
+                                                                        <div
+                                                                            key={logIndex}
+                                                                            className="text-sm text-muted-foreground p-1 border-b last:border-0"
+                                                                        >
+                                                                            {new Date(log.viewedOn).toLocaleTimeString()}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                ) : (
+                                                    <div className="text-sm text-muted-foreground p-2">
+                                                        No access logs found
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </HoverCardContent>
+                                    </HoverCard>
+                                )}
+                                <Link to={`submission/${submission.id}`}>
+                                    <Button variant="outline">View</Button>
+                                </Link>
+                            </div>
                         </Card>
                     ))
                 )}

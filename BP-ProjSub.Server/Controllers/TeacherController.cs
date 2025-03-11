@@ -767,9 +767,30 @@ namespace BP_ProjSub.Server.Controllers
                     PersonId = s.PersonId,
                     StudentLogin = s.Student.Person.UserName!,
                     Rating = s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value
+
                 })
                 .OrderByDescending(s => s.SubmissionDate)
                 .ToList();
+
+                // Suspicious if there are multiple ips from the same student
+                var logs = await _dbContext.AssignmentViewLogs
+                    .Where(l => l.AssignmentId == assignmentId)
+                    .OrderByDescending(l => l.ViewedOn)
+                    .ToListAsync();
+
+                foreach (var submission in latestSubmissions)
+                {
+                    // var studentLogs = logs.Where(l => l.UserId == submission.PersonId).ToList();
+                    submission.AssignmentViewLogs = logs
+                    .Where(l => l.UserId == submission.PersonId)
+                    .Select(l => new AssignmentViewLogDto
+                    {
+                        IpAddress = l.IpAddress,
+                        ViewedOn = l.ViewedOn
+                    }).ToList();
+
+                    submission.IsSuspicious = submission.AssignmentViewLogs.GroupBy(l => l.IpAddress).Count() > 1;
+                }
 
                 return Ok(latestSubmissions);
             }

@@ -32,4 +32,6 @@ public partial class Assignment
     public virtual Subject Subject { get; set; } = null!;
 
     public virtual ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+
+    public virtual ICollection<AssignmentViewLog> AssignmentViewLogs { get; set; } = new List<AssignmentViewLog>();
 }

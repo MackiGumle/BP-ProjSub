@@ -166,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <span className="font-medium">{assignment.title}</span>
                                     <span className="text-xs text-muted-foreground">
                                       Due: {assignment.dueDate ?
-                                        new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
+                                        new Date(assignment.dueDate).toLocaleString() : 'No due date'}
                                     </span>
                                     {assignment.maxPoints && (
                                       <span className="text-xs text-muted-foreground">

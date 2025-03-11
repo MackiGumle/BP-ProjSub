@@ -1,4 +1,5 @@
 using System;
+using BP_ProjSub.Server.Models;
 
 namespace BP_ProjSub.Server.Data.Dtos;
 
@@ -16,4 +17,8 @@ public class PartialSubmissionDto
     public string StudentLogin { get; set; }
 
     public decimal? Rating { get; set; }
+
+    public bool IsSuspicious { get; set; }
+
+    public List<AssignmentViewLogDto> AssignmentViewLogs { get; set; } = new List<AssignmentViewLogDto>();
 }

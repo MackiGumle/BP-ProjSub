@@ -78,6 +78,12 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "No files received from the upload." });
                 }
 
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
                 // Validate file extensions and sizes
                 long totalSize = 0;
                 foreach (var file in files)
@@ -109,7 +115,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 // var uploadId = Guid.NewGuid().ToString();
-                var uploadId = DateTime.Now.ToString("dd.MM.yyyy_HH:mm:ss");
+                var uploadId = DateTime.UtcNow.ToString("dd.MM.yyyy_HH:mm:ss");
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -180,7 +186,7 @@ namespace BP_ProjSub.Server.Controllers
                 var relativePath = $"{assignmentId}/{userName}/{uploadId}";
                 var submission = new Submission
                 {
-                    SubmissionDate = DateTime.Now,
+                    SubmissionDate = DateTime.UtcNow,
                     FileName = relativePath,
                     AssignmentId = assignmentId,
                     FileData = new byte[1], // TODO: remove this field from db
