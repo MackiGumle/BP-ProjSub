@@ -181,14 +181,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 <ThemeToggle /> */}
                                 {hasRole("Teacher") && (
                                   <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
-                                    {/* <SidebarMenuButton
-                                      className="w-6 h-6 p-1"
-                                      onClick={() => console.log("Assignment actions")}
-                                    > */}
                                     <div className="">
                                       <Pencil className="w-6 h-6 p-1" />
                                     </div>
-                                    {/* </SidebarMenuButton> */}
                                   </Link>
                                 )}
                               </SidebarMenuAction>

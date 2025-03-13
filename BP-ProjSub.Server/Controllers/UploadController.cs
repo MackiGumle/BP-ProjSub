@@ -391,28 +391,6 @@ namespace BP_ProjSub.Server.Controllers
                     });
                 }
 
-                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
-
-                // // The directory structure is: uploads/assignmentId/
-                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
-
-                // var fullPath = Path.Combine(targetDir, fileName);
-
-                // // Absolute path check for directory traversal
-                // var resolvedFullPath = Path.GetFullPath(fullPath);
-                // var targetDirFullPath = Path.GetFullPath(targetDir);
-                // if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                // {
-                //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                // }
-
-                // if (!System.IO.File.Exists(fullPath))
-                // {
-                //     return NotFound(new { message = "File not found." });
-                // }
-
-                // System.IO.File.Delete(fullPath);
-
                 return Ok(new
                 {
                     Message = "File removed successfully.",

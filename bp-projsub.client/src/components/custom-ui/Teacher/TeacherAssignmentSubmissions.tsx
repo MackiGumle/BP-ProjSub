@@ -199,8 +199,8 @@ export function TeacherAssignmentSubmissions() {
                                         <HoverCardTrigger>
                                             <Badge className="bg-red-500">Suspicious</Badge>
                                         </HoverCardTrigger>
-                                        <HoverCardContent className="space-y-1 w-fit">
-                                            <div className="max-h-64 overflow-y-auto">
+                                        <HoverCardContent className="space-y-1 w-fit p-0">
+                                            <div className="max-h-64 overflow-y-auto p-2">
                                                 {submission.assignmentViewLogs?.length > 0 ? (
                                                     // Group logs by IP address
                                                     Object.entries(

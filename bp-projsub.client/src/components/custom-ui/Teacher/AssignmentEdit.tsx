@@ -81,7 +81,7 @@ export function AssignmentEdit() {
                                     <UppyDragDrop
                                         endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
                                         invalidateQueries={[
-                                            ["submissionFileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
+                                            ["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
                                         ]}
                                     />
                                 </div>

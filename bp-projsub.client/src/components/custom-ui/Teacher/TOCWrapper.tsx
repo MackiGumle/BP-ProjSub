@@ -81,8 +81,14 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
 
   const handleDelete = async (element: TreeViewElement) => {
     try {
-      await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      // await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      // );
+      await axios.post(
+        `/api/Upload/RemoveAttachmentFile/${assignmentId}`,
+        JSON.stringify(element.name),
+        { headers: { "Content-Type": "application/json" } }
       );
+
 
       toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "default" })
       console.log('File deleted successfully');

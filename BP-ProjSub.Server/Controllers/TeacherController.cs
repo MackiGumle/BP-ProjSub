@@ -68,6 +68,7 @@ namespace BP_ProjSub.Server.Controllers
                 };
 
 
+                Subject? subject;
                 List<Person> newUsers = new List<Person>();
                 // Create subject and students in a transaction
                 using (var transaction = await _dbContext.Database.BeginTransactionAsync())
@@ -89,7 +90,7 @@ namespace BP_ProjSub.Server.Controllers
                             // We need to send activation email to them
                             newUsers.AddRange(users);
 
-                            var subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
+                            subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                             await _dbContext.SaveChangesAsync();
 
                             // Student IDs to be added into the subject
@@ -98,11 +99,10 @@ namespace BP_ProjSub.Server.Controllers
 
                             await _subjectService.AddStudentsToSubjectAsync(subject, studentLoginsToAdd);
                             await _dbContext.SaveChangesAsync();
-
                         }
                         else
                         {
-                            var subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
+                            subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                             await _dbContext.SaveChangesAsync();
                         }
                         await transaction.CommitAsync();
@@ -127,9 +127,9 @@ namespace BP_ProjSub.Server.Controllers
 
                 return Ok(new SubjectDto
                 {
-                    Id = newSubject.Id,
-                    Name = newSubject.Name,
-                    Description = newSubject.Description
+                    Id = subject.Id,
+                    Name = subject.Name,
+                    Description = subject.Description
                 });
             }
             catch (Exception e)
@@ -780,16 +780,19 @@ namespace BP_ProjSub.Server.Controllers
 
                 foreach (var submission in latestSubmissions)
                 {
-                    // var studentLogs = logs.Where(l => l.UserId == submission.PersonId).ToList();
-                    submission.AssignmentViewLogs = logs
-                    .Where(l => l.UserId == submission.PersonId)
-                    .Select(l => new AssignmentViewLogDto
-                    {
-                        IpAddress = l.IpAddress,
-                        ViewedOn = l.ViewedOn
-                    }).ToList();
+                    var studentLogs = logs.Where(l => l.UserId == submission.PersonId).ToList();
 
-                    submission.IsSuspicious = submission.AssignmentViewLogs.GroupBy(l => l.IpAddress).Count() > 1;
+                    submission.IsSuspicious = studentLogs.GroupBy(l => l.IpAddress).Count() > 1;
+
+                    if (submission.IsSuspicious)
+                    {
+                        submission.AssignmentViewLogs = studentLogs
+                        .Select(l => new AssignmentViewLogDto
+                        {
+                            IpAddress = l.IpAddress,
+                            ViewedOn = l.ViewedOn
+                        }).ToList();
+                    }
                 }
 
                 return Ok(latestSubmissions);

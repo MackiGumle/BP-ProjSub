@@ -27,8 +27,8 @@ export function SubjectSwitcher() {
   return (
     <SidebarMenu className="m-1">
       <SidebarMenuItem>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu modal={true}>
+          <DropdownMenuTrigger asChild className="">
             <SidebarMenuButton
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
