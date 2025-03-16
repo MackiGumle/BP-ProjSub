@@ -2,6 +2,7 @@ using System;
 using System.IO.Compression;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BP_ProjSub.Server.Helpers;
 
@@ -127,4 +128,49 @@ public class FileTreeNode
             }
         }
     }
+
+    public static async Task DownloadSourceCodesAsync(BlobContainerClient containerClient, string prefix, string localPath, string[] fileExtensions)
+    {
+        if (!Directory.Exists(localPath))
+        {
+            Directory.CreateDirectory(localPath);
+        }
+
+        await foreach (BlobHierarchyItem item in containerClient.GetBlobsByHierarchyAsync(prefix: prefix, delimiter: "/"))
+        {
+            if (item.IsPrefix)
+            {
+                var folders = item.Prefix.TrimEnd('/').Split('/');
+
+                // Create only login folders (assignmentId/studentLogin)
+                if (folders.Length <= 2)
+                {
+                    string newFolderName = folders.Last();
+                    string newLocalPath = Path.Combine(localPath, newFolderName);
+                    Directory.CreateDirectory(newLocalPath);
+
+                    await DownloadSourceCodesAsync(containerClient, item.Prefix, newLocalPath, fileExtensions);
+                }
+                else
+                {
+                    await DownloadSourceCodesAsync(containerClient, item.Prefix, localPath, fileExtensions);
+                }
+            }
+            else
+            {
+                string fileName = Path.GetFileName(item.Blob.Name);
+
+                // Download files only if the match extension list
+                if (fileExtensions == null || fileExtensions.Length == 0 ||
+                    fileExtensions.Any(ext => Path.GetExtension(fileName).Equals(ext, StringComparison.OrdinalIgnoreCase)))
+                {
+                    string localFilePath = Path.Combine(localPath, fileName);
+                    BlobClient blobClient = containerClient.GetBlobClient(item.Blob.Name);
+                    await blobClient.DownloadToAsync(localFilePath);
+                }
+            }
+        }
+    }
+
+
 }

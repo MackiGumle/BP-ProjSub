@@ -1025,7 +1025,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 foreach (var rating in ratings)
                 {
-                    csv.AppendLine($"{rating.Student};{rating.Rating}");
+                    csv.AppendLine($"{rating.Student};{Convert.ToInt64(rating.Rating)}");
                 }
 
                 var fileName = $"ratings_{assignmentId}.csv";

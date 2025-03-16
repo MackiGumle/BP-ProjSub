@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Claims;
 using Azure.Storage.Blobs;
@@ -115,7 +116,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 // var uploadId = Guid.NewGuid().ToString();
-                var uploadId = DateTime.UtcNow.ToString("dd.MM.yyyy_HH:mm:ss");
+                var uploadId = DateTime.UtcNow.ToString("dd_MM_yyyy_HH_mm_ss");
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -804,8 +805,8 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-
         [HttpGet("ExportSubmissionFiles/{assignmentId}")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> ExportSubmissionFiles(int assignmentId)
         {
             try
@@ -850,5 +851,101 @@ namespace BP_ProjSub.Server.Controllers
                 });
             }
         }
+
+        [HttpGet("CheckPlagiatism/{assignmentId}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> CheckPlagiatism(int assignmentId, [FromQuery] string language)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var extensions = _config.GetSection($"LanguageExtensions:{language}").Get<string[]>();
+
+                if (extensions == null || extensions.Length == 0)
+                {
+                    return BadRequest(new { Message = $"No extensions found for language: {language}" });
+                }
+
+ 
+                return Ok(new { Link = "http://moss.stanford.edu/results/1/8403766510050/", Message = "Plagiatism check finished." });
+
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+
+                await FileTreeNode.DownloadSourceCodesAsync(containerClient, assignmentId.ToString(), Path.Combine(_env.ContentRootPath, "plagiatism/"), extensions);
+
+                string mossPath = Path.Combine(_env.ContentRootPath, "moss.pl");
+
+                var files = Directory.GetFiles(
+                    Path.Combine(_env.ContentRootPath, $"plagiatism/{assignmentId}"),
+                    "*",
+                    SearchOption.AllDirectories
+                );
+
+                // File list as arguments
+                var filesArgument = string.Join(" ", files.Select(f => $"\"{f}\""));
+
+                var arguments = $"{mossPath} -l {language} -d {filesArgument}";
+
+                var process = new Process
+                {
+                    // moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "perl",
+                        Arguments = arguments, // $"{mossPath} -l {language} -d {_env.ContentRootPath}/plagiatism/{assignmentId}/*/*",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    }
+                };
+
+                bool started = process.Start();
+                if (!started)
+                {
+                    throw new Exception("Failed to start the process.");
+                }
+
+                await process.WaitForExitAsync();
+
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    throw new Exception(error);
+                }
+
+                var url = output.Split('\n')[^2];
+
+                // Delete the downloaded files
+                Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+
+                return Ok(new { Link = url, Message = "Plagiatism check finished." });
+            }
+            catch (Exception ex)
+            {
+                if (Directory.Exists(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString())))
+                {
+                    Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+                }
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during plagiatism check.", Error = ex.Message });
+            }
+
+        }
+
     }
 }

@@ -91,4 +91,8 @@ https://stackoverflow.com/questions/74607419/react-markdown-don%c2%b4t-render-ma
   a {
     @apply text-primary underline;
   }
+
+  code {
+    @apply bg-blue-50 text-blue-400 px-0.5 py-0.5 rounded text-sm;
+  }
 }
