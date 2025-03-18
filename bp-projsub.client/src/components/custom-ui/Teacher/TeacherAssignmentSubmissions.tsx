@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, FolderArchive, Loader2, Star, Upload } from "lucide-react";
+import { ChevronDown, Eye, FolderArchive, Loader2, Star, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -19,6 +19,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AssignmentViewLogDto } from "@/Dtos/AssignmentViewLogDto";
+import PlagiarismDialog from "../Dialogs/PlagiatismDialog";
+
 
 
 
@@ -37,7 +39,6 @@ export function TeacherAssignmentSubmissions() {
     const getAssignmentFromCache = () => {
         try {
             const assignments = queryClient.getQueryData<AssignmentDto[]>(['assignments', subjectId]);
-            // console.log('Cached Assignment:', assignments);
 
             const assignment = assignments?.find(a => a.id === Number(assignmentId));
 
@@ -145,33 +146,37 @@ export function TeacherAssignmentSubmissions() {
             <h2 className="text-xl font-semibold mt-4 flex">Submissions
                 {
                     submissions && submissions.length > 0 && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild className="ml-auto">
-                                <Button variant="ghost" size={'sm'}>
-                                    {
-                                        isExportLoading ?
-                                            (<><Loader2 className="h-4 w-4 animate-spin" /> Exporting...</>) :
-                                            (<><Upload /> Export</>)
-                                    }
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="center" className="w-auto">
-                                <DropdownMenuItem
-                                    onSelect={() => {
-                                        getExportSubmissionRatings();
-                                    }}>
-                                    <Star className="mr-2" />
-                                    Export Ratings
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onSelect={() => {
-                                        getExportSubmissionsFiles();
-                                    }}>
-                                    <FolderArchive className="mr-2" />
-                                    Export Submissions
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="ml-auto">
+                            <PlagiarismDialog assignmentId={Number(assignmentId)} />
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild className="">
+                                    <Button variant="ghost" size={'sm'}>
+                                        {
+                                            isExportLoading ?
+                                                (<><Loader2 className="h-4 w-4 animate-spin" /> Exporting...</>) :
+                                                (<><Upload /> Export</>)
+                                        }
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="center" className="w-auto">
+                                    <DropdownMenuItem
+                                        onSelect={() => {
+                                            getExportSubmissionRatings();
+                                        }}>
+                                        <Star className="mr-2" />
+                                        Export Ratings
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onSelect={() => {
+                                            getExportSubmissionsFiles();
+                                        }}>
+                                        <FolderArchive className="mr-2" />
+                                        Export Submissions
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     )
                 }
             </h2>
@@ -197,7 +202,7 @@ export function TeacherAssignmentSubmissions() {
                                 {submission.isSuspicious && (
                                     <HoverCard>
                                         <HoverCardTrigger>
-                                            <Badge className="bg-red-500">Suspicious</Badge>
+                                            <Badge className="bg-red-500">Multiple IPs</Badge>
                                         </HoverCardTrigger>
                                         <HoverCardContent className="space-y-1 w-fit p-0">
                                             <div className="max-h-64 overflow-y-auto p-2">
@@ -243,7 +248,10 @@ export function TeacherAssignmentSubmissions() {
                                     </HoverCard>
                                 )}
                                 <Link to={`submission/${submission.id}`}>
-                                    <Button variant="outline">View</Button>
+                                    <Button variant="outline">
+                                        <Eye />
+                                        View
+                                    </Button>
                                 </Link>
                             </div>
                         </Card>

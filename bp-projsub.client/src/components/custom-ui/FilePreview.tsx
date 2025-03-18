@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
 import { useAuth } from "@/context/UserContext";
-import CommentDialog from "./CommentDialog";
+import CommentDialog from "./Dialogs/CommentDialog";
 
 const getFileLanguage = (fileName: string): string => {
     const extension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -218,7 +218,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                 submissionId={submissionId}
                 fileName={fileName!}
             />
-         
+
         </>
     );
 };

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "../ui/use-toast";
 import {
     Dialog,
     DialogContent,
@@ -9,8 +8,9 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "../ui/button";
 import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface CommentDialogProps {
     isOpen: boolean;

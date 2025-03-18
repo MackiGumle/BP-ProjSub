@@ -877,9 +877,8 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { Message = $"No extensions found for language: {language}" });
                 }
 
- 
-                return Ok(new { Link = "http://moss.stanford.edu/results/1/8403766510050/", Message = "Plagiatism check finished." });
-
+                // TODO: smazat
+                // return Ok(new { Link = "http://moss.stanford.edu/results/1/8403766510050/", Message = "Plagiatism check finished." });
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
 
