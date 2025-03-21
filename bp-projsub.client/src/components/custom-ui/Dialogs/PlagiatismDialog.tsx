@@ -35,7 +35,7 @@ const PlagiarismDialog: React.FC<PlagiarismDialogProps> = ({ assignmentId }) => 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className='gap-0'>
                     <ScanEye className="mr-2" />
                     Plagiarism Check
                 </Button>
@@ -46,31 +46,45 @@ const PlagiarismDialog: React.FC<PlagiarismDialogProps> = ({ assignmentId }) => 
                     <RadioGroup value={selectedLanguage} onValueChange={setSelectedLanguage} className="grid grid-cols-2 gap-4">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="csharp" id="csharp" />
-                            <label htmlFor="csharp">C#</label>
+                            <label htmlFor="csharp">
+                                C# <span className="text-gray-400 text-sm">(.cs)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="java" id="java" />
-                            <label htmlFor="java">Java</label>
+                            <label htmlFor="java">
+                                Java <span className="text-gray-400 text-sm">(.java)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="python" id="python" />
-                            <label htmlFor="python">Python</label>
+                            <label htmlFor="python">
+                                Python <span className="text-gray-400 text-sm">(.py)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="javascript" id="javascript" />
-                            <label htmlFor="javascript">JavaScript</label>
+                            <label htmlFor="javascript">
+                                JavaScript <span className="text-gray-400 text-sm">(.js)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="c" id="c" />
-                            <label htmlFor="c">C</label>
+                            <label htmlFor="c">
+                                C <span className="text-gray-400 text-sm">(.c, .h)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="cc" id="cc" />
-                            <label htmlFor="cc">C++</label>
+                            <label htmlFor="cc">
+                                C++ <span className="text-gray-400 text-sm">(.cpp, .h)</span>
+                            </label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="haskell" id="haskell" />
-                            <label htmlFor="haskell">Haskell</label>
+                            <label htmlFor="haskell">
+                                Haskell <span className="text-gray-400 text-sm">(.hs)</span>
+                            </label>
                         </div>
                     </RadioGroup>
                     {error && <p className="text-red-500">{error}</p>}

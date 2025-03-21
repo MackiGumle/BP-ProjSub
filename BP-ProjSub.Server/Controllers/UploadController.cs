@@ -941,7 +941,7 @@ namespace BP_ProjSub.Server.Controllers
                     Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
                 }
 
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during plagiatism check.", Error = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during plagiarism check.", Error = ex.Message });
             }
 
         }

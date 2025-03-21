@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Eye, FolderArchive, Loader2, Star, Upload } from "lucide-react";
+import { ChevronDown, Eye, FolderArchive, Loader2, Pencil, Star, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -108,7 +108,14 @@ export function TeacherAssignmentSubmissions() {
                 >
                     <Card className="rounded-lg overflow-hidden">
                         <CollapsibleTrigger className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                            <span className="text-xl font-semibold">{assignment?.title}</span>
+                            <div className="flex items-center space-x-2">
+                                <Link to={`edit/`}>
+                                    <Button variant="outline" className="p-2">
+                                        <Pencil className="" />
+                                    </Button>
+                                </Link>
+                                <span className="text-xl font-semibold">{assignment?.title}</span>
+                            </div>
                             <span className="text-muted-foreground">{assignment?.dueDate && "Due: " + new Date(assignment.dueDate).toLocaleString()}</span>
                             <ChevronDown
                                 className={`h-5 w-5 transition-transform duration-200 ${isAssignmentOpen ? 'rotate-180' : ''
@@ -147,7 +154,7 @@ export function TeacherAssignmentSubmissions() {
                 {
                     submissions && submissions.length > 0 && (
                         <div className="ml-auto">
-                            <PlagiarismDialog assignmentId={Number(assignmentId)} />
+                            {submissions.length > 1 && (<PlagiarismDialog assignmentId={Number(assignmentId)} />)}
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild className="">

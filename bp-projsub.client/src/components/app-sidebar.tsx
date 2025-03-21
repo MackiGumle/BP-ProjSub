@@ -111,15 +111,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SubjectSwitcher />
         <div className="flex items-center mt-2">
           <SearchForm className="flex-grow" />
-
-          {/* {subjectId && hasRole("Teacher") && (
-            <SidebarMenuButton
-              className="shrink-0 p-0 w-6 h-6 flex items-center justify-center"
-              onClick={() => console.log("Create assignment")}
-            >
-              <Plus className="h-6 w-6" />
-            </SidebarMenuButton>
-          )} */}
         </div>
       </SidebarHeader>
       <SidebarContent className="">
@@ -179,13 +170,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               <SidebarMenuAction className="flex items-center">
                                 {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
-                                {hasRole("Teacher") && (
+                                {/* {hasRole("Teacher") && (
                                   <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
                                     <div className="">
                                       <Pencil className="w-6 h-6 p-1" />
                                     </div>
                                   </Link>
-                                )}
+                                )} */}
                               </SidebarMenuAction>
                             </div>
                           </SidebarMenuItem>

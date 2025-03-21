@@ -9,8 +9,8 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AccountPage } from "@/pages/AccountPage";
 import { TestingPage } from "@/pages/TestingPage";
-import { ManageSubject } from "@/components/custom-ui/Teacher/ManageSubject";
-import { AssignmentSubmissions } from "@/components/custom-ui/AssignmentSubmissions";
+import { ManageSubjectPage } from "@/pages/teacher/ManageSubjectPage";
+import { AssignmentSubmissionsPage } from "@/pages/AssignmentSubmissionsPage";
 import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
 import { AssignmentEdit } from "@/components/custom-ui/Teacher/AssignmentEdit";
@@ -29,12 +29,11 @@ export const router = createBrowserRouter([
                     {
                         path: "subject/:subjectId", element: <Outlet />,
                         children: [
-                            { path: "manage/", element: <ManageSubject /> },
-                            { path: "create/", element: <CreateSubjectForm /> },
+                            { path: "manage/", element: <ManageSubjectPage /> },
                             {
                                 path: "assignments/:assignmentId", element: <Outlet />,
                                 children: [
-                                    { path: "", element: <AssignmentSubmissions /> },
+                                    { path: "", element: <AssignmentSubmissionsPage /> },
                                     { path: "submission/:submissionId", element: <SubmissionBrowser /> },
                                     { path: "edit/", element: <AssignmentEdit /> },
                                 ]
@@ -42,7 +41,7 @@ export const router = createBrowserRouter([
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },
                         ]
                     },
-
+                    { path: "createsubject/", element: <CreateSubjectForm /> },
                 ],
             },
             // { path: "register", element: <RegisterPage /> },

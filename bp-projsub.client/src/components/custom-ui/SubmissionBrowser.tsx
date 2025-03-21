@@ -107,21 +107,6 @@ export function SubmissionBrowser() {
         <>
             {
                 submissionId ? (
-                    // <div className="min-w-full max-w-full min-h-full max-h-full">
-                    // <div className="w-full h-full">
-                    // <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                    //     <ResizablePanel defaultSize={15}>
-                    //         <div className="overflow-auto">
-                    //             <TOCWrapper submissionId={submissionId} />
-                    //         </div>
-                    //     </ResizablePanel>
-                    //     <ResizableHandle withHandle />
-                    //     <ResizablePanel defaultSize={85}>
-                    //         <div className="overflow-auto">
-                    //             <FilePreviewer submissionId={submissionId} fileName={fileName} />
-                    //         </div>
-                    //     </ResizablePanel>
-                    // </ResizablePanelGroup>
                     <>
                         <div className="flex justify-between items-center p-1 text-muted-foreground">
                             <div>
@@ -134,9 +119,6 @@ export function SubmissionBrowser() {
                             <div className="">
                                 {partialSubmission?.rating ?? '-'} / {assignment?.maxPoints} points
                             </div>
-                            {/* <Button variant="default" className="mr-2"
-                                    onClick={() => console.log(partialSubmission)}>Rate</Button> */}
-                            {/* The Rate button (DialogTrigger) */}
                             <div>
                                 {getRole() === "Teacher" && (
                                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

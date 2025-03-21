@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function AssignmentEdit() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" , disableRefetch: true });
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment, refetch } = useAssignmentQuery({ assignmentId: assignmentId || "" , disableRefetch: true });
     const [description, setDescription] = useState("")
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -69,15 +69,15 @@ export function AssignmentEdit() {
                     {/* </div> */}
                     {/* <Separator /> */}
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                        <ResizablePanel defaultSize={10}>
-                            <div className="flex flex-col h-full">
+                        <ResizablePanel defaultSize={10} className="sticky top-0">
+                            <div className="flex flex-col h-auto">
                                 <div className="flex-grow overflow-y-auto">
                                     <TOCWrapper
                                         endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
                                         contextMenu={true}
                                     />
                                 </div>
-                                <div className="sticky top-5">
+                                <div className="">
                                     <UppyDragDrop
                                         endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
                                         invalidateQueries={[

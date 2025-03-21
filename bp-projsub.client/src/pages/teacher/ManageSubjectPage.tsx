@@ -2,11 +2,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubjectDto } from "@/Dtos/SubjectDto";
 import { useSubjectsQuery } from "@/hooks/useCustomQuery";
 import { useParams } from "react-router-dom";
-import { ManageStudents } from "./ManageStudents";
+import { ManageStudents } from "../../components/custom-ui/Teacher/ManageStudents";
 import { EditSubjectForm } from "@/components/forms/teacher/EditSubjectForm";
 import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
 
-export function ManageSubject() {
+export function ManageSubjectPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const { data: subjects, isLoading: isSubjectsLoading, error: errorSubjecst } = useSubjectsQuery();
 

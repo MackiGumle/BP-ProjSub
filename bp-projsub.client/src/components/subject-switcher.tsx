@@ -46,7 +46,8 @@ export function SubjectSwitcher() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
             {hasRole("Teacher") && (
-              <Link to={`subject/${subjectId}/create`}>
+              // <Link to={`subject/${subjectId}/create`}>
+              <Link to={`createsubject/`}>
                 <DropdownMenuItem>
                   <Plus className="mr-2 " />
                   Create subject

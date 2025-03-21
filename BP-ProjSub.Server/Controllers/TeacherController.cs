@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Azure.Storage.Blobs;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
@@ -28,12 +29,16 @@ namespace BP_ProjSub.Server.Controllers
         private readonly TokenService _tokenService;
         private readonly ResourceAccessService _resourceAccessService;
         private readonly IHostEnvironment _env;
+        private readonly IConfiguration _config;
+        private readonly BlobServiceClient _blobServiceClient;
+
 
         public TeacherController(
             UserManager<Person> userManager, BakalarkaDbContext dbContext,
             SubjectService subjectService, EmailService emailService,
             AccountService accountService, TokenService tokenService,
-            ResourceAccessService resourceAccessService, IHostEnvironment env)
+            ResourceAccessService resourceAccessService, IHostEnvironment env,
+            IConfiguration config)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -43,6 +48,8 @@ namespace BP_ProjSub.Server.Controllers
             _tokenService = tokenService;
             _resourceAccessService = resourceAccessService;
             _env = env;
+            _config = config;
+            _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
         }
 
         [HttpPost("CreateSubject")]
@@ -556,10 +563,25 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                // if (assignment.Submissions.Count > 0)
-                // {
-                //     return BadRequest(new { message = "Assignment has submissions." });
-                // }
+                // Remove attachments from azure blob storage at /assignments/assignmentId/
+                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
+                var prefix = $"{assignmentId}/";
+
+                await foreach (var blobItem in containerClient.GetBlobsAsync(prefix: prefix))
+                {
+                    var blobClient = containerClient.GetBlobClient(blobItem.Name);
+                    await blobClient.DeleteIfExistsAsync();
+                }
+
+                // Remove submissions from azure blob storage at /submissions/assignmentId/
+                var submissionsContainerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+                var submissionsPrefix = $"{assignmentId}/";
+
+                await foreach (var blobItem in submissionsContainerClient.GetBlobsAsync(prefix: submissionsPrefix))
+                {
+                    var blobClient = submissionsContainerClient.GetBlobClient(blobItem.Name);
+                    await blobClient.DeleteIfExistsAsync();
+                }
 
                 _dbContext.Assignments.Remove(assignment);
                 await _dbContext.SaveChangesAsync();

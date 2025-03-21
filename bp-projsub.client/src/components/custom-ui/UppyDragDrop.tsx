@@ -17,7 +17,6 @@ interface UppyDragDropProps {
 
 
 export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: UppyDragDropProps) {
-    // console.log('UppyDragDrop rendered endpoint:', endpoint)
 
     function createUppy() {
         const uppy = new Uppy({

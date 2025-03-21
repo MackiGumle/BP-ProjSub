@@ -69,12 +69,10 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
       );
 
       toast({ title: "Success", description: "File renamed successfully.", variant: "default" })
-      console.log('File renamed successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
       setNewFileName('');
     } catch (error) {
       toast({ title: "Error", description: "Error renaming file.", variant: "destructive" })
-      console.error('Error renaming file:', error);
       setNewFileName(element.name);
     }
   };
@@ -91,11 +89,9 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
 
 
       toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "default" })
-      console.log('File deleted successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
     } catch (error) {
       toast({ title: "Error", description: "Error deleting file.", variant: "destructive" })
-      console.error('Error deleting file:', error);
     }
   };
 

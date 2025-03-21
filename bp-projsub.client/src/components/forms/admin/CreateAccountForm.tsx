@@ -48,15 +48,10 @@ export default function CreateAccountForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await axios.post("api/Admin/createAccount", values).then(response => {
-      console.log(response);
       toast({ title: "Success", description: response.data.message });
     }
     ).catch(error => {
-      // console.error(error);
-      console.log(error.response.data.message);
       toast({ title: "Error", description: error.response.data.message, variant: "destructive" });
-
-      
     });
   }
 

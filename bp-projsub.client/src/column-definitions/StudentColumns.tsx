@@ -15,17 +15,4 @@ export const StudentColumns: ColumnDef<StudentDto>[] = [
         header: () => <div className="text-center">Email</div>,
         cell: ({ row }) => <div className="">{row.getValue("email")}</div>,
     },
-    // {
-    //     id: "delete",
-    //     cell: ({ row }) => {
-    //         const student = row.original
-    //         const { subjectId } = useParams<{ subjectId: string }>();
-
-    //         return (
-    //             <Button variant="ghost" onClick={() => {console.log("Delete student", student);} }>
-    //                 <Trash2 />
-    //             </Button>
-    //         )
-    //     },
-    // }
 ];
