@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using MimeTypes;
 
 namespace BP_ProjSub.Server.Controllers
 {
@@ -31,6 +32,7 @@ namespace BP_ProjSub.Server.Controllers
         private readonly BlobServiceClient _blobServiceClient;
         private long maxFileSize = 5 * 1024 * 1024; // 5MB
         private long maxTotalSize = 20 * 1024 * 1024; // 20MB
+        private int maxFiles = 50; // Max number of files per upload
         private List<string> allowedExtensions { get; }
 
         public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext,
@@ -43,6 +45,7 @@ namespace BP_ProjSub.Server.Controllers
 
             maxFileSize = long.Parse(_config["Uploads:MaxFileSize"]!);
             maxTotalSize = long.Parse(_config["Uploads:MaxTotalSize"]!);
+            maxFiles = int.Parse(_config["Uploads:MaxFiles"]!);
             allowedExtensions = _config.GetSection("Uploads:AllowedFileExtensions").Get<List<string>>() ?? new List<string>();
             _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
         }
@@ -79,6 +82,12 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "No files received from the upload." });
                 }
 
+                var fileCount = files.Count;
+                if (fileCount > maxFiles)
+                {
+                    return BadRequest(new { message = $"Maximum number of files exceeded. Max files: {maxFiles}." });
+                }
+
                 var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
                 if (!access)
                 {
@@ -90,15 +99,27 @@ namespace BP_ProjSub.Server.Controllers
                 foreach (var file in files)
                 {
                     var extension = Path.GetExtension(file.FileName).ToLower();
-                    if (!allowedExtensions.Contains("*") && !allowedExtensions.Contains(extension))
+
+                    if (FileValidationHelper.ValidateFileExtension(extension, allowedExtensions))
                     {
                         return BadRequest(new { message = $"Invalid file extension '{extension}'." });
                     }
+
                     if (file.Length > maxFileSize)
                     {
                         return BadRequest(new { message = $"File {file.FileName} exceeds the maximum filesize of {maxFileSize} bytes." });
                     }
-                    totalSize += file.Length;
+
+                    if (extension == ".zip")
+                    {
+                        // TODO: validate ValidateZipFileSize 
+                    }
+                    else
+                    {
+                        totalSize += file.Length;
+                    }
+
+
                     if (totalSize > maxTotalSize)
                     {
                         return BadRequest(new { message = $"Total size of all files exceeds the maximum total size of {maxTotalSize} bytes." });
@@ -126,63 +147,138 @@ namespace BP_ProjSub.Server.Controllers
                 // Upload each file
                 foreach (var file in files)
                 {
-                    // Split the filename to preserve folder structure
-                    var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
-                    if (fileNameParts.Length == 0)
+                    var extension = Path.GetExtension(file.FileName).ToLower();
+                    // If the file is a zip archive, unzip and process its entries.
+                    if (extension == ".zip")
                     {
-                        return BadRequest(new { message = "Empty filename." });
-                    }
+                        // Use the zip filename (without extension) as the folder name
+                        var zipFolderName = Path.GetFileNameWithoutExtension(file.FileName);
 
-                    // Validate directory parts to prevent directory traversal
-                    var fileName = fileNameParts.Last();
-                    var directoryParts = fileNameParts.Length > 1 ? fileNameParts.Take(fileNameParts.Length - 1).ToArray() : Array.Empty<string>();
-
-                    foreach (var part in directoryParts)
-                    {
-                        if (part == "." || part == "..")
+                        using (var zipStream = file.OpenReadStream())
+                        using (var archive = new ZipArchive(zipStream))
                         {
-                            return BadRequest(new { message = "Directory traversal in filename." });
+                            foreach (var entry in archive.Entries)
+                            {
+                                // Skip directories (entries with empty names)
+                                if (string.IsNullOrEmpty(entry.Name))
+                                {
+                                    continue;
+                                }
+
+                                // Split the entry path to preserve any folder structure inside the zip
+                                var entryPathParts = entry.FullName.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
+                                // Validate each part to avoid directory traversal
+                                foreach (var part in entryPathParts)
+                                {
+                                    if (part == "." || part == "..")
+                                    {
+                                        return BadRequest(new { message = "Invalid file path in zip due to directory traversal." });
+                                    }
+                                    if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                                    {
+                                        return BadRequest(new { message = $"Invalid characters in directory name '{part}' in zip file." });
+                                    }
+                                }
+                                var fileName = entryPathParts.Last();
+                                if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                                {
+                                    return BadRequest(new { message = $"Invalid characters in filename '{fileName}' in zip file." });
+                                }
+
+                                // Construct the blob name:
+                                // assignmentId/userName/uploadId/zipFolderName/[subfolders]/filename
+                                blobName = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
+                                if (entryPathParts.Length > 1)
+                                {
+                                    // Include any subfolders from the zip entry (excluding the file name)
+                                    var subFolders = entryPathParts.Take(entryPathParts.Length - 1);
+                                    blobName += "/" + string.Join("/", subFolders);
+                                }
+                                blobName += "/" + fileName;
+
+                                // (Optional) Validate that the resolved full path is inside the intended folder
+                                var targetDir = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
+                                var resolvedFullPath = Path.GetFullPath(blobName);
+                                var targetDirFullPath = Path.GetFullPath(targetDir);
+                                if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                                {
+                                    return BadRequest(new { message = "Invalid file path in zip due to directory traversal." });
+                                }
+
+                                // Upload the file entry to blob storage
+                                var blobClient = containerClient.GetBlobClient(blobName);
+                                var blobHttpHeaders = new BlobHttpHeaders
+                                {
+                                    // https://github.com/samuelneff/MimeTypeMap
+                                    ContentType = MimeTypeMap.GetMimeType(fileName)
+                                };
+
+                                // Open the entry stream and upload
+                                using (var entryStream = entry.Open())
+                                {
+                                    await blobClient.UploadAsync(entryStream, new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
+                                }
+                            }
                         }
-                        if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    }
+                    else
+                    {
+                        // Split the filename to preserve folder structure
+                        var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                        if (fileNameParts.Length == 0)
                         {
-                            return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
+                            return BadRequest(new { message = "Empty filename." });
                         }
+
+                        // Validate directory parts to prevent directory traversal
+                        var fileName = fileNameParts.Last();
+                        var directoryParts = fileNameParts.Length > 1 ? fileNameParts.Take(fileNameParts.Length - 1).ToArray() : Array.Empty<string>();
+
+                        foreach (var part in directoryParts)
+                        {
+                            if (part == "." || part == "..")
+                            {
+                                return BadRequest(new { message = "Directory traversal in filename." });
+                            }
+                            if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                            {
+                                return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
+                            }
+                        }
+                        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                        {
+                            return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
+                        }
+
+                        var targetDir = $"submissions/{assignmentId}/{userName}/{uploadId}";
+                        var fullPath = Path.Combine(targetDir, file.FileName);
+                        // Absolute path check for directory traversal
+                        var resolvedFullPath = Path.GetFullPath(fullPath);
+                        var targetDirFullPath = Path.GetFullPath(targetDir);
+                        if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                        {
+                            return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                        }
+
+                        // Construct the blob name from folder structure: 
+                        // assignmentId/userName/uploadId/[subfolders]/filename
+                        blobName = $"{assignmentId}/{userName}/{uploadId}";
+                        if (directoryParts.Length > 0)
+                        {
+                            blobName += "/" + string.Join("/", directoryParts);
+                        }
+                        blobName += "/" + fileName;
+
+                        // Upload the file stream and set file content type
+                        var blobClient = containerClient.GetBlobClient(blobName);
+                        var blobHttpHeaders = new BlobHttpHeaders
+                        {
+                            ContentType = file.ContentType
+                        };
+
+                        await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
                     }
-                    if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-                    {
-                        return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
-                    }
-
-                    var targetDir = $"submissions/{assignmentId}/{userName}/{uploadId}";
-                    var fullPath = Path.Combine(targetDir, file.FileName);
-                    // Absolute path check for directory traversal
-                    var resolvedFullPath = Path.GetFullPath(fullPath);
-                    var targetDirFullPath = Path.GetFullPath(targetDir);
-                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                    {
-                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    }
-
-
-                    // Construct the blob name from folder structure: 
-                    // assignmentId/userName/uploadId/[subfolders]/filename
-                    blobName = $"{assignmentId}/{userName}/{uploadId}";
-                    if (directoryParts.Length > 0)
-                    {
-                        blobName += "/" + string.Join("/", directoryParts);
-                    }
-                    blobName += "/" + fileName;
-
-                    // Upload the file stream and set file content type
-                    var blobClient = containerClient.GetBlobClient(blobName);
-                    var blobHttpHeaders = new BlobHttpHeaders
-                    {
-                        ContentType = file.ContentType
-                    };
-
-                    await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
                 }
-
                 // Save submission details to the database
                 var relativePath = $"{assignmentId}/{userName}/{uploadId}";
                 var submission = new Submission

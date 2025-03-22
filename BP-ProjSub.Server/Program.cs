@@ -147,6 +147,7 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<StudentService>();
             builder.Services.AddScoped<ResourceAccessService>();
+            builder.Services.AddScoped<AssignmentService>();
 
 
 

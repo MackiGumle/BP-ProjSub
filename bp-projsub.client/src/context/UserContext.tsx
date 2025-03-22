@@ -131,7 +131,7 @@ export const UserProvider = ({ children }: Props) => {
         const remainingTime = expirationTime.getTime() - currentTime.getTime();
         const refreshThreshold = 10 * 60 * 1000;
 
-        console.log("Time before token refresh:", (remainingTime - refreshThreshold) / 60000, "minutes");
+        console.log("Time before token refresh:", new Date(remainingTime - refreshThreshold).toISOString().substr(11, 8));
 
         if (remainingTime > refreshThreshold) {
           return config;

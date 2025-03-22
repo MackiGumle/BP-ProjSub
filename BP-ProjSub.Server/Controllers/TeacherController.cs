@@ -31,6 +31,7 @@ namespace BP_ProjSub.Server.Controllers
         private readonly IHostEnvironment _env;
         private readonly IConfiguration _config;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly AssignmentService _assignmentService;
 
 
         public TeacherController(
@@ -38,7 +39,7 @@ namespace BP_ProjSub.Server.Controllers
             SubjectService subjectService, EmailService emailService,
             AccountService accountService, TokenService tokenService,
             ResourceAccessService resourceAccessService, IHostEnvironment env,
-            IConfiguration config)
+            IConfiguration config, AssignmentService assignmentService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -50,6 +51,7 @@ namespace BP_ProjSub.Server.Controllers
             _env = env;
             _config = config;
             _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
+            _assignmentService = assignmentService;
         }
 
         [HttpPost("CreateSubject")]
@@ -397,6 +399,39 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpDelete("DeleteSubject/{subjectId}")]
+        public async Task<IActionResult> DeleteSubject(int subjectId)
+        {
+            try
+            {
+                if (subjectId < 0)
+                {
+                    return BadRequest(new { message = "Invalid subject ID" });
+                }
+
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                try
+                {
+                    await _subjectService.DeleteSubjectAsync(subjectId, personId);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return NotFound(new { message = ex.Message });
+                }
+
+                return Ok(new { message = "Subject deleted." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
         [HttpPut("EditAssignment")]
         public async Task<IActionResult> EditAssignment([FromBody] EditAssignmentDto model)
         {
@@ -554,37 +589,7 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                var assignment = await _dbContext.Assignments
-                    // .Include(a => a.Submissions)
-                    .FirstOrDefaultAsync(a => a.Id == assignmentId);
-
-                if (assignment == null)
-                {
-                    return NotFound(new { message = "Assignment not found." });
-                }
-
-                // Remove attachments from azure blob storage at /assignments/assignmentId/
-                var containerClient = _blobServiceClient.GetBlobContainerClient("assignments");
-                var prefix = $"{assignmentId}/";
-
-                await foreach (var blobItem in containerClient.GetBlobsAsync(prefix: prefix))
-                {
-                    var blobClient = containerClient.GetBlobClient(blobItem.Name);
-                    await blobClient.DeleteIfExistsAsync();
-                }
-
-                // Remove submissions from azure blob storage at /submissions/assignmentId/
-                var submissionsContainerClient = _blobServiceClient.GetBlobContainerClient("submissions");
-                var submissionsPrefix = $"{assignmentId}/";
-
-                await foreach (var blobItem in submissionsContainerClient.GetBlobsAsync(prefix: submissionsPrefix))
-                {
-                    var blobClient = submissionsContainerClient.GetBlobClient(blobItem.Name);
-                    await blobClient.DeleteIfExistsAsync();
-                }
-
-                _dbContext.Assignments.Remove(assignment);
-                await _dbContext.SaveChangesAsync();
+                await _assignmentService.DeleteAssignmentAsync(assignmentId);
 
                 return Ok(new { message = "Assignment deleted." });
             }

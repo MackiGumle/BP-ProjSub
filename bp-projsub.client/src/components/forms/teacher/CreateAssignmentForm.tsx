@@ -15,7 +15,7 @@ import {
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+// import { Textarea } from "@/components/ui/textarea"
 import { DatetimePicker } from "@/components/ui/datetime-picker"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 
@@ -30,7 +30,7 @@ export function CreateAssignmentForm({
     defaultValues: {
       type: "Homework",
       title: "",
-      description: "",
+      // description: "",
       dateAssigned: new Date(Date.now()).toISOString(),
       dueDate: new Date(Date.now()).toISOString(),
       maxPoints: "",
@@ -46,7 +46,7 @@ export function CreateAssignmentForm({
       SubjectId: subjectId,
       Type: values.type,
       Title: values.title,
-      Description: values.description,
+      // Description: values.description,
       DateAssigned: values.dateAssigned ? new Date(values.dateAssigned).toISOString() : undefined,
       DueDate: values.dueDate ? new Date(values.dueDate).toISOString() : undefined,
       MaxPoints: values.maxPoints ? Number(values.maxPoints) : undefined,
@@ -104,7 +104,7 @@ export function CreateAssignmentForm({
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
@@ -120,7 +120,7 @@ export function CreateAssignmentForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 control={form.control}

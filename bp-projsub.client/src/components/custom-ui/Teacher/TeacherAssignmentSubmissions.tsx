@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Eye, FolderArchive, Loader2, Pencil, Star, Upload } from "lucide-react";
+import { CalendarCog, ChevronDown, Eye, FolderArchive, LetterText, Loader2, Pencil, Star, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AssignmentViewLogDto } from "@/Dtos/AssignmentViewLogDto";
 import PlagiarismDialog from "../Dialogs/PlagiatismDialog";
+import { toast } from "@/components/ui/use-toast";
+import { ConfirmActionDialog } from "../Dialogs/ConfirmActionDialog";
 
 
 
@@ -35,6 +37,8 @@ export function TeacherAssignmentSubmissions() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
     const [isAssignmentOpen, setAssignmentOpen] = useState<boolean | undefined>(false);
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
+
 
     const getAssignmentFromCache = () => {
         try {
@@ -95,6 +99,17 @@ export function TeacherAssignmentSubmissions() {
             });
     }
 
+    const handleAssignmentDelete = async () => {
+        try {
+            await axios.delete(`/api/Teacher/DeleteAssignment/${assignmentId}`);
+            queryClient.invalidateQueries(["assignments", subjectId]);
+            toast({ title: "Success", description: "Assignment deleted successfully.", variant: "default" })
+            navigate("../", { replace: true });
+        } catch (error) {
+            toast({ title: "Error", description: "Error deleting assignment file.", variant: "destructive" })
+        }
+    }
+
     return (
         <div className="w-full mx-auto p-6 space-y-4">
             {isAssignmentLoading ? (
@@ -108,19 +123,50 @@ export function TeacherAssignmentSubmissions() {
                 >
                     <Card className="rounded-lg overflow-hidden">
                         <CollapsibleTrigger className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                            <div className="flex items-center space-x-2">
-                                <Link to={`edit/`}>
-                                    <Button variant="outline" className="p-2">
-                                        <Pencil className="" />
-                                    </Button>
-                                </Link>
-                                <span className="text-xl font-semibold">{assignment?.title}</span>
+                            <span className="text-xl font-semibold">{assignment?.title}</span>
+                            <div className="flex flex-col space-y-1">
+                                <span className="text-sm text-muted-foreground">{assignment?.dateAssigned && "Assigned: " + new Date(assignment.dateAssigned).toLocaleString()}</span>
+                                <span className="text-sm text-muted-foreground">{assignment?.dueDate && "Due: " + new Date(assignment.dueDate).toLocaleString()}</span>
                             </div>
-                            <span className="text-muted-foreground">{assignment?.dueDate && "Due: " + new Date(assignment.dueDate).toLocaleString()}</span>
-                            <ChevronDown
-                                className={`h-5 w-5 transition-transform duration-200 ${isAssignmentOpen ? 'rotate-180' : ''
-                                    }`}
-                            />
+                            <div className="flex items-center space-x-1">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild className="">
+                                        <Button variant="outline" className="p-2">
+                                            <Pencil className="" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="center" className="w-auto">
+                                        <DropdownMenuItem>
+                                            <Link to={`editdetails/`} className="flex items-center space-x-2">
+                                                <CalendarCog />
+                                                <span>Edit Details</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <Link to={`editdescription/`} className="flex items-center space-x-2">
+                                                <LetterText />
+                                                <span>Edit Description</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <ConfirmActionDialog
+                                    title={`Confirm removal of '${assignment?.title}'`}
+                                    description="Are you sure you want to remove this assignment?"
+                                    onConfirm={handleAssignmentDelete}
+                                    triggerButton={
+                                        <Button variant="outline" className="p-2"
+                                            onClick={(e) => { e.stopPropagation() }}
+                                        >
+                                            <Trash2 />
+                                        </Button>
+                                    } />
+
+                                <ChevronDown
+                                    className={`h-5 w-5 transition-transform duration-200 ${isAssignmentOpen ? 'rotate-180' : ''
+                                        }`}
+                                />
+                            </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="px-6 py-4">
                             {/* <p className="text-gray-700">Popis zadání</p> */}

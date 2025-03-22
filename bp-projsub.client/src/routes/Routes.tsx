@@ -13,7 +13,8 @@ import { ManageSubjectPage } from "@/pages/teacher/ManageSubjectPage";
 import { AssignmentSubmissionsPage } from "@/pages/AssignmentSubmissionsPage";
 import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
-import { AssignmentEdit } from "@/components/custom-ui/Teacher/AssignmentEdit";
+import { AssignmentDescriptionEditPage } from "@/pages/teacher/AssignmentDescriptionEditPage";
+import { AssignmentDetailEditPage } from "@/pages/teacher/AssignmentDetailEditPage";
 
 
 
@@ -35,7 +36,8 @@ export const router = createBrowserRouter([
                                 children: [
                                     { path: "", element: <AssignmentSubmissionsPage /> },
                                     { path: "submission/:submissionId", element: <SubmissionBrowser /> },
-                                    { path: "edit/", element: <AssignmentEdit /> },
+                                    { path: "editdescription/", element: <AssignmentDescriptionEditPage /> },
+                                    { path: "editdetails/", element: <AssignmentDetailEditPage   /> },
                                 ]
                             },
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },

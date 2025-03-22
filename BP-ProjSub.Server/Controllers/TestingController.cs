@@ -113,7 +113,7 @@ namespace BP_ProjSub.Server.Controllers
         public async Task<IActionResult> ConsoleLog()
         {
             Console.WriteLine("Console log test");
-            return Ok();
+            return Ok(new { message = new string[] { "Console log test", "Console log test" } });
         }
     }
 }

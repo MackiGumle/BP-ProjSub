@@ -17,3 +17,13 @@ export interface CreateAssignmentDto {
   MaxPoints?: number
   SubjectId: number
 }
+
+export interface EditAssignmentDto {
+  Id: number;
+  Type: string;
+  Title: string;
+  Description?: string;
+  DateAssigned: Date;
+  DueDate?: Date;
+  MaxPoints?: number;
+}
