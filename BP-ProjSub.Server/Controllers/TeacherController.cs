@@ -515,7 +515,7 @@ namespace BP_ProjSub.Server.Controllers
                     Type = model.Type,
                     Title = model.Title,
                     Description = model.Description,
-                    DateAssigned = model.DateAssigned ?? DateTime.UtcNow,
+                    DateAssigned = model.DateAssigned ?? DateTime.Now,
                     DueDate = model.DueDate,
                     MaxPoints = model.MaxPoints,
                     SubjectId = model.SubjectId,
@@ -916,7 +916,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var comment = new SubmissionComment
                 {
-                    CommentDate = DateTime.UtcNow,
+                    CommentDate = DateTime.Now,
                     FileName = model.FileName,
                     LineCommented = model.LineCommented,
                     Comment = model.Comment,
@@ -983,7 +983,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var rating = new Rating
                 {
-                    Time = DateTime.UtcNow,
+                    Time = DateTime.Now,
                     Value = model.Rating,
                     Note = model.Note,
                     SubmissionId = model.SubmissionId,

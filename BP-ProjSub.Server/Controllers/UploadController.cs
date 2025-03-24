@@ -94,13 +94,14 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
+                #region Validate file extensions and sizes
                 // Validate file extensions and sizes
                 long totalSize = 0;
                 foreach (var file in files)
                 {
                     var extension = Path.GetExtension(file.FileName).ToLower();
 
-                    if (FileValidationHelper.ValidateFileExtension(extension, allowedExtensions))
+                    if (!FileValidationHelper.IsValidFileExtension(extension, allowedExtensions))
                     {
                         return BadRequest(new { message = $"Invalid file extension '{extension}'." });
                     }
@@ -112,32 +113,30 @@ namespace BP_ProjSub.Server.Controllers
 
                     if (extension == ".zip")
                     {
-                        // TODO: validate ValidateZipFileSize 
+                        (int count, long size) = FileValidationHelper.ValidateZipFileSize(file, maxFiles, maxFileSize);
+                        fileCount += count;
+                        if (fileCount > maxFiles)
+                        {
+                            return BadRequest(new { message = $"Maximum number of files exceeded. Max files: {maxFiles}." });
+                        }
+
+                        totalSize += size;
                     }
                     else
                     {
                         totalSize += file.Length;
                     }
 
-
                     if (totalSize > maxTotalSize)
                     {
                         return BadRequest(new { message = $"Total size of all files exceeds the maximum total size of {maxTotalSize} bytes." });
                     }
                 }
+                #endregion
 
-                // Check if student is in the subject
-                var assignment = await _dbContext.Assignments
-                    .Include(a => a.Subject.Students)
-                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Subject.Students.Any(s => s.PersonId == userId));
-
-                if (assignment == null)
-                {
-                    return NotFound(new { message = "Assignment not found" });
-                }
 
                 // var uploadId = Guid.NewGuid().ToString();
-                var uploadId = DateTime.UtcNow.ToString("dd_MM_yyyy_HH_mm_ss");
+                var uploadId = DateTime.Now.ToString("dd_MM_yyyy_HH_mm_ss");
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -151,21 +150,21 @@ namespace BP_ProjSub.Server.Controllers
                     // If the file is a zip archive, unzip and process its entries.
                     if (extension == ".zip")
                     {
-                        // Use the zip filename (without extension) as the folder name
-                        var zipFolderName = Path.GetFileNameWithoutExtension(file.FileName);
+                        // Use the zip filename as the folder name
+                        var zipFolderName = Path.GetFileNameWithoutExtension(file.FileName) + "_zip";
 
                         using (var zipStream = file.OpenReadStream())
                         using (var archive = new ZipArchive(zipStream))
                         {
                             foreach (var entry in archive.Entries)
                             {
-                                // Skip directories (entries with empty names)
-                                if (string.IsNullOrEmpty(entry.Name))
+                                // Skip directories
+                                if (entry.Name.IsNullOrEmpty())
                                 {
                                     continue;
                                 }
 
-                                // Split the entry path to preserve any folder structure inside the zip
+                                // Split the entry path
                                 var entryPathParts = entry.FullName.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
                                 // Validate each part to avoid directory traversal
                                 foreach (var part in entryPathParts)
@@ -190,13 +189,11 @@ namespace BP_ProjSub.Server.Controllers
                                 blobName = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
                                 if (entryPathParts.Length > 1)
                                 {
-                                    // Include any subfolders from the zip entry (excluding the file name)
                                     var subFolders = entryPathParts.Take(entryPathParts.Length - 1);
                                     blobName += "/" + string.Join("/", subFolders);
                                 }
                                 blobName += "/" + fileName;
 
-                                // (Optional) Validate that the resolved full path is inside the intended folder
                                 var targetDir = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
                                 var resolvedFullPath = Path.GetFullPath(blobName);
                                 var targetDirFullPath = Path.GetFullPath(targetDir);
@@ -283,7 +280,7 @@ namespace BP_ProjSub.Server.Controllers
                 var relativePath = $"{assignmentId}/{userName}/{uploadId}";
                 var submission = new Submission
                 {
-                    SubmissionDate = DateTime.UtcNow,
+                    SubmissionDate = DateTime.Now,
                     FileName = relativePath,
                     AssignmentId = assignmentId,
                     FileData = new byte[1], // TODO: remove this field from db

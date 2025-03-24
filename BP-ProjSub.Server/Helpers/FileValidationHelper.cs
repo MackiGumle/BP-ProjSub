@@ -11,7 +11,7 @@ public class FileValidationHelper
     /// <param name="fileName"></param>
     /// <param name="allowedExtensions"></param>
     /// <returns></returns>
-    public static bool ValidateFileExtension(string extension, IEnumerable<string> allowedExtensions)
+    public static bool IsValidFileExtension(string extension, IEnumerable<string> allowedExtensions)
     {
         return allowedExtensions.Contains("*") || allowedExtensions.Contains(extension);
     }
@@ -35,16 +35,12 @@ public class FileValidationHelper
         using (var zipStream = file.OpenReadStream())
         using (var archive = new ZipArchive(zipStream))
         {
-            if (maxFiles.HasValue && (fileCount += archive.Entries.Count) > maxFiles)
+            if (maxFiles.HasValue && ((fileCount += archive.Entries.Count) > maxFiles))
             {
                 throw new Exception($"Maximum number of files exceeded. Max files: {maxFiles}.");
             }
 
-            if (!maxFileSize.HasValue)
-            {
-                totalSize = archive.Entries.Sum(entry => entry.Length);
-            }
-            else
+            if (maxFileSize.HasValue)
             {
                 foreach (var entry in archive.Entries)
                 {
@@ -52,11 +48,44 @@ public class FileValidationHelper
                     {
                         throw new Exception($"File {entry.Name} in zip exceeds the maximum filesize of {maxFileSize} bytes.");
                     }
+
                     totalSize += entry.Length;
                 }
+            }
+            else
+            {
+                totalSize = archive.Entries.Sum(entry => entry.Length);
             }
         }
 
         return (fileCount, totalSize);
     }
+
+    // public static bool ValidatePathTraversal(string path, string allowedRootPath)
+    // {
+    //     if (path.Contains(".."))
+    //     {
+    //         return false;
+    //     }
+
+        
+    //     return Path.GetFullPath(path).StartsWith(allowedRootPath);
+    // }
+
+    // public static void ValidateZipEntries(IFormFile file)
+    // { // TODO: Implement this method
+    //     using (var zipStream = file.OpenReadStream())
+    //     using (var archive = new ZipArchive(zipStream))
+    //     {
+    //         foreach (var entry in archive.Entries)
+    //         {
+    //             var fullPath = Path.GetFullPath(entry.FullName);
+
+    //             if (entry.FullName.Contains(".."))
+    //             {
+    //                 throw new Exception("Invalid file path.");
+    //             }
+    //         }
+    //     }
+    // }
 }

@@ -12,7 +12,7 @@ export function AssignmentDetailEditPage() {
     }
     
     const { data: assignment, isLoading, error } = useAssignmentQuery({ assignmentId: assignmentId || "" });
-    
+
     return (
         <div className="mt-2">
             {isLoading && <div>Loading...</div>}

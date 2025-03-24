@@ -35,7 +35,7 @@ export function EditAssignmentForm({
         defaultValues: {
             type: (assignment.type as "Homework" | "Test" | "Project") || "Homework",
             title: assignment.title,
-            description: assignment.description,
+            description: assignment.description ?? "",
             dateAssigned: assignment.dateAssigned,
             dueDate: assignment.dueDate,
             maxPoints: assignment.maxPoints?.toString(),
@@ -47,6 +47,7 @@ export function EditAssignmentForm({
     })
 
     function onSubmit(values: AssignmentFormValues) {
+        console.log(values)
         const payload: EditAssignmentDto = {
             Id: assignment.id,
             Type: values.type,

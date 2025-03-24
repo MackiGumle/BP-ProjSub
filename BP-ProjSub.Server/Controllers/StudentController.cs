@@ -80,7 +80,7 @@ namespace BP_ProjSub.Server.Controllers
                 }
 
                 var assignments = await _dbContext.Assignments
-                    .Where(a => a.SubjectId == subjectId && a.DateAssigned <= DateTime.UtcNow)
+                    .Where(a => a.SubjectId == subjectId && a.DateAssigned <= DateTime.Now)
                     .OrderBy(a => a.DueDate)
                     .Select(a => new AssignmentDto
                     {
@@ -133,14 +133,14 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                if (assignment.Type == "Test" && assignment.DueDate > DateTime.UtcNow)
+                if (assignment.Type == "Test" && assignment.DueDate > DateTime.Now)
                 {
                     var assignmentViewLog = new AssignmentViewLog
                     {
                         AssignmentId = assignmentId,
                         UserId = userId,
                         IpAddress = Request.HttpContext.Connection.RemoteIpAddress?.ToString(),
-                        ViewedOn = DateTime.UtcNow
+                        ViewedOn = DateTime.Now
                     };
 
                     _dbContext.AssignmentViewLogs.Add(assignmentViewLog);

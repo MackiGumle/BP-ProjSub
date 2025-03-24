@@ -51,7 +51,7 @@ public class ResourceAccessService
 
         if (role == "Student")
         {
-            return assignment.Subject.Students.Any(s => s.PersonId == userId) && assignment.DateAssigned <= DateTime.UtcNow;
+            return assignment.Subject.Students.Any(s => s.PersonId == userId) && assignment.DateAssigned <= DateTime.Now;
         }
         if (role == "Teacher")
         {

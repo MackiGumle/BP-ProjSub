@@ -1,7 +1,6 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { Pencil } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -30,7 +29,7 @@ import { AssignmentDto } from "@/Dtos/AssignmentDto"
 
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { getRole, hasRole } = useAuth()
+  const { getRole } = useAuth()
   const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
 
   const [searchParams, setSearchParams] = useSearchParams()

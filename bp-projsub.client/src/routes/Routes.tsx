@@ -27,6 +27,8 @@ export const router = createBrowserRouter([
             {
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
+                    { path: "/account", element: <ProtectedRoute> <AccountPage /> </ProtectedRoute> },
+
                     {
                         path: "subject/:subjectId", element: <Outlet />,
                         children: [
@@ -37,7 +39,7 @@ export const router = createBrowserRouter([
                                     { path: "", element: <AssignmentSubmissionsPage /> },
                                     { path: "submission/:submissionId", element: <SubmissionBrowser /> },
                                     { path: "editdescription/", element: <AssignmentDescriptionEditPage /> },
-                                    { path: "editdetails/", element: <AssignmentDetailEditPage   /> },
+                                    { path: "editdetails/", element: <AssignmentDetailEditPage /> },
                                 ]
                             },
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },
@@ -57,7 +59,6 @@ export const router = createBrowserRouter([
                     { path: "activateaccount/:token", element: <ActivateAccountPage /> },
                 ],
             },
-            { path: "/account", element: <ProtectedRoute> <AccountPage /> </ProtectedRoute> },
             { path: "/testing", element: <TestingPage /> },
 
 

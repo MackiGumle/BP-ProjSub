@@ -69,7 +69,7 @@ export function AccountPage() {
   }
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="flex justify-center items-center mt-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Change Password</CardTitle>

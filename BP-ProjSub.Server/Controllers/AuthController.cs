@@ -59,7 +59,7 @@ namespace BP_ProjSub.Server.Controllers
                     Email = user.Email,
                     Token = _tokenService.CreateToken(user, roles as List<string>),
                     Roles = await _userManager.GetRolesAsync(user),
-                    Expires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
+                    Expires = DateTime.Now.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
                 };
 
                 return Ok(response);
@@ -101,7 +101,7 @@ namespace BP_ProjSub.Server.Controllers
                     Email = user.Email,
                     Token = _tokenService.CreateToken(user, roles as List<string>),
                     Roles = await _userManager.GetRolesAsync(user),
-                    Expires = DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
+                    Expires = DateTime.Now.AddMinutes(_config.GetValue<int>("Jwt:ExpirationInMinutes"))
                 };
 
                 return Ok(response);
