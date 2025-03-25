@@ -75,6 +75,39 @@ namespace BP_ProjSub.Server.Migrations
                     b.ToTable("Assignment", (string)null);
                 });
 
+            modelBuilder.Entity("BP_ProjSub.Server.Models.AssignmentViewLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("ViewedOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignmentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AssignmentViewLog", (string)null);
+                });
+
             modelBuilder.Entity("BP_ProjSub.Server.Models.Person", b =>
                 {
                     b.Property<string>("Id")
@@ -142,17 +175,17 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "3324d9a7-35c9-4ea6-86a5-3855e791cc48",
+                            Id = "85ac4046-558f-4ab1-a897-b0fdac17a42c",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "dfa50993-4e4e-407f-8563-4a08b6e9d255",
+                            ConcurrencyStamp = "73e3e9f7-6ba7-40a0-832f-49af21501a7b",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEB+VJ2mauzpimrheQNghjGhn2/qt9lDcjn0bsJYkqZNDMN5yvoonWqFZ8LHW1RVdQg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBHySyS1aouXB+Mz6CABoyTf7Kknmyh1pXAN7sT4XyNKiQXQO1MZ0eG7vLYnuyM7fQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "7f108645-b982-4fb4-9c45-699676f5b00b",
+                            SecurityStamp = "fcc24dd9-6cb8-4c1d-a223-4e835f855a0b",
                             TwoFactorEnabled = false,
                             UserName = "Admin"
                         });
@@ -337,19 +370,19 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "a1eed8ea-58bf-40a9-9578-26352aaf20a9",
+                            Id = "1be25c42-3789-4b52-a31e-48a3ac2bed20",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "f5a297a0-7411-41eb-9b68-cbfa7c90c1b2",
+                            Id = "3d6aca5b-bc78-41f3-a9f3-a45326e8a4fc",
                             Name = "Teacher",
                             NormalizedName = "TEACHER"
                         },
                         new
                         {
-                            Id = "076d001b-f25d-4546-8507-e42d5415fa3d",
+                            Id = "a8c691a8-0278-4053-9af6-1fa09c6aa42d",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -444,8 +477,8 @@ namespace BP_ProjSub.Server.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "3324d9a7-35c9-4ea6-86a5-3855e791cc48",
-                            RoleId = "a1eed8ea-58bf-40a9-9578-26352aaf20a9"
+                            UserId = "85ac4046-558f-4ab1-a897-b0fdac17a42c",
+                            RoleId = "1be25c42-3789-4b52-a31e-48a3ac2bed20"
                         });
                 });
 
@@ -526,6 +559,25 @@ namespace BP_ProjSub.Server.Migrations
                     b.Navigation("Subject");
 
                     b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("BP_ProjSub.Server.Models.AssignmentViewLog", b =>
+                {
+                    b.HasOne("BP_ProjSub.Server.Models.Assignment", "Assignment")
+                        .WithMany("AssignmentViewLogs")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BP_ProjSub.Server.Models.Student", "Student")
+                        .WithMany("AssignmentViewLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Rating", b =>
@@ -688,6 +740,8 @@ namespace BP_ProjSub.Server.Migrations
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Assignment", b =>
                 {
+                    b.Navigation("AssignmentViewLogs");
+
                     b.Navigation("Submissions");
                 });
 
@@ -702,6 +756,8 @@ namespace BP_ProjSub.Server.Migrations
 
             modelBuilder.Entity("BP_ProjSub.Server.Models.Student", b =>
                 {
+                    b.Navigation("AssignmentViewLogs");
+
                     b.Navigation("Submissions");
                 });
 

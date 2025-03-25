@@ -6,8 +6,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import CurrentUserButton from "@/components/custom-ui/CurrentUserButton"
-import { ThemeToggle } from "./theme-components/theme-toggle"
-import { useState } from "react"
 
 export default function AppPage({ children }: { children: React.ReactNode }) {
   // const [isAssignmentOpen] = useState<boolean | undefined>(true)
@@ -16,7 +14,7 @@ export default function AppPage({ children }: { children: React.ReactNode }) {
     <>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="flex flex-col overflow-hidden">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />

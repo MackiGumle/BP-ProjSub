@@ -10,7 +10,6 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
@@ -230,7 +229,7 @@ const Folder = forwardRef<
       children,
       ...props
     },
-    ref,
+    // ref,
   ) => {
     const {
       direction,
@@ -369,7 +368,6 @@ const CollapseButton = forwardRef<
   }, []);
 
   useEffect(() => {
-    console.log(expandAll);
     if (expandAll) {
       expendAllTree(elements);
     }

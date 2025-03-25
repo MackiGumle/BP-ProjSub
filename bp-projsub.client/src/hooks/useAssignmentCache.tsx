@@ -11,7 +11,6 @@ export function useAssignmentSubmissionsCache({ subjectId, assignmentId }: { sub
     const getAssignmentFromCache = () => {
         try {
             const assignments = queryClient.getQueryData<AssignmentDto[]>(['assignments', subjectId]);
-            console.log('Cached Assignment:', assignments);
 
             const assignment = assignments?.find(a => a.id === Number(assignmentId));
 

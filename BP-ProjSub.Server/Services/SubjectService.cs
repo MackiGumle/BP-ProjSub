@@ -1,4 +1,6 @@
-﻿using BP_ProjSub.Server.Data;
+﻿using System.Reflection.Metadata;
+using Azure.Storage.Blobs;
+using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Auth;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
@@ -16,11 +18,19 @@ namespace BP_ProjSub.Server.Services
     {
         private readonly BakalarkaDbContext _dbContext;
         private readonly AccountService _accountService;
+        private readonly IConfiguration _config;
+        private readonly BlobServiceClient _blobServiceClient;
+        private readonly AssignmentService _assignmentService;
 
-        public SubjectService(BakalarkaDbContext dbContext, AccountService accountService)
+        public SubjectService(
+            BakalarkaDbContext dbContext, AccountService accountService,
+            IConfiguration config, AssignmentService assignmentService)
         {
             _dbContext = dbContext;
             _accountService = accountService;
+            _config = config;
+            _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
+            _assignmentService = assignmentService;
         }
 
         /// <summary>
@@ -243,6 +253,37 @@ namespace BP_ProjSub.Server.Services
             catch
             {
                 await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a subject and all its assignments. <br/>
+        /// Also deletes all submissions and attachments in Azure blob storage.
+        /// </summary>
+        /// <param name="subjectId"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public async Task DeleteSubjectAsync(int subjectId, string personId)
+        {
+            var subject = await _dbContext.Subjects
+                .Include(s => s.Assignments)
+                .FirstOrDefaultAsync(s => s.Id == subjectId);
+
+            if (subject == null)
+            {
+                throw new KeyNotFoundException("Subject not found.");
+            }
+
+            var assignments = subject.Assignments.ToList();
+
+            try
+            {
+                await _assignmentService.DeleteAssignmentsAsync(assignments.Select(a => a.Id));
+            }
+            catch
+            {
                 throw;
             }
         }

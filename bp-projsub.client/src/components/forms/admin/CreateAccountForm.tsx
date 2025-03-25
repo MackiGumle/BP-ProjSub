@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { useAuth } from "@/context/UserContext"
 import axios from "axios"
 import { toast } from "@/components/ui/use-toast"
 
@@ -36,7 +35,6 @@ const formSchema = z.object({
 
 
 export default function CreateAccountForm() {
-  const { user } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -50,15 +48,10 @@ export default function CreateAccountForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await axios.post("api/Admin/createAccount", values).then(response => {
-      console.log(response);
       toast({ title: "Success", description: response.data.message });
     }
     ).catch(error => {
-      // console.error(error);
-      console.log(error.response.data.message);
       toast({ title: "Error", description: error.response.data.message, variant: "destructive" });
-
-      
     });
   }
 

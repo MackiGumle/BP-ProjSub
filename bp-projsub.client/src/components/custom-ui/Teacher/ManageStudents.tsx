@@ -55,7 +55,7 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
     });
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
             {/* Student Management Form */}
             <Card>
                 <CardHeader>
@@ -107,7 +107,7 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
                 <CardHeader>
                     <CardTitle>Enrolled Students</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-center">
                     {isStudentsLoading ? (
                         <div>Loading students...</div>
                     ) : errorStudents ? (

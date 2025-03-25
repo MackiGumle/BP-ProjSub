@@ -184,7 +184,7 @@ public class AccountService
                 var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(student);
                 var tokenWithEmail = _tokenService.CreateAccountActivationToken(student, emailToken);
                 // var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
-                // NOTE: For testing purposes, send email to the same address
+                // REMOVE: For testing purposes, send email to the same address
                 var emailRes = await _emailService.SendAccountActivationAsync("sis0049@vsb.cz", tokenWithEmail);
                 if (!emailRes.IsSuccessStatusCode)
                 {

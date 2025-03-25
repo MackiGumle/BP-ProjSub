@@ -1,22 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import { createElement } from "react-syntax-highlighter";
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { AddSubmissionCommentDto, SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
-import { toast } from "../ui/use-toast";
-import { te } from "date-fns/locale";
+import { SubmissionCommentDto } from "@/Dtos/SubmissionCommentDto";
 import { useAuth } from "@/context/UserContext";
+import CommentDialog from "./Dialogs/CommentDialog";
 
 const getFileLanguage = (fileName: string): string => {
     const extension = fileName.split(".").pop()?.toLowerCase() || "";
@@ -66,20 +58,18 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
     );
 
     const [fileType, setFileType] = useState<string | null>(null);
-    const [selectedLines, setSelectedLines] = useState<number[]>([]);
+    // const [selectedLines, setSelectedLines] = useState<number[]>([]);
     // State for controlling the comment dialog and tracking selected line
     const [commentDialogOpen, setCommentDialogOpen] = useState(false);
     const [selectedLineForComment, setSelectedLineForComment] = useState<number | null>(null);
-    const [commentText, setCommentText] = useState("");
-    const queryClient = useQueryClient();
 
 
     // Query to fetch the submission comments.
     const {
         data: comments,
-        isLoading: commentsLoading,
-        error: commentsError,
-        refetch: refetchComments,
+        // isLoading: commentsLoading,
+        // error: commentsError,
+        // refetch: refetchComments,
     } = useQuery<SubmissionCommentDto[], Error>(
         ["submissionComments", submissionId],
         async () => {
@@ -89,29 +79,10 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
         { enabled: !!submissionId }
     );
 
-    const addCommentMutation = useMutation({
-        mutationFn: async (newComment: AddSubmissionCommentDto) => {
-            const response = await axios.post<SubmissionCommentDto>("/api/Teacher/AddSubmissionComment", newComment);
-            return response.data;
-        },
-        onSuccess: (newComment) => {
-            toast({ title: "Comment added", variant: "default" });
-            setCommentText("");
-            setCommentDialogOpen(false);
-            queryClient.setQueryData<SubmissionCommentDto[]>
-                (["submissionComments", submissionId], (oldData = []) => [...oldData, newComment]);
-
-
-        },
-        onError: (error) => {
-            console.error("Error adding comment", error);
-            toast({ title: "Error adding comment", variant: "destructive" });
-        },
-    });
-
     async function fetchSubmissionFile() {
         const response = await axios.get(
-            `/api/upload/DownloadSubmissionFile/${submissionId}/${encodeURIComponent(fileName!)}`,
+            `/api/upload/DownloadSubmissionFile/${submissionId}?file=${encodeURIComponent(fileName!)}`,
+
             { responseType: "blob" }
         );
 
@@ -140,19 +111,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
         return response.data;
     }
 
-    // This function is now kept for possible future use, e.g. to track line selections
-    const handleLineClick = (lineNumber: number, fileContent: string) => {
-        console.log(`${lineNumber}, ${fileContent.split("\n")[lineNumber]}`);
-        setSelectedLines((prev) => {
-            if (prev.includes(lineNumber)) {
-                return prev.filter((line) => line !== lineNumber);
-            } else {
-                return [...prev, lineNumber];
-            }
-        });
-    };
-
-    // const [hoveredLine, setHoveredLine] = React.useState<number | null>(null);
+    // const renderer = useCallback()
 
 
     return (
@@ -184,6 +143,9 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                                 style={materialLight}
                                 showLineNumbers={true}
                                 wrapLines={true}
+                                wrapLongLines={true}
+                                customStyle={{ padding: "0" }}
+                                lineNumberStyle={{ minWidth: "2em", paddingRight: "1em" }}
                                 renderer={({ rows, stylesheet, useInlineStyles }) => {
                                     return rows.map((row, i) => {
                                         // Map over each child token in the row and convert it to a valid React element.
@@ -203,23 +165,26 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
 
                                         return (
                                             <div key={i} className="flex flex-col">
-                                                <div className="flex items-center p-0 m-0 relative group code-line"
+                                                <div className="flex items-center p-0 m-0  group code-line"
                                                 // onMouseEnter={() => setHoveredLine(i)}
                                                 // onMouseLeave={() => setHoveredLine(null)}
                                                 >
-                                                    {hasRole("Teacher") && (
-                                                        <Button
-                                                            variant={"ghost"}
-                                                            onClick={() => {
-                                                                setSelectedLineForComment(i);
-                                                                setCommentDialogOpen(true);
-                                                            }}
-                                                            className={`text-blue-500 p-0 m-0 plus-button absolute left-0 opacity-0 group-hover:opacity-100`}
-                                                        >
-                                                            <Plus className="p-0 m-0 max-h-fit" />
-                                                        </Button>
-                                                    )}
-                                                    <span style={row.properties?.style}>{line}</span>
+                                                    <span className="flex items-center" style={row.properties?.style}>
+                                                        {hasRole("Teacher") && (
+                                                            <Button
+                                                                variant={"ghost"}
+                                                                onClick={() => {
+                                                                    setSelectedLineForComment(i);
+                                                                    setCommentDialogOpen(true);
+                                                                }}
+                                                                className={`max-h-[1.5em] max-w-fit text-blue-500 p-0 m-0 plus-button left-0 opacity-0 group-hover:opacity-100`}
+                                                            >
+                                                                <Plus className="p-0 m-1" />
+
+                                                            </Button>
+                                                        )}
+                                                        {line}
+                                                    </span>
                                                 </div>
                                                 {lineComments && lineComments.length > 0 && (
                                                     <div className="ml-8">
@@ -246,41 +211,14 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ submissionId, fileName })
                 )}
             </div>
 
-            {/* Dialog for Adding a Comment */}
-            <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>
-                            Add Comment on Line{" "}
-                            {selectedLineForComment !== null ? selectedLineForComment + 1 : ""}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <textarea
-                        className="w-full p-2 border rounded"
-                        placeholder="Enter your comment"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                    />
-                    <DialogFooter>
-                        <Button
-                            onClick={() => {
-                                if (fileName && selectedLineForComment !== null) {
-                                    // Call the mutation with the proper payload.
-                                    addCommentMutation.mutate({
-                                        submissionId,
-                                        fileName,
-                                        lineCommented: selectedLineForComment + 1, // 1 based line number.
-                                        comment: commentText,
-                                    });
-                                }
-                            }}
-                            disabled={addCommentMutation.isLoading || !commentText.trim()}
-                        >
-                            {addCommentMutation.isLoading ? "Submitting..." : "Submit"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <CommentDialog
+                isOpen={commentDialogOpen}
+                onOpenChange={setCommentDialogOpen}
+                selectedLine={selectedLineForComment}
+                submissionId={submissionId}
+                fileName={fileName!}
+            />
+
         </>
     );
 };

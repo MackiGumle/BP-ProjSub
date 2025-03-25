@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
-import { AssignmentDto, CreateAssignmentDto } from "@/Dtos/AssignmentDto"
+import { AssignmentDto } from "@/Dtos/AssignmentDto"
 import { toast } from "@/components/ui/use-toast"
 
 
@@ -22,7 +22,7 @@ export function useCreateAssignment<CreateAssignmentDto>({
     },
     onSuccess: (newAssignment) => {
       queryClient.setQueryData<AssignmentDto[]>(
-        ["assignments", subjectId],
+        ["assignments", `${subjectId}`],
         (old = []) => [...old, newAssignment]
       )
 
@@ -32,7 +32,7 @@ export function useCreateAssignment<CreateAssignmentDto>({
         variant: "default",
       })
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Failed to create assignment",
         description: "An error occurred while creating the assignment.",

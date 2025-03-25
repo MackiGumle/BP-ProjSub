@@ -63,7 +63,6 @@ namespace BP_ProjSub.Server
             ValidateAppSettings(builder.Configuration, "Jwt:Key");
             ValidateAppSettings(builder.Configuration, "Jwt:ExpirationInMinutes");
 
-
             var debugView = builder.Configuration.GetDebugView();
             Console.WriteLine($"[i] Debug view: {debugView}");
 
@@ -148,6 +147,7 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<SubjectService>();
             builder.Services.AddScoped<StudentService>();
             builder.Services.AddScoped<ResourceAccessService>();
+            builder.Services.AddScoped<AssignmentService>();
 
 
 

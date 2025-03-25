@@ -3,12 +3,9 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import ReactRouterLink from "@/components/custom-ui/HyperLink";
-import { useAuth } from "@/context/UserContext";
 
 
 export default function LoginPage() {

@@ -3,19 +3,19 @@ import TOCWrapper from "@/components/custom-ui/Teacher/TOCWrapper"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "../ui/button";
-import { ArrowBigLeft, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { PartialSubmissionDto } from "@/Dtos/SubmissionDto";
 import { useAuth } from "@/context/UserContext";
 import { getAssignmentFromCache } from "@/utils/cacheUtils";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "../ui/dialog";
 import { toast } from "../ui/use-toast";
 import { Separator } from "../ui/separator";
 
 export function SubmissionBrowser() {
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const { subjectId, assignmentId, submissionId } = useParams();
     const fileName = searchParams.get('file');
     const { getRole } = useAuth();
@@ -35,7 +35,7 @@ export function SubmissionBrowser() {
         return response.data;
     }
 
-    const { data: submissionIds, isLoading: isLoadingIds, error: errorIds } = useQuery<number[], Error>(
+    const { data: submissionIds } = useQuery<number[], Error>(
         ["submissionVersionsIds", submissionId],
         GetSubmissionVersionIds,
         {
@@ -107,21 +107,6 @@ export function SubmissionBrowser() {
         <>
             {
                 submissionId ? (
-                    // <div className="min-w-full max-w-full min-h-full max-h-full">
-                    // <div className="w-full h-full">
-                    // <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                    //     <ResizablePanel defaultSize={15}>
-                    //         <div className="overflow-auto">
-                    //             <TOCWrapper submissionId={submissionId} />
-                    //         </div>
-                    //     </ResizablePanel>
-                    //     <ResizableHandle withHandle />
-                    //     <ResizablePanel defaultSize={85}>
-                    //         <div className="overflow-auto">
-                    //             <FilePreviewer submissionId={submissionId} fileName={fileName} />
-                    //         </div>
-                    //     </ResizablePanel>
-                    // </ResizablePanelGroup>
                     <>
                         <div className="flex justify-between items-center p-1 text-muted-foreground">
                             <div>
@@ -134,9 +119,6 @@ export function SubmissionBrowser() {
                             <div className="">
                                 {partialSubmission?.rating ?? '-'} / {assignment?.maxPoints} points
                             </div>
-                            {/* <Button variant="default" className="mr-2"
-                                    onClick={() => console.log(partialSubmission)}>Rate</Button> */}
-                            {/* The Rate button (DialogTrigger) */}
                             <div>
                                 {getRole() === "Teacher" && (
                                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

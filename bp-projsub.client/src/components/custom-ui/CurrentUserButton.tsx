@@ -33,9 +33,9 @@ export default function CurrentUserButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-auto">
           <DropdownMenuItem asChild>
-            <Link to="/account" className="cursor-pointer w-full flex items-center gap-2 p-2">
+            <Link to="/changepassword" className="cursor-pointer w-full flex items-center gap-2 p-2">
               <Settings className="mr-2"/>
-              Account Settings
+              Change Password
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem

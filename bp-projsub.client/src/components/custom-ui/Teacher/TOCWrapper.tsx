@@ -3,17 +3,14 @@ import {
   TreeViewElement,
   File,
   Folder,
-  CollapseButton,
 } from "@/components/extension/tree-view-api";
 import { Button } from "@/components/ui/button";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { se } from "date-fns/locale";
-import { Check, Ellipsis, LinkIcon, PenIcon, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LinkIcon, Save, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 type TOCProps = {
@@ -57,7 +54,7 @@ async function fetchSubmissionFileTree(endpoint: string): Promise<FileTreeItem[]
 
 
 export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemProps) => {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
   const [newFileName, setNewFileName] = useState<string>('');
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const queryClient = useQueryClient();
@@ -65,34 +62,36 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
 
   const handleRename = async (element: TreeViewElement) => {
     try {
-      const response = await axios.put(`/api/Upload/RenameAttachmentFile/${assignmentId}`, {
+      await axios.put(`/api/Upload/RenameAttachmentFile/${assignmentId}`, {
         oldFileName: `${parentPath}${element.name}`,
         newFileName: `${parentPath}${newFileName}`
       }
       );
 
       toast({ title: "Success", description: "File renamed successfully.", variant: "default" })
-      console.log('File renamed successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
       setNewFileName('');
     } catch (error) {
       toast({ title: "Error", description: "Error renaming file.", variant: "destructive" })
-      console.error('Error renaming file:', error);
       setNewFileName(element.name);
     }
   };
 
   const handleDelete = async (element: TreeViewElement) => {
     try {
-      const response = await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      // await axios.post(`/api/Upload/RemoveAttachmentFile/${assignmentId}`, element.name
+      // );
+      await axios.post(
+        `/api/Upload/RemoveAttachmentFile/${assignmentId}`,
+        JSON.stringify(element.name),
+        { headers: { "Content-Type": "application/json" } }
       );
 
+
       toast({ title: "Success", description: `File '${element.name}' deleted successfully.`, variant: "default" })
-      console.log('File deleted successfully');
       queryClient.invalidateQueries(["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]);
     } catch (error) {
       toast({ title: "Error", description: "Error deleting file.", variant: "destructive" })
-      console.error('Error deleting file:', error);
     }
   };
 
@@ -163,7 +162,7 @@ export const TreeItem = ({ elements, parentPath = '', contextMenu }: TreeItemPro
                       <DropdownMenuItem
                         className="cursor-pointer flex items-center"
                         onClick={() => {
-                          navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/${encodeURIComponent(currentPath)})`);
+                          navigator.clipboard.writeText(`[${element.name}](/api/Upload/GetAttachmentFile/${assignmentId}/?file=${encodeURIComponent(currentPath)})`);
                           toast({ title: "Copied", description: "Path copied to clipboard.", variant: "default" });
                         }}
                       >

@@ -1,7 +1,6 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { Pencil, Plus } from "lucide-react"
 import { useAuth } from "@/context/UserContext"
 import {
   Collapsible,
@@ -26,12 +25,11 @@ import { ChevronDown } from "lucide-react"
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
-import { Button } from "./ui/button"
 
 
 // Sidebar component for displaying assignments
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { getRole, hasRole } = useAuth()
+  const { getRole } = useAuth()
   const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
 
   const [searchParams, setSearchParams] = useSearchParams()
@@ -112,15 +110,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SubjectSwitcher />
         <div className="flex items-center mt-2">
           <SearchForm className="flex-grow" />
-
-          {/* {subjectId && hasRole("Teacher") && (
-            <SidebarMenuButton
-              className="shrink-0 p-0 w-6 h-6 flex items-center justify-center"
-              onClick={() => console.log("Create assignment")}
-            >
-              <Plus className="h-6 w-6" />
-            </SidebarMenuButton>
-          )} */}
         </div>
       </SidebarHeader>
       <SidebarContent className="">
@@ -167,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     <span className="font-medium">{assignment.title}</span>
                                     <span className="text-xs text-muted-foreground">
                                       Due: {assignment.dueDate ?
-                                        new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
+                                        new Date(assignment.dueDate).toLocaleString() : 'No due date'}
                                     </span>
                                     {assignment.maxPoints && (
                                       <span className="text-xs text-muted-foreground">
@@ -180,18 +169,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               <SidebarMenuAction className="flex items-center">
                                 {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
                                 <ThemeToggle /> */}
-                                {hasRole("Teacher") && (
+                                {/* {hasRole("Teacher") && (
                                   <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
-                                    {/* <SidebarMenuButton
-                                      className="w-6 h-6 p-1"
-                                      onClick={() => console.log("Assignment actions")}
-                                    > */}
                                     <div className="">
                                       <Pencil className="w-6 h-6 p-1" />
                                     </div>
-                                    {/* </SidebarMenuButton> */}
                                   </Link>
-                                )}
+                                )} */}
                               </SidebarMenuAction>
                             </div>
                           </SidebarMenuItem>

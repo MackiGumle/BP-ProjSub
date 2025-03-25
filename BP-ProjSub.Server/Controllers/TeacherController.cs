@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text;
+using Azure.Storage.Blobs;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Data.Dtos.Teacher;
@@ -27,12 +29,17 @@ namespace BP_ProjSub.Server.Controllers
         private readonly TokenService _tokenService;
         private readonly ResourceAccessService _resourceAccessService;
         private readonly IHostEnvironment _env;
+        private readonly IConfiguration _config;
+        private readonly BlobServiceClient _blobServiceClient;
+        private readonly AssignmentService _assignmentService;
+
 
         public TeacherController(
             UserManager<Person> userManager, BakalarkaDbContext dbContext,
             SubjectService subjectService, EmailService emailService,
             AccountService accountService, TokenService tokenService,
-            ResourceAccessService resourceAccessService, IHostEnvironment env)
+            ResourceAccessService resourceAccessService, IHostEnvironment env,
+            IConfiguration config, AssignmentService assignmentService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -42,6 +49,9 @@ namespace BP_ProjSub.Server.Controllers
             _tokenService = tokenService;
             _resourceAccessService = resourceAccessService;
             _env = env;
+            _config = config;
+            _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
+            _assignmentService = assignmentService;
         }
 
         [HttpPost("CreateSubject")]
@@ -67,6 +77,7 @@ namespace BP_ProjSub.Server.Controllers
                 };
 
 
+                Subject? subject;
                 List<Person> newUsers = new List<Person>();
                 // Create subject and students in a transaction
                 using (var transaction = await _dbContext.Database.BeginTransactionAsync())
@@ -88,7 +99,7 @@ namespace BP_ProjSub.Server.Controllers
                             // We need to send activation email to them
                             newUsers.AddRange(users);
 
-                            var subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
+                            subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                             await _dbContext.SaveChangesAsync();
 
                             // Student IDs to be added into the subject
@@ -97,11 +108,10 @@ namespace BP_ProjSub.Server.Controllers
 
                             await _subjectService.AddStudentsToSubjectAsync(subject, studentLoginsToAdd);
                             await _dbContext.SaveChangesAsync();
-
                         }
                         else
                         {
-                            var subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
+                            subject = await _subjectService.CreateSubjectAsync(newSubject, personId);
                             await _dbContext.SaveChangesAsync();
                         }
                         await transaction.CommitAsync();
@@ -126,9 +136,9 @@ namespace BP_ProjSub.Server.Controllers
 
                 return Ok(new SubjectDto
                 {
-                    Id = newSubject.Id,
-                    Name = newSubject.Name,
-                    Description = newSubject.Description
+                    Id = subject.Id,
+                    Name = subject.Name,
+                    Description = subject.Description
                 });
             }
             catch (Exception e)
@@ -389,6 +399,39 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpDelete("DeleteSubject/{subjectId}")]
+        public async Task<IActionResult> DeleteSubject(int subjectId)
+        {
+            try
+            {
+                if (subjectId < 0)
+                {
+                    return BadRequest(new { message = "Invalid subject ID" });
+                }
+
+                var personId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (personId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                try
+                {
+                    await _subjectService.DeleteSubjectAsync(subjectId, personId);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return NotFound(new { message = ex.Message });
+                }
+
+                return Ok(new { message = "Subject deleted." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
+
         [HttpPut("EditAssignment")]
         public async Task<IActionResult> EditAssignment([FromBody] EditAssignmentDto model)
         {
@@ -472,7 +515,7 @@ namespace BP_ProjSub.Server.Controllers
                     Type = model.Type,
                     Title = model.Title,
                     Description = model.Description,
-                    DateAssigned = model.DateAssigned ?? DateTime.UtcNow,
+                    DateAssigned = model.DateAssigned ?? DateTime.Now,
                     DueDate = model.DueDate,
                     MaxPoints = model.MaxPoints,
                     SubjectId = model.SubjectId,
@@ -546,22 +589,7 @@ namespace BP_ProjSub.Server.Controllers
                     return NotFound(new { message = "Assignment not found." });
                 }
 
-                var assignment = await _dbContext.Assignments
-                    // .Include(a => a.Submissions)
-                    .FirstOrDefaultAsync(a => a.Id == assignmentId);
-
-                if (assignment == null)
-                {
-                    return NotFound(new { message = "Assignment not found." });
-                }
-
-                // if (assignment.Submissions.Count > 0)
-                // {
-                //     return BadRequest(new { message = "Assignment has submissions." });
-                // }
-
-                _dbContext.Assignments.Remove(assignment);
-                await _dbContext.SaveChangesAsync();
+                await _assignmentService.DeleteAssignmentAsync(assignmentId);
 
                 return Ok(new { message = "Assignment deleted." });
             }
@@ -766,9 +794,33 @@ namespace BP_ProjSub.Server.Controllers
                     PersonId = s.PersonId,
                     StudentLogin = s.Student.Person.UserName!,
                     Rating = s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value
+
                 })
                 .OrderByDescending(s => s.SubmissionDate)
                 .ToList();
+
+                // Suspicious if there are multiple ips from the same student
+                var logs = await _dbContext.AssignmentViewLogs
+                    .Where(l => l.AssignmentId == assignmentId)
+                    .OrderByDescending(l => l.ViewedOn)
+                    .ToListAsync();
+
+                foreach (var submission in latestSubmissions)
+                {
+                    var studentLogs = logs.Where(l => l.UserId == submission.PersonId).ToList();
+
+                    submission.IsSuspicious = studentLogs.GroupBy(l => l.IpAddress).Count() > 1;
+
+                    if (submission.IsSuspicious)
+                    {
+                        submission.AssignmentViewLogs = studentLogs
+                        .Select(l => new AssignmentViewLogDto
+                        {
+                            IpAddress = l.IpAddress,
+                            ViewedOn = l.ViewedOn
+                        }).ToList();
+                    }
+                }
 
                 return Ok(latestSubmissions);
             }
@@ -864,7 +916,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var comment = new SubmissionComment
                 {
-                    CommentDate = DateTime.UtcNow,
+                    CommentDate = DateTime.Now,
                     FileName = model.FileName,
                     LineCommented = model.LineCommented,
                     Comment = model.Comment,
@@ -931,7 +983,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var rating = new Rating
                 {
-                    Time = DateTime.UtcNow,
+                    Time = DateTime.Now,
                     Value = model.Rating,
                     Note = model.Note,
                     SubmissionId = model.SubmissionId,
@@ -954,6 +1006,62 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+
+        [HttpGet("ExportSubmissionsRating/{assignmentId}")]
+        public async Task<IActionResult> ExportSubmissionsRating(int assignmentId)
+        {
+            try
+            {
+                if (assignmentId < 0)
+                {
+                    return BadRequest(new { message = "Invalid assignment ID" });
+                }
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                    .Include(a => a.Teacher)
+                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Teacher.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Include(s => s.Student.Person)
+                    .Where(s => s.AssignmentId == assignmentId && s.Ratings.Count > 0)
+                    .ToListAsync();
+
+                var ratings = submissions
+                    .Select(s => new
+                    {
+                        Student = s.Student.Person.UserName,
+                        Rating = s.Ratings.FirstOrDefault(r => r.Time == s.Ratings.Max(rt => rt.Time))?.Value
+                    }).ToList();
+
+                var csv = new StringBuilder();
+                csv.AppendLine("Student;Rating");
+
+                foreach (var rating in ratings)
+                {
+                    csv.AppendLine($"{rating.Student};{Convert.ToInt64(rating.Rating)}");
+                }
+
+                var fileName = $"ratings_{assignmentId}.csv";
+                var fileBytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(fileBytes, "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
             }
         }
 

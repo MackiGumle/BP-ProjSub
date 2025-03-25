@@ -42,6 +42,8 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
 
     public virtual DbSet<Admin> Admins { get; set; }
 
+    public virtual DbSet<AssignmentViewLog> AssignmentViewLogs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer(_config["ConnectionStrings:BakalarkaDB"]);
     // => optionsBuilder.UseSqlServer("BakalarkaDB");
@@ -100,6 +102,27 @@ public partial class BakalarkaDbContext : IdentityDbContext<Person>
                 //Nemuze byt Cascade: Foreign key constraint may cause cycles or multiple cascade paths
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Submission_Person_FK");
+        });
+
+        modelBuilder.Entity<AssignmentViewLog>(entity =>
+        {
+            entity.ToTable("AssignmentViewLog");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.IpAddress)
+                .HasMaxLength(45)
+                .IsUnicode(false);
+
+            entity.HasOne(avl => avl.Assignment)
+                .WithMany(a => a.AssignmentViewLogs)
+                .HasForeignKey(avl => avl.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(avl => avl.Student)
+                .WithMany(s => s.AssignmentViewLogs)
+                .HasForeignKey(avl => avl.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         List<IdentityRole> roles = new List<IdentityRole>

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO.Compression;
 using System.Security.Claims;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -14,6 +16,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using MimeTypes;
 
 namespace BP_ProjSub.Server.Controllers
 {
@@ -29,6 +32,7 @@ namespace BP_ProjSub.Server.Controllers
         private readonly BlobServiceClient _blobServiceClient;
         private long maxFileSize = 5 * 1024 * 1024; // 5MB
         private long maxTotalSize = 20 * 1024 * 1024; // 20MB
+        private int maxFiles = 50; // Max number of files per upload
         private List<string> allowedExtensions { get; }
 
         public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext,
@@ -41,6 +45,7 @@ namespace BP_ProjSub.Server.Controllers
 
             maxFileSize = long.Parse(_config["Uploads:MaxFileSize"]!);
             maxTotalSize = long.Parse(_config["Uploads:MaxTotalSize"]!);
+            maxFiles = int.Parse(_config["Uploads:MaxFiles"]!);
             allowedExtensions = _config.GetSection("Uploads:AllowedFileExtensions").Get<List<string>>() ?? new List<string>();
             _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
         }
@@ -66,42 +71,72 @@ namespace BP_ProjSub.Server.Controllers
                     return Unauthorized(new { message = "User ID not found in token." });
                 }
 
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (userName == null)
+                {
+                    return Unauthorized(new { message = "User login not found in token." });
+                }
+
                 if (files == null || files.Count == 0)
                 {
                     return BadRequest(new { message = "No files received from the upload." });
                 }
 
+                var fileCount = files.Count;
+                if (fileCount > maxFiles)
+                {
+                    return BadRequest(new { message = $"Maximum number of files exceeded. Max files: {maxFiles}." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Student");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                #region Validate file extensions and sizes
                 // Validate file extensions and sizes
                 long totalSize = 0;
                 foreach (var file in files)
                 {
                     var extension = Path.GetExtension(file.FileName).ToLower();
-                    if (!allowedExtensions.Contains("*") && !allowedExtensions.Contains(extension))
+
+                    if (!FileValidationHelper.IsValidFileExtension(extension, allowedExtensions))
                     {
                         return BadRequest(new { message = $"Invalid file extension '{extension}'." });
                     }
+
                     if (file.Length > maxFileSize)
                     {
                         return BadRequest(new { message = $"File {file.FileName} exceeds the maximum filesize of {maxFileSize} bytes." });
                     }
-                    totalSize += file.Length;
+
+                    if (extension == ".zip")
+                    {
+                        (int count, long size) = FileValidationHelper.ValidateZipFileSize(file, maxFiles, maxFileSize);
+                        fileCount += count;
+                        if (fileCount > maxFiles)
+                        {
+                            return BadRequest(new { message = $"Maximum number of files exceeded. Max files: {maxFiles}." });
+                        }
+
+                        totalSize += size;
+                    }
+                    else
+                    {
+                        totalSize += file.Length;
+                    }
+
                     if (totalSize > maxTotalSize)
                     {
                         return BadRequest(new { message = $"Total size of all files exceeds the maximum total size of {maxTotalSize} bytes." });
                     }
                 }
+                #endregion
 
-                // Check if student is in the subject
-                var assignment = await _dbContext.Assignments
-                    .Include(a => a.Subject.Students)
-                    .FirstOrDefaultAsync(a => a.Id == assignmentId && a.Subject.Students.Any(s => s.PersonId == userId));
 
-                if (assignment == null)
-                {
-                    return NotFound(new { message = "Assignment not found" });
-                }
-
-                var uploadId = Guid.NewGuid().ToString();
+                // var uploadId = Guid.NewGuid().ToString();
+                var uploadId = DateTime.Now.ToString("dd_MM_yyyy_HH_mm_ss");
 
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -111,65 +146,138 @@ namespace BP_ProjSub.Server.Controllers
                 // Upload each file
                 foreach (var file in files)
                 {
-                    // Split the filename to preserve folder structure
-                    var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
-                    if (fileNameParts.Length == 0)
+                    var extension = Path.GetExtension(file.FileName).ToLower();
+                    // If the file is a zip archive, unzip and process its entries.
+                    if (extension == ".zip")
                     {
-                        return BadRequest(new { message = "Empty filename." });
-                    }
+                        // Use the zip filename as the folder name
+                        var zipFolderName = Path.GetFileNameWithoutExtension(file.FileName) + "_zip";
 
-                    // Validate directory parts to prevent directory traversal
-                    var fileName = fileNameParts.Last();
-                    var directoryParts = fileNameParts.Length > 1 ? fileNameParts.Take(fileNameParts.Length - 1).ToArray() : Array.Empty<string>();
-
-                    foreach (var part in directoryParts)
-                    {
-                        if (part == "." || part == "..")
+                        using (var zipStream = file.OpenReadStream())
+                        using (var archive = new ZipArchive(zipStream))
                         {
-                            return BadRequest(new { message = "Directory traversal in filename." });
+                            foreach (var entry in archive.Entries)
+                            {
+                                // Skip directories
+                                if (entry.Name.IsNullOrEmpty())
+                                {
+                                    continue;
+                                }
+
+                                // Split the entry path
+                                var entryPathParts = entry.FullName.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
+                                // Validate each part to avoid directory traversal
+                                foreach (var part in entryPathParts)
+                                {
+                                    if (part == "." || part == "..")
+                                    {
+                                        return BadRequest(new { message = "Invalid file path in zip due to directory traversal." });
+                                    }
+                                    if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                                    {
+                                        return BadRequest(new { message = $"Invalid characters in directory name '{part}' in zip file." });
+                                    }
+                                }
+                                var fileName = entryPathParts.Last();
+                                if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                                {
+                                    return BadRequest(new { message = $"Invalid characters in filename '{fileName}' in zip file." });
+                                }
+
+                                // Construct the blob name:
+                                // assignmentId/userName/uploadId/zipFolderName/[subfolders]/filename
+                                blobName = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
+                                if (entryPathParts.Length > 1)
+                                {
+                                    var subFolders = entryPathParts.Take(entryPathParts.Length - 1);
+                                    blobName += "/" + string.Join("/", subFolders);
+                                }
+                                blobName += "/" + fileName;
+
+                                var targetDir = $"{assignmentId}/{userName}/{uploadId}/{zipFolderName}";
+                                var resolvedFullPath = Path.GetFullPath(blobName);
+                                var targetDirFullPath = Path.GetFullPath(targetDir);
+                                if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                                {
+                                    return BadRequest(new { message = "Invalid file path in zip due to directory traversal." });
+                                }
+
+                                // Upload the file entry to blob storage
+                                var blobClient = containerClient.GetBlobClient(blobName);
+                                var blobHttpHeaders = new BlobHttpHeaders
+                                {
+                                    // https://github.com/samuelneff/MimeTypeMap
+                                    ContentType = MimeTypeMap.GetMimeType(fileName)
+                                };
+
+                                // Open the entry stream and upload
+                                using (var entryStream = entry.Open())
+                                {
+                                    await blobClient.UploadAsync(entryStream, new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
+                                }
+                            }
                         }
-                        if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    }
+                    else
+                    {
+                        // Split the filename to preserve folder structure
+                        var fileNameParts = file.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                        if (fileNameParts.Length == 0)
                         {
-                            return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
+                            return BadRequest(new { message = "Empty filename." });
                         }
+
+                        // Validate directory parts to prevent directory traversal
+                        var fileName = fileNameParts.Last();
+                        var directoryParts = fileNameParts.Length > 1 ? fileNameParts.Take(fileNameParts.Length - 1).ToArray() : Array.Empty<string>();
+
+                        foreach (var part in directoryParts)
+                        {
+                            if (part == "." || part == "..")
+                            {
+                                return BadRequest(new { message = "Directory traversal in filename." });
+                            }
+                            if (part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                            {
+                                return BadRequest(new { message = $"Invalid characters in directory name '{part}'." });
+                            }
+                        }
+                        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                        {
+                            return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
+                        }
+
+                        var targetDir = $"submissions/{assignmentId}/{userName}/{uploadId}";
+                        var fullPath = Path.Combine(targetDir, file.FileName);
+                        // Absolute path check for directory traversal
+                        var resolvedFullPath = Path.GetFullPath(fullPath);
+                        var targetDirFullPath = Path.GetFullPath(targetDir);
+                        if (!resolvedFullPath.StartsWith(targetDirFullPath))
+                        {
+                            return BadRequest(new { message = "Invalid file path due to directory traversal." });
+                        }
+
+                        // Construct the blob name from folder structure: 
+                        // assignmentId/userName/uploadId/[subfolders]/filename
+                        blobName = $"{assignmentId}/{userName}/{uploadId}";
+                        if (directoryParts.Length > 0)
+                        {
+                            blobName += "/" + string.Join("/", directoryParts);
+                        }
+                        blobName += "/" + fileName;
+
+                        // Upload the file stream and set file content type
+                        var blobClient = containerClient.GetBlobClient(blobName);
+                        var blobHttpHeaders = new BlobHttpHeaders
+                        {
+                            ContentType = file.ContentType
+                        };
+
+                        await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
                     }
-                    if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-                    {
-                        return BadRequest(new { message = $"Invalid characters in filename '{fileName}'." });
-                    }
-
-                    var targetDir = $"submissions/{assignmentId}/{userId}/{uploadId}";
-                    var fullPath = Path.Combine(targetDir, file.FileName);
-                    // Absolute path check for directory traversal
-                    var resolvedFullPath = Path.GetFullPath(fullPath);
-                    var targetDirFullPath = Path.GetFullPath(targetDir);
-                    if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                    {
-                        return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    }
-
-
-                    // Construct the blob name from folder structure: 
-                    // assignmentId/userId/uploadId/[subfolders]/filename
-                    blobName = $"{assignmentId}/{userId}/{uploadId}";
-                    if (directoryParts.Length > 0)
-                    {
-                        blobName += "/" + string.Join("/", directoryParts);
-                    }
-                    blobName += "/" + fileName;
-
-                    // Upload the file stream and set file content type
-                    var blobClient = containerClient.GetBlobClient(blobName);
-                    var blobHttpHeaders = new BlobHttpHeaders
-                    {
-                        ContentType = file.ContentType
-                    };
-
-                    await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
                 }
-
                 // Save submission details to the database
-                var relativePath = $"{assignmentId}/{userId}/{uploadId}";
+                var relativePath = $"{assignmentId}/{userName}/{uploadId}";
                 var submission = new Submission
                 {
                     SubmissionDate = DateTime.Now,
@@ -308,37 +416,6 @@ namespace BP_ProjSub.Server.Controllers
                     };
 
                     await blobClient.UploadAsync(file.OpenReadStream(), new BlobUploadOptions { HttpHeaders = blobHttpHeaders });
-
-                    // // recreate the user path for checking
-                    // var fullPath = targetDir;
-                    // foreach (var dirPart in directoryParts)
-                    // {
-                    //     fullPath = Path.Combine(fullPath, dirPart);
-                    // }
-
-                    // fullPath = Path.Combine(fullPath, fileName);
-
-                    // // Absolute path check for directory traversal
-                    // var resolvedFullPath = Path.GetFullPath(fullPath);
-                    // var targetDirFullPath = Path.GetFullPath(targetDir);
-                    // if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                    // {
-                    //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                    // }
-
-                    // Directory.CreateDirectory(targetDir);
-
-                    // var currentDir = targetDir;
-                    // foreach (var dirPart in directoryParts)
-                    // {
-                    //     currentDir = Path.Combine(currentDir, dirPart);
-                    //     Directory.CreateDirectory(currentDir);
-                    // }
-
-                    // using (var stream = new FileStream(fullPath, FileMode.Create))
-                    // {
-                    //     await file.CopyToAsync(stream);
-                    // }
                 }
 
                 return Ok(new
@@ -407,28 +484,6 @@ namespace BP_ProjSub.Server.Controllers
                         Message = "An error occurred during file removal.",
                     });
                 }
-
-                // var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads/assignments");
-
-                // // The directory structure is: uploads/assignmentId/
-                // var targetDir = Path.Combine(uploadsRoot, assignmentId.ToString());
-
-                // var fullPath = Path.Combine(targetDir, fileName);
-
-                // // Absolute path check for directory traversal
-                // var resolvedFullPath = Path.GetFullPath(fullPath);
-                // var targetDirFullPath = Path.GetFullPath(targetDir);
-                // if (!resolvedFullPath.StartsWith(targetDirFullPath))
-                // {
-                //     return BadRequest(new { message = "Invalid file path due to directory traversal." });
-                // }
-
-                // if (!System.IO.File.Exists(fullPath))
-                // {
-                //     return NotFound(new { message = "File not found." });
-                // }
-
-                // System.IO.File.Delete(fullPath);
 
                 return Ok(new
                 {
@@ -553,9 +608,9 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-        [HttpGet("GetAttachmentFile/{assignmentId}/{requestedFileName}")]
+        [HttpGet("GetAttachmentFile/{assignmentId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAttachmentFile(int assignmentId, string requestedFileName)
+        public async Task<IActionResult> GetAttachmentFile(int assignmentId, [FromQuery] string file)
         {
             try
             {
@@ -569,7 +624,7 @@ namespace BP_ProjSub.Server.Controllers
 
                 var targetDir = $"assignments/{assignmentId}/";
 
-                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName);
+                var decodedFileName = System.Net.WebUtility.UrlDecode(file);
                 var filePath = Path.Combine(targetDir, decodedFileName);
                 var resolvedFullPath = Path.GetFullPath(filePath);
                 var targetDirFullPath = Path.GetFullPath(targetDir);
@@ -735,9 +790,9 @@ namespace BP_ProjSub.Server.Controllers
         }
 
 
-        [HttpGet("DownloadSubmissionFile/{submissionId}/{requestedFileName}")]
+        [HttpGet("DownloadSubmissionFile/{submissionId}")]
         [Authorize(Roles = "Student, Teacher")]
-        public async Task<IActionResult> DownloadSubmissionFile(int submissionId, string requestedFileName)
+        public async Task<IActionResult> DownloadSubmissionFile(int submissionId, [FromQuery] string file)
         {
             try
             {
@@ -759,7 +814,7 @@ namespace BP_ProjSub.Server.Controllers
                 string containerName = "submissions";
                 var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-                var decodedFileName = System.Net.WebUtility.UrlDecode(requestedFileName).Replace("\\", "/");
+                var decodedFileName = System.Net.WebUtility.UrlDecode(file).Replace("\\", "/");
 
                 string blobName = $"{submissionDb.FileName.TrimEnd('/')}/{decodedFileName}";
 
@@ -843,6 +898,146 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
+        [HttpGet("ExportSubmissionFiles/{assignmentId}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> ExportSubmissionFiles(int assignmentId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var assignment = await _dbContext.Assignments
+                .Include(a => a.Subject.Teachers)
+                .FirstOrDefaultAsync(a => a.Id == assignmentId && a.PersonId == userId);
+
+                if (assignment == null)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+
+                var prefix = $"{assignmentId}";
+
+                var fileTree = await FileTreeNode.BuildFileTreeFromBlobStorageAsync(containerClient, prefix);
+
+                var zipStream = new MemoryStream();
+                using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+                {
+                    await fileTree.ZipFilesAsync(zipArchive, containerClient);
+                }
+
+                zipStream.Position = 0;
+
+                return File(zipStream, "application/zip", $"assignment_{assignmentId}_submissions.zip");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = "An error occurred during file export.",
+                    Error = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("CheckPlagiatism/{assignmentId}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> CheckPlagiatism(int assignmentId, [FromQuery] string language)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in token." });
+                }
+
+                var access = await _resourceAccessService.CanAccessAssignmentAsync(userId, assignmentId, "Teacher");
+                if (!access)
+                {
+                    return NotFound(new { message = "Assignment not found." });
+                }
+
+                var extensions = _config.GetSection($"LanguageExtensions:{language}").Get<string[]>();
+
+                if (extensions == null || extensions.Length == 0)
+                {
+                    return BadRequest(new { Message = $"No extensions found for language: {language}" });
+                }
+
+                // TODO: smazat
+                // return Ok(new { Link = "http://moss.stanford.edu/results/1/8403766510050/", Message = "Plagiatism check finished." });
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
+
+                await FileTreeNode.DownloadSourceCodesAsync(containerClient, assignmentId.ToString(), Path.Combine(_env.ContentRootPath, "plagiatism/"), extensions);
+
+                string mossPath = Path.Combine(_env.ContentRootPath, "moss.pl");
+
+                var files = Directory.GetFiles(
+                    Path.Combine(_env.ContentRootPath, $"plagiatism/{assignmentId}"),
+                    "*",
+                    SearchOption.AllDirectories
+                );
+
+                // File list as arguments
+                var filesArgument = string.Join(" ", files.Select(f => $"\"{f}\""));
+
+                var arguments = $"{mossPath} -l {language} -d {filesArgument}";
+
+                var process = new Process
+                {
+                    // moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "perl",
+                        Arguments = arguments, // $"{mossPath} -l {language} -d {_env.ContentRootPath}/plagiatism/{assignmentId}/*/*",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    }
+                };
+
+                bool started = process.Start();
+                if (!started)
+                {
+                    throw new Exception("Failed to start the process.");
+                }
+
+                await process.WaitForExitAsync();
+
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    throw new Exception(error);
+                }
+
+                var url = output.Split('\n')[^2];
+
+                // Delete the downloaded files
+                Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+
+                return Ok(new { Link = url, Message = "Plagiatism check finished." });
+            }
+            catch (Exception ex)
+            {
+                if (Directory.Exists(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString())))
+                {
+                    Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+                }
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during plagiarism check.", Error = ex.Message });
+            }
+
+        }
 
     }
 }

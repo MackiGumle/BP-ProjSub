@@ -12,6 +12,11 @@ const baseFolder =
         ? `${env.APPDATA}/ASP.NET/https`
         : `${env.HOME}/.aspnet/https`;
 
+// Added: CI/CD environments do not have APPDATA or HOME set
+if (!fs.existsSync(baseFolder)) {
+    fs.mkdirSync(baseFolder, { recursive: true });
+}
+
 const certificateName = "bp-projsub.client";
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
@@ -43,15 +48,19 @@ export default defineConfig({
         }
     },
     server: {
-        proxy: {
+        proxy: { // This is what the back-end server will search if set in url of client
             '^/api/.*': {
                 target,
                 secure: false
             },
-            '^/account/.*': {
-                target,
-                secure: false
-            },
+            // '^/account/.*': {
+            //     target,
+            //     secure: false
+            // },
+            // '^/auth/.*': {
+            //     target,
+            //     secure: false
+            // },
         },
         port: 5173,
         https: {

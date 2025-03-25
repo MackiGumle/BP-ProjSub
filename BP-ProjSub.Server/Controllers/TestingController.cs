@@ -20,14 +20,17 @@ namespace BP_ProjSub.Server.Controllers
         private readonly UserManager<Person> _userManager;
         private readonly AccountService _accountService;
         private readonly BakalarkaDbContext _dbContext;
+        private readonly EmailService _emailService;
 
-        public TestingController(AccountService accountService, UserManager<Person> userManager, ILogger<TestingController> logger
-            , BakalarkaDbContext dbContext)
+        public TestingController(AccountService accountService, UserManager<Person> userManager,
+         ILogger<TestingController> logger, BakalarkaDbContext dbContext,
+         EmailService emailService)
         {
             _logger = logger;
             _userManager = userManager;
             _accountService = accountService;
             _dbContext = dbContext;
+            _emailService = emailService;
         }
 
         [HttpGet("CreateRandomStudentAccount")]
@@ -109,11 +112,30 @@ namespace BP_ProjSub.Server.Controllers
             }
         }
 
-         [HttpGet("ConsoleLog")]
+        [HttpGet("ConsoleLog")]
         public async Task<IActionResult> ConsoleLog()
         {
             Console.WriteLine("Console log test");
-            return Ok();
+            return Ok(new { message = new string[] { "Console log test", "Console log test" } });
+        }
+
+        [HttpGet("SendEmail")]
+        public async Task<IActionResult> SendEmail()
+        {
+            try
+            {
+                var res = await _emailService.SendAccountActivationAsync("masterik676@gmail.com", "token");
+                if (!res.IsSuccessStatusCode)
+                {
+                    return BadRequest(new { message = "Email could not be sent." });
+                }
+
+                return Ok(new { message = "Email sent" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = e.Message });
+            }
         }
     }
 }

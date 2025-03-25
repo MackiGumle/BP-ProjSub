@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Check, ChevronsUpDown, BookOpen, Wrench, Plus } from "lucide-react"
 import {
   DropdownMenu,
@@ -28,8 +27,8 @@ export function SubjectSwitcher() {
   return (
     <SidebarMenu className="m-1">
       <SidebarMenuItem>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu modal={true}>
+          <DropdownMenuTrigger asChild className="">
             <SidebarMenuButton
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
@@ -47,7 +46,8 @@ export function SubjectSwitcher() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
             {hasRole("Teacher") && (
-              <Link to={`subject/${subjectId}/create`}>
+              // <Link to={`subject/${subjectId}/create`}>
+              <Link to={`/createsubject/`}>
                 <DropdownMenuItem>
                   <Plus className="mr-2 " />
                   Create subject
@@ -56,7 +56,7 @@ export function SubjectSwitcher() {
               </Link>
             )}
             {hasRole("Teacher") && selectedSubject && (
-              <Link to={`subject/${subjectId}/manage`}>
+              <Link to={`/subject/${subjectId}/manage`}>
                 <DropdownMenuItem>
                   <Wrench className="mr-2 " />
                   Manage subject
@@ -76,7 +76,7 @@ export function SubjectSwitcher() {
                 <DropdownMenuItem disabled>No subjects found</DropdownMenuItem>
               ) :
                 subjects?.map((subject) => (
-                  <Link to={`subject/${subject.id}`} key={subject.id}>
+                  <Link to={`/subject/${subject.id}`} key={subject.id}>
                     <DropdownMenuItem
                       key={subject.id}
                       className="flex items-center justify-between"

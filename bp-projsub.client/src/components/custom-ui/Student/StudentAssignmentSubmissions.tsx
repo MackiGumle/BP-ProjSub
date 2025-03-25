@@ -28,13 +28,13 @@ export function StudentAssignmentSubmissions() {
     const [isAssignmentOpen, setAssignmentOpen] = useState<boolean>(true);
     const queryClient = useQueryClient()
 
-    const { data: submission, isLoading, isError, error } = useQuery<PartialSubmissionDto>({
+    const { data: submission, isLoading, isError } = useQuery<PartialSubmissionDto>({
         queryKey: ["parialsubmissions", assignmentId],
         queryFn: () => fetchSubmission(assignmentId!),
         enabled: !!assignmentId,
     });
 
-    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: parseInt(assignmentId || "") })
+    const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" });
 
 
     return (
@@ -110,9 +110,12 @@ export function StudentAssignmentSubmissions() {
                     }
                 </div>
 
-                {assignmentId && (
+                {isLoading ? (
+                    <Skeleton className="h-60 w-full rounded-md" />
+                ) : !isError && (
                     <Card className="shadow-lg rounded-lg p-6">
-                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId)}`} />
+                        <UppyDragDrop endpoint={`/api/upload/UploadSubmissionFiles/${parseInt(assignmentId!)}`}
+                            invalidateQueries={[["parialsubmissions", assignmentId!]]} />
                     </Card>
                 )}
             </div>

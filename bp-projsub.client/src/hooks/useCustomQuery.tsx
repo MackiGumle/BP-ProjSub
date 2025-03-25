@@ -26,7 +26,7 @@ export const useSubjectsQuery = (): UseQueryResult<SubjectDto[], Error> => {
     });
 };
 
-export const useAssignmentQuery = ({ assignmentId }: { assignmentId: number }): UseQueryResult<AssignmentDto, Error> => {
+export const useAssignmentQuery = ({ assignmentId, disableRefetch = false }: { assignmentId: string, disableRefetch?: boolean }): UseQueryResult<AssignmentDto, Error> => {
     const { getRole } = useAuth();
 
     return useQuery<AssignmentDto, Error>({
@@ -42,6 +42,7 @@ export const useAssignmentQuery = ({ assignmentId }: { assignmentId: number }): 
                 throw new Error("Failed to fetch assignment");
             }
         },
+        enabled: !!assignmentId && !disableRefetch,
         staleTime: 2 * 60 * 1000,
         retry: 2
     });
