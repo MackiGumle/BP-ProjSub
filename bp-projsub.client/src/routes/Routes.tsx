@@ -7,7 +7,6 @@ import ActivateAccountPage from "@/pages/ActivateAccountPage";
 import { NotFoundPage } from "@/pages/errorPages/NotFoundPage";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { AccountPage } from "@/pages/AccountPage";
 import { TestingPage } from "@/pages/TestingPage";
 import { ManageSubjectPage } from "@/pages/teacher/ManageSubjectPage";
 import { AssignmentSubmissionsPage } from "@/pages/AssignmentSubmissionsPage";
@@ -15,6 +14,7 @@ import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
 import { AssignmentDescriptionEditPage } from "@/pages/teacher/AssignmentDescriptionEditPage";
 import { AssignmentDetailEditPage } from "@/pages/teacher/AssignmentDetailEditPage";
+import AccountPage from "@/pages/AccountPage";
 
 
 
@@ -27,7 +27,6 @@ export const router = createBrowserRouter([
             {
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
-                    { path: "/account", element: <ProtectedRoute> <AccountPage /> </ProtectedRoute> },
 
                     {
                         path: "subject/:subjectId", element: <Outlet />,
@@ -48,6 +47,8 @@ export const router = createBrowserRouter([
                     { path: "createsubject/", element: <CreateSubjectForm /> },
                 ],
             },
+            { path: "/changepassword", element: <ProtectedRoute> <AccountPage /> </ProtectedRoute> },
+
             // { path: "register", element: <RegisterPage /> },
             { path: "/login", element: <LoginPage /> },
             { path: "/student", element: <ProtectedRoute role={["Student"]}> StudentPage </ProtectedRoute> },

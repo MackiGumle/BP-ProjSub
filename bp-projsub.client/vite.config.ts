@@ -48,19 +48,19 @@ export default defineConfig({
         }
     },
     server: {
-        proxy: {
+        proxy: { // This is what the back-end server will search if set in url of client
             '^/api/.*': {
                 target,
                 secure: false
             },
-            '^/account/.*': {
-                target,
-                secure: false
-            },
-            '^/auth/.*': {
-                target,
-                secure: false
-            },
+            // '^/account/.*': {
+            //     target,
+            //     secure: false
+            // },
+            // '^/auth/.*': {
+            //     target,
+            //     secure: false
+            // },
         },
         port: 5173,
         https: {
