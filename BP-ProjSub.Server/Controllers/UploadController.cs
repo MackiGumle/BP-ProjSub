@@ -5,16 +5,13 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using BP_ProjSub.Server.Data;
 using BP_ProjSub.Server.Data.Dtos;
-using BP_ProjSub.Server.Data.Dtos.Teacher;
 using BP_ProjSub.Server.Helpers;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using MimeTypes;
 
@@ -34,9 +31,11 @@ namespace BP_ProjSub.Server.Controllers
         private long maxTotalSize = 20 * 1024 * 1024; // 20MB
         private int maxFiles = 50; // Max number of files per upload
         private List<string> allowedExtensions { get; }
+        private readonly DolosClientService _dolosClient;
 
         public UploadController(IWebHostEnvironment env, BakalarkaDbContext dbContext,
-         IConfiguration config, ResourceAccessService resourceAccessService)
+         IConfiguration config, ResourceAccessService resourceAccessService,
+         DolosClientService dolosClient)
         {
             _env = env;
             _dbContext = dbContext;
@@ -48,6 +47,7 @@ namespace BP_ProjSub.Server.Controllers
             maxFiles = int.Parse(_config["Uploads:MaxFiles"]!);
             allowedExtensions = _config.GetSection("Uploads:AllowedFileExtensions").Get<List<string>>() ?? new List<string>();
             _blobServiceClient = new BlobServiceClient(_config["ConnectionStrings:BakalarkaBlob"]);
+            _dolosClient = dolosClient;
         }
 
         /// <summary>
@@ -977,61 +977,83 @@ namespace BP_ProjSub.Server.Controllers
 
                 await FileTreeNode.DownloadSourceCodesAsync(containerClient, assignmentId.ToString(), Path.Combine(_env.ContentRootPath, "plagiatism/"), extensions);
 
-                string mossPath = Path.Combine(_env.ContentRootPath, "moss.pl");
-
-                var files = Directory.GetFiles(
-                    Path.Combine(_env.ContentRootPath, $"plagiatism/{assignmentId}"),
-                    "*",
-                    SearchOption.AllDirectories
-                );
-
-                // File list as arguments
-                var filesArgument = string.Join(" ", files.Select(f => $"\"{f}\""));
-
-                var arguments = $"{mossPath} -l {language} -d {filesArgument}";
-
-                var process = new Process
+                var folderPath = Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString());
+                if (!Directory.Exists(folderPath))
                 {
-                    // moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "perl",
-                        Arguments = arguments, // $"{mossPath} -l {language} -d {_env.ContentRootPath}/plagiatism/{assignmentId}/*/*",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                    }
-                };
-
-                bool started = process.Start();
-                if (!started)
-                {
-                    throw new Exception("Failed to start the process.");
+                    return NotFound(new { Message = "No files found for plagiarism check." });
                 }
+                var zipFilePath = Path.Combine(Path.Combine(_env.ContentRootPath, "plagiatism", $"{assignmentId}.zip"));
 
-                await process.WaitForExitAsync();
+                ZipFile.CreateFromDirectory(folderPath, zipFilePath);
 
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
+                #region MOSS
+                // string mossPath = Path.Combine(_env.ContentRootPath, "moss.pl");
 
-                if (!string.IsNullOrEmpty(error))
-                {
-                    throw new Exception(error);
-                }
+                // var files = Directory.GetFiles(
+                //     Path.Combine(_env.ContentRootPath, $"plagiatism/{assignmentId}"),
+                //     "*",
+                //     SearchOption.AllDirectories
+                // );
 
-                var url = output.Split('\n')[^2];
+                // // File list as arguments
+                // var filesArgument = string.Join(" ", files.Select(f => $"\"{f}\""));
+
+                // var arguments = $"{mossPath} -l {language} -d {filesArgument}";
+
+                // var process = new Process
+                // {
+                //     // moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..moss [-l language] [-d] [-b basefile1] ... [-b basefilen] [-m #] [-c "string"] file1 file2 file3 ..
+                //     StartInfo = new ProcessStartInfo
+                //     {
+                //         FileName = "perl",
+                //         Arguments = arguments, // $"{mossPath} -l {language} -d {_env.ContentRootPath}/plagiatism/{assignmentId}/*/*",
+                //         RedirectStandardOutput = true,
+                //         RedirectStandardError = true,
+                //         UseShellExecute = false,
+                //         CreateNoWindow = true,
+                //     }
+                // };
+
+                // bool started = process.Start();
+                // if (!started)
+                // {
+                //     throw new Exception("Failed to start the process.");
+                // }
+
+                // await process.WaitForExitAsync();
+
+                // var output = process.StandardOutput.ReadToEnd();
+                // var error = process.StandardError.ReadToEnd();
+
+                // if (!string.IsNullOrEmpty(error))
+                // {
+                //     throw new Exception(error);
+                // }
+
+                // var url = output.Split('\n')[^2];
+
+                // Delete the downloaded files
+                #endregion
+
+                var reportUrl = await _dolosClient.SubmitToDolosAsync($"assignment-{assignmentId}", zipFilePath);
 
                 // Delete the downloaded files
                 Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+                System.IO.File.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", $"{assignmentId}.zip"));
 
-                return Ok(new { Link = url, Message = "Plagiatism check finished." });
+
+                return Ok(new { Link = reportUrl, Message = "Plagiatism check finished." });
             }
             catch (Exception ex)
             {
                 if (Directory.Exists(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString())))
                 {
                     Directory.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()), true);
+                }
+
+                if (System.IO.File.Exists(Path.Combine(_env.ContentRootPath, "plagiatism", $"{assignmentId}.zip")))
+                {
+                    System.IO.File.Delete(Path.Combine(_env.ContentRootPath, "plagiatism", $"{assignmentId}.zip"));
                 }
 
                 return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred during plagiarism check.", Error = ex.Message });
