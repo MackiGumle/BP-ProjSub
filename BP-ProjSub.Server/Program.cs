@@ -7,8 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BP_ProjSub.Server.Services;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.Configuration.EnvironmentVariables;
-using Azure.Storage.Blobs;
+using BP_ProjSub.Server.Helpers;
 
 
 namespace BP_ProjSub.Server
@@ -148,6 +147,8 @@ namespace BP_ProjSub.Server
             builder.Services.AddScoped<StudentService>();
             builder.Services.AddScoped<ResourceAccessService>();
             builder.Services.AddScoped<AssignmentService>();
+            builder.Services.AddHttpClient<DolosClientService>();
+
 
 
 
