@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   password: z.string().min(8, {
@@ -23,9 +24,9 @@ const formSchema = z.object({
     message: "Please confirm your password.",
   }),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 export default function ActivateAccountPage() {
   const params = new URLSearchParams(window.location.search);
@@ -39,7 +40,7 @@ export default function ActivateAccountPage() {
   }
 
   console.log(token);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,27 +50,27 @@ export default function ActivateAccountPage() {
   });
 
   const mutation = useMutation({
-  mutationFn: (values: z.infer<typeof formSchema>) => {
-    return axios.post(
-      "/api/Auth/ActivateAccount",
-       values.password,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+    mutationFn: (values: z.infer<typeof formSchema>) => {
+      return axios.post(
+        "/api/Auth/ActivateAccount",
+        values.password,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      }
-    );
-  },
-  onSuccess: () => {
-    navigate('/login');
-  },
-  onError: (error: AxiosError<{ message: string }>) => {
-    const errorMessage = error.response?.data?.message || 
-                       "An error occurred during activation";
-    form.setError('root', { message: errorMessage });
-  },
-});
+      );
+    },
+    onSuccess: () => {
+      navigate('/login');
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      const errorMessage = error.response?.data?.message ||
+        "An error occurred during activation";
+      form.setError('root', { message: errorMessage });
+    },
+  });
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -125,7 +126,8 @@ export default function ActivateAccountPage() {
             className="w-full"
             disabled={mutation.isLoading}
           >
-            {mutation.isLoading ? "Activating..." : "Activate Account"}
+            {mutation.isLoading ? <><Loader2 className="animate-spin h-4 w-4 mr-2" /> "Activating..."</>
+              : "Activate Account"}
           </Button>
         </form>
       </Form>

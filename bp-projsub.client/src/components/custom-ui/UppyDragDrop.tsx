@@ -104,6 +104,7 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
                     maxFileSize: settings.maxFileSize,
                     maxTotalFileSize: settings.maxTotalSize,
                     allowedFileTypes: settings.allowedExtensions,
+                    maxNumberOfFiles: settings.maxFiles,
                 },
             })
 

@@ -22,87 +22,259 @@ import {
 import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
 import { ChevronDown } from "lucide-react"
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
 
+// Managing collapsible groups with URL parameters
+const useCollapsibleGroups = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-// Sidebar component for displaying assignments
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { getRole } = useAuth()
-  const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
-
-  const [searchParams, setSearchParams] = useSearchParams()
-  const searchQuery = searchParams.get("q")?.toLowerCase() || "";
-
-
-  // Initialize open groups from URL using useMemo to avoid warning
-  const initialOpenGroups = React.useMemo(
-    () => new Set(searchParams.get("open")?.split(",") || []),
-    [searchParams]
-  )
-  const [openGroups, setOpenGroups] = React.useState<Set<string>>(initialOpenGroups)
-
-  // Update URL when open groups change
-  React.useEffect(() => {
-    const newParams = new URLSearchParams(searchParams)
-    const currentOpen = searchParams.get("open")?.split(",") || []
-
-    // Only update if there's an actual change
-    if (Array.from(openGroups).join(",") !== currentOpen.join(",")) {
-      if (openGroups.size > 0) {
-        newParams.set("open", Array.from(openGroups).join(","))
-      } else {
-        newParams.delete("open")
-      }
-      setSearchParams(newParams, { replace: true })
+  const initialClosedGroups = React.useMemo(() => {
+    if (searchParams.has("closed")) {
+      const closedParam = searchParams.get("closed");
+      return new Set<string>(closedParam?.split(",").filter(Boolean) || []);
     }
-  }, [openGroups, searchParams, setSearchParams])
+
+    // Default all open
+    return new Set<string>();
+  }, [searchParams]);
+
+  const [closedGroups, setClosedGroups] = React.useState<Set<string>>(initialClosedGroups);
+
+  // Update URL when closed groups change
+  React.useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+
+    if (closedGroups.size > 0) {
+      newParams.set("closed", Array.from(closedGroups).join(","));
+    } else {
+      newParams.delete("closed");
+    }
+
+    setSearchParams(newParams, { replace: true });
+  }, [closedGroups, searchParams, setSearchParams]);
 
   // Toggle group without side effects
   const toggleGroup = (type: string) => {
-    setOpenGroups(prev => {
-      const newSet = new Set(prev)
-      newSet.has(type) ? newSet.delete(type) : newSet.add(type)
-      return newSet
-    })
-  }
+    setClosedGroups(prev => {
+      const newSet = new Set(prev);
+      newSet.has(type) ? newSet.delete(type) : newSet.add(type);
+      return newSet;
+    });
+  };
 
-  // Fetch assignments
-  const { data: assignments, isLoading, error } = useQuery({
+  return { closedGroups, toggleGroup };
+};
+
+// Fetching and filtering assignments
+const useAssignments = (subjectId: string | undefined, searchQuery: string) => {
+  const { getRole } = useAuth();
+
+  const { data, isLoading, error } = useQuery({
     queryKey: ['assignments', subjectId],
     queryFn: async () => {
-      if (!subjectId) return []
+      if (!subjectId) return [];
       const response = await axios.get(
         `/api/${getRole()}/GetAssignments/${subjectId}`,
-      )
-      return response.data as AssignmentDto[]
+      );
+      return response.data as AssignmentDto[];
     },
     enabled: !!subjectId,
-  })
+  });
 
-  // Group assignments by type
+  // Group and filter assignments
   const groupedAssignments = React.useMemo(() => {
-    const groups: Record<string, AssignmentDto[]> = {}
+    const groups: Record<string, AssignmentDto[]> = {};
 
-    // First filter, then group
-    assignments?.filter(assignment => {
+    data?.filter(assignment => {
       const searchFields = [
         assignment.title,
         assignment.maxPoints
       ].join(" ").toLowerCase();
 
       return searchFields.includes(searchQuery.toLowerCase());
-    }).forEach(assignment => { // group by type
+    }).forEach(assignment => {
       const type = assignment.type || 'Other';
       if (!groups[type]) groups[type] = [];
       groups[type].push(assignment);
-    }
-    );
+    });
 
     return Object.entries(groups);
-  }, [assignments, searchQuery])
+  }, [data, searchQuery]);
 
+  return { assignments: data, groupedAssignments, isLoading, error };
+};
+
+
+const AssignmentItemSkeleton = () => {
+  return (
+    <SidebarMenuItem className="group p-0 m-0">
+      <div className="flex items-center justify-between w-full">
+        <div className="w-full m-1 p-0 h-auto">
+          <div className="w-full m-0 p-1 h-auto">
+            <div className="flex flex-col flex-1 text-left space-y-2">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </SidebarMenuItem>
+  );
+};
+
+const AssignmentGroupSkeleton = () => {
+  return (
+    <SidebarGroup className="p-0">
+      <div className="w-full flex items-center justify-between border-b p-2">
+        <Skeleton className="h-5 w-1/4" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </div>
+      <SidebarGroupContent>
+        <SidebarMenu className="p-0">
+          {[1, 2, 3].map((i) => (
+            <AssignmentItemSkeleton key={i} />
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+};
+
+const SkeletonLoader = () => {
+  return (
+    <div className="animate-pulse">
+      {[1, 2].map((i) => (
+        <AssignmentGroupSkeleton key={i} />
+      ))}
+    </div>
+  );
+};
+
+const EmptyStateMessage = ({
+  subjectId,
+  isLoading,
+  error,
+  hasAssignments,
+  hasFilteredAssignments
+}: {
+  subjectId?: string;
+  isLoading: boolean;
+  error: unknown;
+  hasAssignments: boolean;
+  hasFilteredAssignments: boolean;
+}) => {
+  if (!subjectId) {
+    return <div className="p-4 text-center text-muted-foreground">Select a subject to view assignments</div>;
+  }
+
+  if (isLoading) {
+    return <SkeletonLoader />;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error loading assignments</div>;
+  }
+
+  if (!hasAssignments) {
+    return <div className="p-4 text-center text-muted-foreground">There are no assignments</div>;
+  }
+
+  if (!hasFilteredAssignments) {
+    return <div className="p-4 text-center text-muted-foreground">No assignments match search</div>;
+  }
+
+  return null;
+};
+
+const AssignmentItem = ({
+  assignment,
+  subjectId,
+  currentAssignmentId
+}: {
+  assignment: AssignmentDto;
+  subjectId: string;
+  currentAssignmentId?: string;
+}) => {
+  return (
+    <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
+      <div className="flex items-center justify-between w-full">
+        <Link to={`subject/${subjectId}/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto">
+          <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={currentAssignmentId === String(assignment.id)}>
+            <div className="flex flex-col flex-1 text-left">
+              <span className="font-medium">{assignment.title}</span>
+              <span className="text-xs text-muted-foreground">
+                Due: {assignment.dueDate ?
+                  new Date(assignment.dueDate).toLocaleString() : 'No due date'}
+              </span>
+              {assignment.maxPoints && (
+                <span className="text-xs text-muted-foreground">
+                  Max points: {assignment.maxPoints}
+                </span>
+              )}
+            </div>
+          </SidebarMenuButton>
+        </Link>
+        {/* <SidebarMenuAction className="flex items-center">
+
+        </SidebarMenuAction> */}
+      </div>
+    </SidebarMenuItem>
+  );
+};
+
+const AssignmentGroup = ({
+  type,
+  assignments,
+  isOpen,
+  onToggle,
+  subjectId,
+  currentAssignmentId
+}: {
+  type: string;
+  assignments: AssignmentDto[];
+  isOpen: boolean;
+  onToggle: () => void;
+  subjectId: string;
+  currentAssignmentId?: string;
+}) => {
+  return (
+    <Collapsible key={type} open={isOpen} onOpenChange={onToggle}>
+      <SidebarGroup className="p-0">
+        <CollapsibleTrigger className="w-full flex items-center justify-between border-b">
+          <SidebarGroupLabel>
+            <span>{type}</span>
+          </SidebarGroupLabel>
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <SidebarMenu className="p-0">
+              {assignments.map((assignment) => (
+                <AssignmentItem
+                  key={assignment.id}
+                  assignment={assignment}
+                  subjectId={subjectId}
+                  currentAssignmentId={currentAssignmentId}
+                />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
+  );
+};
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q")?.toLowerCase() || "";
+  const { closedGroups, toggleGroup } = useCollapsibleGroups();
+  const { groupedAssignments, assignments, isLoading, error } = useAssignments(subjectId, searchQuery);
 
   return (
     <Sidebar variant="sidebar" {...props}>
@@ -112,84 +284,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SearchForm className="flex-grow" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="">
-        {!subjectId ? (
-          <div className="p-4 text-center text-muted-foreground">
-            Select a subject to view assignments
-          </div>
-        ) : isLoading ? (
-          <div className="p-4">Loading assignments...</div>
-        ) : error ? (
-          <div className="p-4 text-red-500">Error loading assignments</div>
-        ) : assignments?.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            No assignments found for this subject
-          </div>
-        ) : groupedAssignments.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            No assignments match search criteria
-          </div>
-        ) : (
+      <SidebarContent>
+        <EmptyStateMessage
+          subjectId={subjectId}
+          isLoading={isLoading}
+          error={error}
+          hasAssignments={!!assignments?.length}
+          hasFilteredAssignments={!!groupedAssignments.length}
+        />
+
+        {groupedAssignments.length > 0 && (
           <>
             {groupedAssignments.map(([type, typeAssignments]) => (
-              <Collapsible
+              <AssignmentGroup
                 key={type}
-                open={openGroups.has(type)}
-                onOpenChange={() => toggleGroup(type)}
-              >
-                <SidebarGroup className="p-0">
-                  <CollapsibleTrigger className="w-full flex items-center justify-between border-b">
-                    <SidebarGroupLabel>
-                      <span>{type}</span>
-                    </SidebarGroupLabel>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${openGroups.has(type) ? 'rotate-180' : ''}`} />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu className="p-0">
-                        {typeAssignments.map((assignment) => ( // each assignment
-                          <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
-                            <div className="flex items-center justify-between w-full">
-                              <Link to={`subject/${subjectId}/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto">
-                                <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={assignmentId === String(assignment.id)}>
-                                  <div className="flex flex-col flex-1 text-left">
-                                    <span className="font-medium">{assignment.title}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      Due: {assignment.dueDate ?
-                                        new Date(assignment.dueDate).toLocaleString() : 'No due date'}
-                                    </span>
-                                    {assignment.maxPoints && (
-                                      <span className="text-xs text-muted-foreground">
-                                        Max points: {assignment.maxPoints}
-                                      </span>
-                                    )}
-                                  </div>
-                                </SidebarMenuButton>
-                              </Link>
-                              <SidebarMenuAction className="flex items-center">
-                                {/*for some reason this doesnt show the menu correctly?!?!?!? <TeacherAssignmentActions assignmentId={assignment.id} />
-                                <ThemeToggle /> */}
-                                {/* {hasRole("Teacher") && (
-                                  <Link to={`subject/${subjectId}/assignments/${assignment.id}/edit`}>
-                                    <div className="">
-                                      <Pencil className="w-6 h-6 p-1" />
-                                    </div>
-                                  </Link>
-                                )} */}
-                              </SidebarMenuAction>
-                            </div>
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
+                type={type}
+                assignments={typeAssignments}
+                isOpen={!closedGroups.has(type)}
+                onToggle={() => toggleGroup(type)}
+                subjectId={subjectId!}
+                currentAssignmentId={assignmentId}
+              />
             ))}
           </>
         )}
       </SidebarContent>
-
     </Sidebar>
-  )
+  );
 }

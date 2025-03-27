@@ -30,7 +30,7 @@ public class EmailService
         var subject = "ProjSub Account activation";
         var to = new EmailAddress(recipient);
 
-        string activationUrl = $"{_config["WebsiteUrl"]}/auth/ActivateAccount/{token}";
+        string activationUrl = $"{_config["WebsiteUrl"]}/auth/ActivateAccount/?token={token}";
 
         // Load email template
         string templatePath = Path.Combine(_env.ContentRootPath, "EmailTemplates", "AccountActivation.html");

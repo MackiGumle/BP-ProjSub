@@ -15,6 +15,7 @@ import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm"
 import { AssignmentDescriptionEditPage } from "@/pages/teacher/AssignmentDescriptionEditPage";
 import { AssignmentDetailEditPage } from "@/pages/teacher/AssignmentDetailEditPage";
 import AccountPage from "@/pages/AccountPage";
+import { SubjectGrid } from "@/components/custom-ui/SubjectGrid";
 
 
 
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
             {
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
-
+                    { path: "", element: <SubjectGrid /> },
                     {
                         path: "subject/:subjectId", element: <><Outlet /></>,
                         children: [

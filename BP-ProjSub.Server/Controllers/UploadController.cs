@@ -785,7 +785,8 @@ namespace BP_ProjSub.Server.Controllers
             {
                 maxFileSize,
                 maxTotalSize,
-                allowedExtensions
+                allowedExtensions,
+                maxFiles
             });
         }
 
