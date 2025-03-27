@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -37,7 +37,7 @@ export default function ActivateAccountPage() {
     // navigate('/login');
     return null;
   }
-  
+
   console.log(token);
   
   const form = useForm<z.infer<typeof formSchema>>({
