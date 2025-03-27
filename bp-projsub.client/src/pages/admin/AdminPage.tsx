@@ -35,7 +35,6 @@ export function AdminPage() {
                         </div>
                     </TabsContent>
                     <TabsContent value="Accounts">
-                        {/* TODO: Account list */}
                         <AccountsTable />
                     </TabsContent>
                 </Tabs>

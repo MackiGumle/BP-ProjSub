@@ -28,8 +28,17 @@ const formSchema = z.object({
   });
 
 export default function ActivateAccountPage() {
-  const { token } = useParams<{ token: string }>();
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
   const navigate = useNavigate();
+
+  if (!token) {
+    console.error("No token provided for account activation");
+    // navigate('/login');
+    return null;
+  }
+  
+  console.log(token);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

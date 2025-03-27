@@ -29,7 +29,7 @@ export const router = createBrowserRouter([
                 children: [
 
                     {
-                        path: "subject/:subjectId", element: <Outlet />,
+                        path: "subject/:subjectId", element: <><Outlet /></>,
                         children: [
                             { path: "manage/", element: <ManageSubjectPage /> },
                             {
@@ -57,7 +57,8 @@ export const router = createBrowserRouter([
             {
                 path: "/auth",
                 children: [
-                    { path: "activateaccount/:token", element: <ActivateAccountPage /> },
+                    // { path: "activateaccount/:token", element: <ActivateAccountPage /> },
+                    { path: "activateaccount/", element: <ActivateAccountPage /> },
                 ],
             },
             { path: "/testing", element: <TestingPage /> },
