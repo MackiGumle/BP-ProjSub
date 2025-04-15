@@ -10,6 +10,7 @@ env:
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 8.0.x
   WORKING_DIRECTORY: BP-ProjSub.Server
+  TZ: 'Europe/Prague' 
 jobs:
   build:
     runs-on: ubuntu-latest
