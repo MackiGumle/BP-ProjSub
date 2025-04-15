@@ -135,7 +135,7 @@ export function TeacherAssignmentSubmissions() {
                                             <Pencil className="" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="center" className="w-auto">
+                                    <DropdownMenuContent align="center" className="w-auto p-1.5">
                                         <DropdownMenuItem>
                                             <Link to={`editdetails/`} className="flex items-center space-x-2">
                                                 <CalendarCog />

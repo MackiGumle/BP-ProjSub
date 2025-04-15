@@ -15,17 +15,19 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { SearchForm } from "@/components/search-form"
 import { SubjectSwitcher } from "@/components/subject-switcher"
-import { ChevronDown } from "lucide-react"
+import { Check, ChevronDown, Plus } from "lucide-react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { AssignmentDto } from "@/Dtos/AssignmentDto"
+import { getTimeRemaining, getTimeStatusColor } from "@/utils/timeRemaining"
+import { Button } from "./ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 // Managing collapsible groups with URL parameters
 const useCollapsibleGroups = () => {
@@ -199,28 +201,41 @@ const AssignmentItem = ({
   subjectId: string;
   currentAssignmentId?: string;
 }) => {
+  const { hasRole } = useAuth();
+  const isStudent = hasRole("Student");
+
   return (
-    <SidebarMenuItem key={assignment.id} className="group p-0 m-0">
-      <div className="flex items-center justify-between w-full">
-        <Link to={`subject/${subjectId}/assignments/${assignment.id}`} className="w-full m-1 p-0 h-auto">
+    <SidebarMenuItem key={assignment.id} className="group first:mt-1 p-0 mx-1">
+      <div className="flex items-center justify-between w-full border rounded-md">
+        <Link to={`subject/${subjectId}/assignments/${assignment.id}`} className="w-full m-0 p-0 h-auto">
           <SidebarMenuButton className="w-full m-0 p-1 h-auto" isActive={currentAssignmentId === String(assignment.id)}>
             <div className="flex flex-col flex-1 text-left">
               <span className="font-medium">{assignment.title}</span>
-              <span className="text-xs text-muted-foreground">
-                Due: {assignment.dueDate ?
-                  new Date(assignment.dueDate).toLocaleString() : 'No due date'}
-              </span>
-              {assignment.maxPoints && (
-                <span className="text-xs text-muted-foreground">
-                  Max points: {assignment.maxPoints}
-                </span>
-              )}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className={`text-xs ${getTimeStatusColor(assignment.dateAssigned, assignment.dueDate)}`}>
+                    Due: {assignment.dueDate ?
+                      getTimeRemaining(assignment.dueDate) : 'No due date'}
+                  </span>
+                  {assignment.maxPoints && (
+                    <span className="text-xs text-muted-foreground">
+                      {isStudent ? "Points: " : "Max points: "}
+                      {isStudent ? `${assignment.rating ?? "-"}/${assignment.maxPoints}` : assignment.maxPoints}
+                    </span>
+                  )}
+                </div>
+
+                <span className="text-xs text-muted-foreground">{assignment.description}</span>
+              </div>
             </div>
+
+            {assignment.isSubmitted && (
+              <div className="flex items-center ml-2 self-center">
+                <Check className="h-4 w-4 text-green-400" />
+              </div>
+            )}
           </SidebarMenuButton>
         </Link>
-        {/* <SidebarMenuAction className="flex items-center">
-
-        </SidebarMenuAction> */}
       </div>
     </SidebarMenuItem>
   );
@@ -241,14 +256,44 @@ const AssignmentGroup = ({
   subjectId: string;
   currentAssignmentId?: string;
 }) => {
+  const { getRole } = useAuth();
+  const isTeacher = getRole() == "Teacher";
+
   return (
     <Collapsible key={type} open={isOpen} onOpenChange={onToggle}>
       <SidebarGroup className="p-0">
-        <CollapsibleTrigger className="w-full flex items-center justify-between border-b">
+        <CollapsibleTrigger className="w-full flex items-center justify-between">
           <SidebarGroupLabel>
             <span>{type}</span>
           </SidebarGroupLabel>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+
+          <div className="flex items-center gap-1">
+            {isTeacher && (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Button variant="ghost" className="text-xs h-4 w-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Link to={`/subject/${subjectId}/assignments/new`} className="flex items-center">
+                          <Plus className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Create assignment
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+
+              </>
+            )}
+            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarGroupContent>
@@ -265,7 +310,7 @@ const AssignmentGroup = ({
           </SidebarGroupContent>
         </CollapsibleContent>
       </SidebarGroup>
-    </Collapsible>
+    </Collapsible >
   );
 };
 
@@ -276,11 +321,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { closedGroups, toggleGroup } = useCollapsibleGroups();
   const { groupedAssignments, assignments, isLoading, error } = useAssignments(subjectId, searchQuery);
 
+
   return (
     <Sidebar variant="sidebar" {...props}>
       <SidebarHeader>
         <SubjectSwitcher />
-        <div className="flex items-center mt-2">
+        <div className="flex items-center mt-1">
           <SearchForm className="flex-grow" />
         </div>
       </SidebarHeader>

@@ -1,13 +1,13 @@
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 import { useAssignmentQuery } from "@/hooks/useCustomQuery";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import 'katex/dist/katex.min.css'; // Keeps unformated text hidden
 import { MarkdownRenderer } from "../../components/custom-ui/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
-import { Save, Trash } from "lucide-react";
+import { Save, Trash, Undo2 } from "lucide-react";
 import TOCWrapper from "../../components/custom-ui/Teacher/TOCWrapper";
 import { UppyDragDrop } from "../../components/custom-ui/UppyDragDrop";
 import axios from "axios";
@@ -65,30 +65,36 @@ export function AssignmentDescriptionEditPage() {
                 <p className="text-red-500">Failed to load assignment.</p>
             ) : (
                 <>
-                    {/* <div className="flex justify-between items-center"> */}
-
-                    {/* </div> */}
-                    {/* <Separator /> */}
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                        <ResizablePanel defaultSize={10} className="sticky top-0">
-                            <div className="flex flex-col h-auto">
-                                <div className="flex-grow overflow-y-auto">
-                                    <TOCWrapper
-                                        endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
-                                        contextMenu={true}
-                                    />
-                                </div>
-                                <div className="">
-                                    <UppyDragDrop
-                                        endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
-                                        invalidateQueries={[
-                                            ["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
-                                        ]}
-                                    />
+                        <ResizablePanel defaultSize={10} className="">
+                            <div className="flex flex-col items-center justify-between m-1">
+                                <Link to={`..`} className="w-full">
+                                    <Button variant="secondary" className="w-full overflow-auto">
+                                        <Undo2 className="mr-2" />
+                                        Back to Assignment
+                                    </Button>
+                                </Link>
+                                <div className="flex flex-col h-auto mt-2 space-y-2">
+                                    <div className="flex-grow overflow-y-auto">
+                                        <TOCWrapper
+                                            endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
+                                            contextMenu={true}
+                                        />
+                                    </div>
+                                    <div className="">
+                                        <UppyDragDrop
+                                            endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                            invalidateQueries={[
+                                                ["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </ResizablePanel>
+
                         <ResizableHandle />
+
                         <ResizablePanel defaultSize={45}>
                             <Textarea
                                 // autoFocus

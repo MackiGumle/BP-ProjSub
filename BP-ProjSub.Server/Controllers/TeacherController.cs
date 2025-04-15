@@ -811,7 +811,7 @@ namespace BP_ProjSub.Server.Controllers
 
                     submission.IsSuspicious = studentLogs.GroupBy(l => l.IpAddress).Count() > 1;
 
-                    if (submission.IsSuspicious)
+                    if (submission.IsSuspicious == true)
                     {
                         submission.AssignmentViewLogs = studentLogs
                         .Select(l => new AssignmentViewLogDto

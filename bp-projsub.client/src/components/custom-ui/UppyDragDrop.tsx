@@ -15,6 +15,22 @@ interface UppyDragDropProps {
     onUploadComplete?: () => void;
 }
 
+interface UploadSettings {
+    maxFileSize: number;
+    maxTotalSize: number;
+    allowedExtensions: string[] | null;
+    maxFiles: number;
+}
+
+interface UploadErrorResponse {
+    body?: Record<string, any>;
+    status: number;
+    bytesUploaded?: number;
+    response: {
+        message: string;
+    };
+}
+
 
 export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: UppyDragDropProps) {
 
@@ -33,18 +49,6 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
 
                 return modifiedFile
             },
-            // locale: {
-            //     strings: {
-            //         dropPaste: 'Drop files here or paste',
-            //         dropPasteImport: 'Drop files here, paste or import from',
-            //         dropHereOr: 'sssDrop files here or %{browse}',
-            //         browse: 'browse skibidi bop',
-            //     },
-            //     pluralize: function (n: number): number {
-            //         throw new Error('Function not implemented.');
-            //     }
-            // }
-
         }).use(XHR, {
             endpoint: endpoint,
             fieldName: 'files',
@@ -53,6 +57,22 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
+            responseType: 'json',
+            getResponseData(xhr) {
+                try {
+                    const responseBody = xhr.response;
+                    console.log('Response body:', responseBody);
+
+                    if (!responseBody.url && xhr.status >= 200 && xhr.status < 300) {
+                        responseBody.url = 'uploaded';
+                    }
+
+                    return responseBody;
+                } catch (error) {
+                    console.error('Error processing response:', error);
+                    return { url: 'uploaded', status: xhr.status };
+                }
+            },
         })
 
         uppy.on('complete', () => {
@@ -60,6 +80,39 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
                 invalidateQueries.forEach(queryKey => {
                     queryClient.invalidateQueries({ queryKey });
                 });
+            }
+        });
+
+        // uppy.on('error', (error, file, response) => {
+        //     if (response) { // undefined for some reason
+        //         response = response as any;
+        //         const res = response as UploadErrorResponse;
+
+        //         error.message = res.response?.message || 'Upload failed';
+        //         error.details = undefined;
+        //         // error.name = "meno";
+        //     }
+        // });
+
+        uppy.on('upload-error', (file, error, response) => {
+            if (response) {
+                response = response as any;
+                const res = response as UploadErrorResponse;
+                error.message = res.response?.message || 'Upload failed';
+                error.details = undefined;
+
+                if (file) {
+                    uppy.setState({
+                        error: res.response?.message || 'Upload failed',
+                        errorFile: file.id,
+                    });
+                    uppy.setFileState(file.id, {
+                        error: res.response?.message || 'Upload failed'
+
+                    });
+                }
+
+                uppy.info(`${res.response.message}`, 'error', 8500)
             }
         });
 
@@ -91,13 +144,18 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
         }
     }, [results, onUploadComplete]);
 
+    const [uploadSettings, setUploadSettings] = React.useState<UploadSettings>()
+
     const fetchUploadSettings = async () => {
         try {
             const response = await axios.get('/api/upload/GetUploadSettings')
-            const settings = response.data
+            const settings = response.data as UploadSettings
 
-            if (settings.allowedExtensions == '*')
+            if (settings.allowedExtensions && settings.allowedExtensions.includes('*')) {
                 settings.allowedExtensions = null
+            }
+
+            setUploadSettings(settings)
 
             uppy.setOptions({
                 restrictions: {
@@ -122,9 +180,17 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
 
     return (
         <>
-            {/* <p>File count: {fileCount}</p>
-            <p>Total progress: {totalProgress}</p> */}
-            <Dashboard width="100%" theme={theme === 'system' ? 'auto' : theme} uppy={uppy} />
+            <Dashboard
+                width="100%"
+                theme={theme === 'system' ? 'auto' : theme}
+                uppy={uppy}
+                note={
+                    `${uploadSettings?.maxFileSize ? `file size: ${uploadSettings.maxFileSize / 1024 / 1024} MB, ` : ''}` +
+                    `${uploadSettings?.maxTotalSize ? `total size: ${uploadSettings.maxTotalSize / 1024 / 1024} MB, ` : ''}` +
+                    `${uploadSettings?.maxFiles ? `files: ${uploadSettings.maxFiles}, ` : ''}` +
+                    `${uploadSettings?.allowedExtensions ? `file types: ${uploadSettings.allowedExtensions.join(', ')}` : ''}`
+                }
+            />
         </>
     )
 }

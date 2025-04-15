@@ -1,9 +1,10 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, Wrench } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubjectsQuery } from "@/hooks/useCustomQuery";
 import { useAuth } from "@/context/UserContext";
+import { Button } from "../ui/button";
 
 function SubjectSkeletonCard() {
     return (
@@ -46,26 +47,24 @@ export function SubjectGrid() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 m-4">
             {subjects.map((subject) => (
                 <Link to={`/subject/${subject.id}`} key={subject.id}>
                     <Card className="hover:bg-accent transition-colors cursor-pointer h-full shadow-sm hover:shadow-md">
-                        <CardHeader className="flex flex-row items-center gap-3 p-5">
-                            <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <CardHeader className="flex flex-row items-center gap-3 p-2">
+                            <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-auto">
                                 <BookOpen className="size-5" />
                             </div>
                             <div>
                                 <CardTitle className="truncate">{subject.name}</CardTitle>
-                                <CardDescription>
+                                <CardDescription className="text-sm text-muted-foreground max-h-10 overflow-y-auto">
                                     {subject.description || "No description"}
                                 </CardDescription>
                             </div>
                         </CardHeader>
-                        <CardContent className="px-5 pb-5">
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                {subject.description || "No description "}
-                            </p>
-                        </CardContent>
+                        {/* <CardContent className="px-5 pb-5">
+
+                        </CardContent> */}
                     </Card>
                 </Link>
             ))}

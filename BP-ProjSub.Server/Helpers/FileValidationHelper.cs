@@ -35,11 +35,13 @@ public class FileValidationHelper
         using (var zipStream = file.OpenReadStream())
         using (var archive = new ZipArchive(zipStream))
         {
+            // Check for max files
             if (maxFiles.HasValue && ((fileCount += archive.Entries.Count) > maxFiles))
             {
                 throw new Exception($"Maximum number of files exceeded. Max files: {maxFiles}.");
             }
 
+            // Check for single max file size is set
             if (maxFileSize.HasValue)
             {
                 foreach (var entry in archive.Entries)
@@ -60,32 +62,4 @@ public class FileValidationHelper
 
         return (fileCount, totalSize);
     }
-
-    // public static bool ValidatePathTraversal(string path, string allowedRootPath)
-    // {
-    //     if (path.Contains(".."))
-    //     {
-    //         return false;
-    //     }
-
-        
-    //     return Path.GetFullPath(path).StartsWith(allowedRootPath);
-    // }
-
-    // public static void ValidateZipEntries(IFormFile file)
-    // { // TODO: Implement this method
-    //     using (var zipStream = file.OpenReadStream())
-    //     using (var archive = new ZipArchive(zipStream))
-    //     {
-    //         foreach (var entry in archive.Entries)
-    //         {
-    //             var fullPath = Path.GetFullPath(entry.FullName);
-
-    //             if (entry.FullName.Contains(".."))
-    //             {
-    //                 throw new Exception("Invalid file path.");
-    //             }
-    //         }
-    //     }
-    // }
 }

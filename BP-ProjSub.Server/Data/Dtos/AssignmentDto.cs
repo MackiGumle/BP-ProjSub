@@ -17,4 +17,8 @@ public class AssignmentDto
     public DateTime? DueDate { get; set; }
 
     public long? MaxPoints { get; set; }
+
+    public bool IsSubmitted { get; set; }
+    
+    public long? Rating { get; set; }
 }
