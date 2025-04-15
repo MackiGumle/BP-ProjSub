@@ -530,6 +530,7 @@ namespace BP_ProjSub.Server.Controllers
                     PersonId = personId
                 };
 
+
                 await _dbContext.Assignments.AddAsync(assignment);
                 await _dbContext.SaveChangesAsync();
 
