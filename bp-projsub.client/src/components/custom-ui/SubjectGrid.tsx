@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubjectsQuery } from "@/hooks/useCustomQuery";
+import { useAuth } from "@/context/UserContext";
 
 function SubjectSkeletonCard() {
     return (
@@ -24,6 +25,8 @@ function SubjectSkeletonCard() {
 
 export function SubjectGrid() {
     const { data: subjects, isLoading, error } = useSubjectsQuery();
+    const { hasRole } = useAuth();
+    const isTeacher = hasRole("Teacher");
 
     if (isLoading) {
         return (
@@ -56,7 +59,7 @@ export function SubjectGrid() {
                                 <CardTitle className="truncate pb-1">
                                     <div className="flex justify-between items-center">
                                         <span>{subject.name}</span>
-                                        <span className="text-xs text-muted-foreground">{subject.studentCount} students</span>
+                                        {isTeacher && (<span className="text-xs text-muted-foreground">{subject.studentCount} students</span>)}
                                     </div>
                                 </CardTitle>
                                 <CardDescription className="text-sm text-muted-foreground max-h-10 overflow-y-auto">
