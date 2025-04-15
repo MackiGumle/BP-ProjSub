@@ -272,13 +272,13 @@ const AssignmentGroup = ({
               <>
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <Button variant="ghost" className="text-xs h-4 w-4"
+                    <TooltipTrigger className="m-0 p-0">
+                      <Button variant="ghost" className="text-xs h-4 w-4" size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
                       >
-                        <Link to={`/subject/${subjectId}/manage?tab=assignment&type=${type}`} className="flex items-center">
+                        <Link to={`/subject/${subjectId}/manage?tab=assignment&type=${type}`}>
                           <Plus className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -288,11 +288,21 @@ const AssignmentGroup = ({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-
-
               </>
             )}
-            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="m-0 p-0">
+                  <Button variant="ghost" className="text-xs h-4 w-4" size="icon">
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Collapse category
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>

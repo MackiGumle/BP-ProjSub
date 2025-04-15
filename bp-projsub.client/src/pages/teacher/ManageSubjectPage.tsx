@@ -5,7 +5,6 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { ManageStudents } from "../../components/custom-ui/Teacher/ManageStudents";
 import { EditSubjectForm } from "@/components/forms/teacher/EditSubjectForm";
 import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
-import { useEffect } from "react";
 
 export function ManageSubjectPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -18,7 +17,7 @@ export function ManageSubjectPage() {
   const currentSubject = subjects?.find(
     (sub: SubjectDto) => sub.id === parseInt(subjectId || "")
   );
-  
+
 
   const handleTabChange = (value: string) => {
     searchParams.set("tab", value);

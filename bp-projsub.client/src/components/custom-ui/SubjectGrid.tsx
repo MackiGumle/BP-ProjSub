@@ -1,10 +1,8 @@
-import { BookOpen, Wrench } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubjectsQuery } from "@/hooks/useCustomQuery";
-import { useAuth } from "@/context/UserContext";
-import { Button } from "../ui/button";
 
 function SubjectSkeletonCard() {
     return (
@@ -25,7 +23,6 @@ function SubjectSkeletonCard() {
 }
 
 export function SubjectGrid() {
-    const { hasRole } = useAuth();
     const { data: subjects, isLoading, error } = useSubjectsQuery();
 
     if (isLoading) {
@@ -55,8 +52,13 @@ export function SubjectGrid() {
                             <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground mb-auto">
                                 <BookOpen className="size-5" />
                             </div>
-                            <div>
-                                <CardTitle className="truncate">{subject.name}</CardTitle>
+                            <div className="space-y-1 w-full">
+                                <CardTitle className="truncate pb-1">
+                                    <div className="flex justify-between items-center">
+                                        <span>{subject.name}</span>
+                                        <span className="text-xs text-muted-foreground">{subject.studentCount} students</span>
+                                    </div>
+                                </CardTitle>
                                 <CardDescription className="text-sm text-muted-foreground max-h-10 overflow-y-auto">
                                     {subject.description || "No description"}
                                 </CardDescription>

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 // import { Textarea } from "@/components/ui/textarea"
 import { DatetimePicker } from "@/components/ui/datetime-picker"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>
 
@@ -190,7 +191,10 @@ export function CreateAssignmentForm({
             </CardContent>
             <CardFooter>
               <Button className="w-full" type="submit" disabled={createAssignment.isLoading}>
-                {createAssignment.isLoading ? "Creating..." : "Create Assignment"}
+                {createAssignment.isLoading ?
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Creating assignment...</> :
+                  "Create Assignment"
+                }
               </Button>
             </CardFooter>
           </form>

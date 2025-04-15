@@ -343,8 +343,16 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     Id = s.Id,
                     Name = s.Name,
-                    Description = s.Description
+                    Description = s.Description,
                 }).ToList();
+
+                foreach (var subject in subjectDtos)
+                {
+                    var studentCount = await _dbContext.Subjects
+                        .Include(s => s.Students)
+                        .FirstOrDefaultAsync(s => s.Id == subject.Id);
+                    subject.StudentCount = studentCount?.Students.Count ?? 0;
+                }
 
                 return Ok(subjectDtos);
             }
