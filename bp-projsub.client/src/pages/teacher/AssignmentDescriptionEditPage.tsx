@@ -1,5 +1,4 @@
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-
 import { useAssignmentQuery } from "@/hooks/useCustomQuery";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,10 +11,9 @@ import TOCWrapper from "../../components/custom-ui/Teacher/TOCWrapper";
 import { UppyDragDrop } from "../../components/custom-ui/UppyDragDrop";
 import axios from "axios";
 import { toast } from "@/components/ui/use-toast";
-// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmActionDialog } from "@/components/custom-ui/Dialogs/ConfirmActionDialog";
-
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function AssignmentDescriptionEditPage() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
@@ -60,21 +58,34 @@ export function AssignmentDescriptionEditPage() {
     return (
         <>
             {isAssignmentLoading ? (
-                <p>Loading...</p>
+                <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+                    <ResizablePanel defaultSize={10} className="">
+                        <Skeleton className="h-10 w-full mb-4 p-2" />
+                        <Skeleton className="h-[calc(100%-40px)] w-full p-2" />
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={45}>
+                        <Skeleton className="h-full w-full" />
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={45}>
+                        <Skeleton className="h-full w-full" />
+                    </ResizablePanel>
+                </ResizablePanelGroup>
             ) : errorAssignment ? (
                 <p className="text-red-500">Failed to load assignment.</p>
             ) : (
                 <>
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                         <ResizablePanel defaultSize={10} className="">
-                            <div className="flex flex-col items-center justify-between m-1">
-                                <Link to={`..`} className="w-full">
-                                    <Button variant="secondary" className="w-full overflow-auto">
-                                        <Undo2 className="mr-2" />
-                                        Back to Assignment
+                            <div className="flex flex-col items-center justify-between p-2">
+                                <Link to={`..`} className="w-full overflow-hidden p-0">
+                                    <Button variant="secondary" className="w-full p-1 overflow-hidden">
+                                        <Undo2 className="" />
+                                        Go back
                                     </Button>
                                 </Link>
-                                <div className="flex flex-col h-auto mt-2 space-y-2">
+                                <div className="flex flex-col w-full h-auto mt-2 space-y-2">
                                     <div className="flex-grow overflow-y-auto">
                                         <TOCWrapper
                                             endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}

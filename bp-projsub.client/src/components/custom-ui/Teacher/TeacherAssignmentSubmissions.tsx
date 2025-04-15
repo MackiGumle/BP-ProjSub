@@ -22,6 +22,14 @@ import { AssignmentViewLogDto } from "@/Dtos/AssignmentViewLogDto";
 import PlagiarismDialog from "../Dialogs/PlagiatismDialog";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmActionDialog } from "../Dialogs/ConfirmActionDialog";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
 
 
 

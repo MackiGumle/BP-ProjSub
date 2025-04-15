@@ -24,11 +24,12 @@ type AssignmentFormValues = z.infer<typeof assignmentSchema>
 
 export function CreateAssignmentForm({
   subjectId,
-}: { subjectId: number }) {
+  assignmentType,
+}: { subjectId: number, assignmentType?: string }) {
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
-      type: "Homework",
+      type: assignmentType ?? "Homework",
       title: "",
       // description: "",
       dateAssigned: new Date(Date.now()).toISOString(),
@@ -73,7 +74,9 @@ export function CreateAssignmentForm({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={
+                          assignmentType ?? field.value
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select assignment type" />

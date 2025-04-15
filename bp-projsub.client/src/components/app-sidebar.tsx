@@ -278,7 +278,7 @@ const AssignmentGroup = ({
                           e.stopPropagation();
                         }}
                       >
-                        <Link to={`/subject/${subjectId}/assignments/new`} className="flex items-center">
+                        <Link to={`/subject/${subjectId}/manage?tab=assignment&type=${type}`} className="flex items-center">
                           <Plus className="h-4 w-4" />
                         </Link>
                       </Button>

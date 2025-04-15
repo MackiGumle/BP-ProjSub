@@ -515,8 +515,8 @@ namespace BP_ProjSub.Server.Controllers
                     Type = model.Type,
                     Title = model.Title,
                     Description = model.Description,
-                    DateAssigned = model.DateAssigned ?? DateTime.Now,
-                    DueDate = model.DueDate,
+                    DateAssigned = DateTimeHelper.ConvertToLocalTimeOrNow(model.DateAssigned),
+                    DueDate = DateTimeHelper.ConvertToLocalTime(model.DueDate),
                     MaxPoints = model.MaxPoints,
                     SubjectId = model.SubjectId,
                     PersonId = personId

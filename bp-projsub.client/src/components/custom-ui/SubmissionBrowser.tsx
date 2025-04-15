@@ -113,7 +113,7 @@ export function SubmissionBrowser() {
                                 <Link to={`/subject/${subjectId}/assignments/${assignmentId}`} className="text-muted-foreground hover:text-primary transition-colors">
                                     <Button variant="secondary" className="">
                                         <Undo2 className="" />
-                                        Back to assignment
+                                        Go back
                                     </Button>
                                 </Link>
                             </div>
@@ -211,7 +211,7 @@ export function SubmissionBrowser() {
                                                     // </Button>
                                                 )}
                                             </div>
-                                            <div className="text-sm">{`submission ${submissionIds.length - submissionIds.findIndex(id => id === parseInt(submissionId))}/${submissionIds.length}`}</div>
+                                            <div className="text-sm">{`version ${submissionIds.length - submissionIds.findIndex(id => id === parseInt(submissionId))}/${submissionIds.length}`}</div>
                                             <div className="flex-1 flex justify-end">
                                                 {cycleSubmission('next') ? (
                                                     <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('next')}`}>
