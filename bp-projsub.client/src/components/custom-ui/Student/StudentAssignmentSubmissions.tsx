@@ -17,6 +17,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import materialLight from "react-syntax-highlighter/dist/cjs/styles/prism/material-light";
 import { Separator } from "@/components/ui/separator";
 import { getTimeRemaining, getTimeStatusColor } from "@/utils/timeRemaining";
+import { formatUtcDate } from "@/utils/formatUtcDate";
 
 
 // actually gets only the latest submission
@@ -37,7 +38,6 @@ export function StudentAssignmentSubmissions() {
     });
 
     const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "" });
-
 
     return (
         <div className="w-4xl mx-3 p-6">
@@ -61,8 +61,8 @@ export function StudentAssignmentSubmissions() {
                                 <div className="text-muted-foreground text">
                                     {assignment?.dueDate && (
                                         <div className="text-sm flex flex-col items-center">
-                                            <span className={`font-medium ${getTimeStatusColor(assignment.dateAssigned, assignment.dueDate)}`}> {getTimeRemaining(assignment.dueDate)} </span>
-                                            Due: {new Date(assignment.dueDate).toLocaleString()}
+                                            <span className={`font-medium ${getTimeStatusColor(assignment.dateAssigned, assignment.dueDate)}`}> {getTimeRemaining(assignment.dueDate) === "Overdue" ?  formatUtcDate(assignment.dateAssigned) : getTimeRemaining(assignment.dueDate)} </span>
+                                            Due: {formatUtcDate(assignment.dueDate)}
                                         </div>
                                     )}
                                 </div>
@@ -114,7 +114,7 @@ export function StudentAssignmentSubmissions() {
                             {submissions.map((sub) => (
                                 <Card key={sub.id} className="p-4 border rounded-xl flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm text-muted-foreground">{new Date(sub.submissionDate).toLocaleString()}</p>
+                                        <p className="text-sm text-muted-foreground">{formatUtcDate(sub.submissionDate)}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">{sub.rating || "-"} / {getAssignmentFromCache(queryClient, subjectId!, assignmentId!)?.maxPoints ?? '-'} points</p>

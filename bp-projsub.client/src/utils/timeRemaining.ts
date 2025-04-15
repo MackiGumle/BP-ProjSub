@@ -1,6 +1,8 @@
+import { ensureUtcDate } from "./formatUtcDate";
+
 export function getTimeRemaining(dueDate: string | Date): string {
     const now = new Date();
-    const due = new Date(dueDate);
+    const due = ensureUtcDate(dueDate);
 
     if (due < now) {
         return "Overdue";
@@ -25,8 +27,8 @@ export function getTimeStatusColor(startDate: string | Date, endDate: string | D
         return "text-muted-foreground";
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = ensureUtcDate(startDate);
+    const end = ensureUtcDate(endDate);
     const now = new Date();
 
     if (end < now) {

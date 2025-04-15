@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "../ui/dialog";
 import { toast } from "../ui/use-toast";
 import { Separator } from "../ui/separator";
+import { formatUtcDate } from "@/utils/formatUtcDate";
 
 export function SubmissionBrowser() {
     const [searchParams] = useSearchParams()
@@ -121,7 +122,7 @@ export function SubmissionBrowser() {
                                 {
                                     isLoadingPartialSubmission ? 'Loading...' :
                                         errorPartialSubmission ? 'Error loading submission' :
-                                            (`Submitted on: ${new Date(partialSubmission?.submissionDate ?? '').toLocaleString()}`)
+                                            (`Submitted on: ${formatUtcDate(partialSubmission?.submissionDate)}`)
                                 }
                             </div>
                             <div className="">
