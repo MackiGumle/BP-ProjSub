@@ -48,6 +48,29 @@ export const useAssignmentQuery = ({ assignmentId, disableRefetch = false }: { a
     });
 }
 
+export const useAssignmentsQuery = (subjectId?: string): UseQueryResult<AssignmentDto[], Error> => {
+    const { getRole } = useAuth();
+
+    return useQuery<AssignmentDto[], Error>({
+        queryKey: ['assignments', subjectId],
+        queryFn: async () => {
+            if (!subjectId) return [];
+            try {
+                const response = await axios.get<AssignmentDto[]>(
+                    `/api/${getRole()}/GetAssignments/${subjectId}`,
+                    { withCredentials: true }
+                );
+                return response.data;
+            } catch (error) {
+                throw new Error("Failed to fetch assignments");
+            }
+        },
+        enabled: !!subjectId,
+        staleTime: 2 * 60 * 1000,
+        retry: 2
+    });
+};
+
 export const useStudentsQuery = ({ subjectId }: { subjectId: number }): UseQueryResult<StudentDto[], Error> => {
     const { getRole } = useAuth();
 

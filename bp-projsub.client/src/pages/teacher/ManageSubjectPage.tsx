@@ -18,11 +18,11 @@ export function ManageSubjectPage() {
     (sub: SubjectDto) => sub.id === parseInt(subjectId || "")
   );
 
-
   const handleTabChange = (value: string) => {
     searchParams.set("tab", value);
     setSearchParams(searchParams);
   };
+
 
   if (isSubjectsLoading) return <div>Loading subjects...</div>;
 

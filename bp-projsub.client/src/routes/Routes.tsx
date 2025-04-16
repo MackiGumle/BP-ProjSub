@@ -16,6 +16,7 @@ import { AssignmentDescriptionEditPage } from "@/pages/teacher/AssignmentDescrip
 import { AssignmentDetailEditPage } from "@/pages/teacher/AssignmentDetailEditPage";
 import AccountPage from "@/pages/AccountPage";
 import { SubjectGrid } from "@/components/custom-ui/SubjectGrid";
+import { AssignmentsGrid } from "@/components/custom-ui/AssingmentsGrid";
 
 
 
@@ -29,9 +30,11 @@ export const router = createBrowserRouter([
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
                     { path: "", element: <SubjectGrid /> },
+
                     {
-                        path: "subject/:subjectId", element: <><Outlet /></>,
+                        path: "subject/:subjectId", element: <Outlet />,
                         children: [
+                            { path: "", element: <AssignmentsGrid /> },
                             { path: "manage/", element: <ManageSubjectPage /> },
                             {
                                 path: "assignments/:assignmentId", element: <Outlet />,
@@ -45,6 +48,7 @@ export const router = createBrowserRouter([
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },
                         ]
                     },
+
                     { path: "createsubject/", element: <CreateSubjectForm /> },
                 ],
             },
