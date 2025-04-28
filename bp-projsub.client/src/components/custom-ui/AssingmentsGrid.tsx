@@ -106,7 +106,7 @@ export function AssignmentsGrid() {
                                                     </div>
                                                 </CardTitle>
                                                 <CardDescription className="text-sm line-clamp-2">
-                                                    {assignment.description || "No description"}
+                                                    {/* {assignment.description || "No description"} */}
                                                 </CardDescription>
                                             </div>
                                         </CardHeader>

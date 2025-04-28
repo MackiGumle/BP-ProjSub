@@ -10,6 +10,7 @@ namespace BP_ProjSub.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class TestingController : ControllerBase
     {
         private static readonly string[] Summaries = new[]

@@ -107,7 +107,7 @@ export function CreateSubjectForm({
 
   return (
     <div className="flex justify-center items-center">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mt-5">
         <CardHeader>
           <CardTitle className="text-2xl">Create New Subject</CardTitle>
         </CardHeader>

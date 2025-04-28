@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmActionDialog } from "@/components/custom-ui/Dialogs/ConfirmActionDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function AssignmentDescriptionEditPage() {
+export function AssignmentDescEditPage() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
     const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "", disableRefetch: true });
     const [description, setDescription] = useState("")

@@ -183,9 +183,9 @@ public class AccountService
                 // Send email with activation link
                 var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(student);
                 var tokenWithEmail = _tokenService.CreateAccountActivationToken(student, emailToken);
-                // var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
+                var emailRes = await _emailService.SendAccountActivationAsync(student.Email, tokenWithEmail);
                 // REMOVE: For testing purposes, send email to the same address
-                var emailRes = await _emailService.SendAccountActivationAsync("sis0049@vsb.cz", tokenWithEmail);
+                // var emailRes = await _emailService.SendAccountActivationAsync("sis0049@vsb.cz", tokenWithEmail);
                 if (!emailRes.IsSuccessStatusCode)
                 {
                     throw new InvalidOperationException($"Failed to send email to {student.Email}.");

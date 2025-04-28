@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { UppyDragDrop } from "../UppyDragDrop";
@@ -120,7 +120,7 @@ export function StudentAssignmentSubmissions() {
                                         <p className="text-sm text-muted-foreground">{sub.rating || "-"} / {getAssignmentFromCache(queryClient, subjectId!, assignmentId!)?.maxPoints ?? '-'} points</p>
                                     </div>
                                     <Link to={`submission/${sub.id}`}>
-                                        <Button variant="outline">View</Button>
+                                        <Button variant="outline"><Eye />View</Button>
                                     </Link>
                                 </Card>
                             ))}
