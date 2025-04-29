@@ -65,11 +65,14 @@ export default function ActivateAccountPage() {
     onSuccess: () => {
       navigate('/login');
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      const errorMessage = error.response?.data?.message ||
-        "An error occurred during activation";
+    onError: (error: AxiosError<{ message?: string; errors?: Array<{ code: string; description: string }> }>) => {
+        const errorMessage = error.response?.data?.errors?.map(e => e).join("\n") || error.response?.data?.message || "Failed to activate account";
+      
+        console.log(error);
+      
+      console.error(errorMessage);
       form.setError('root', { message: errorMessage });
-    },
+    }
   });
 
 
