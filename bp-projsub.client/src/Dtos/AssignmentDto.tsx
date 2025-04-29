@@ -6,6 +6,8 @@ export interface AssignmentDto {
   dateAssigned: string
   dueDate?: string
   maxPoints?: number
+  isSubmitted?: boolean
+  rating?: number
 }
 
 export interface CreateAssignmentDto {

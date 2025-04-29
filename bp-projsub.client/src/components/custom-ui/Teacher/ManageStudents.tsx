@@ -13,8 +13,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export function ManageStudents({ subjectId }: { subjectId: number }) {
     const queryClient = useQueryClient();
     const { data: students, isLoading: isStudentsLoading, error: errorStudents } = useStudentsQuery({ subjectId: subjectId });
-
     const [studentLogins, setStudentLogins] = useState("");
+
+
 
     const addStudentsMutation = useMutation({
         mutationFn: async () => {
@@ -105,7 +106,7 @@ export function ManageStudents({ subjectId }: { subjectId: number }) {
             {/* Student List */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Enrolled Students</CardTitle>
+                    <CardTitle>Enrolled Students ({students?.length || 0})</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
                     {isStudentsLoading ? (

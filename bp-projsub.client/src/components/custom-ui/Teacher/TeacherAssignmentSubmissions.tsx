@@ -22,7 +22,7 @@ import { AssignmentViewLogDto } from "@/Dtos/AssignmentViewLogDto";
 import PlagiarismDialog from "../Dialogs/PlagiatismDialog";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmActionDialog } from "../Dialogs/ConfirmActionDialog";
-
+import { formatUtcDate } from "@/utils/formatUtcDate";
 
 
 
@@ -125,8 +125,8 @@ export function TeacherAssignmentSubmissions() {
                         <CollapsibleTrigger className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
                             <span className="text-xl font-semibold">{assignment?.title}</span>
                             <div className="flex flex-col space-y-1">
-                                <span className="text-sm text-muted-foreground">{assignment?.dateAssigned && "Assigned: " + new Date(assignment.dateAssigned).toLocaleString()}</span>
-                                <span className="text-sm text-muted-foreground">{assignment?.dueDate && "Due: " + new Date(assignment.dueDate).toLocaleString()}</span>
+                                <span className="text-sm text-muted-foreground">{assignment?.dateAssigned && "Assigned: " + formatUtcDate(assignment.dateAssigned)}</span>
+                                <span className="text-sm text-muted-foreground">{assignment?.dueDate && "Due: " + formatUtcDate(assignment.dueDate)}</span>
                             </div>
                             <div className="flex items-center space-x-1">
                                 <DropdownMenu>
@@ -135,7 +135,7 @@ export function TeacherAssignmentSubmissions() {
                                             <Pencil className="" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="center" className="w-auto">
+                                    <DropdownMenuContent align="center" className="w-auto p-1.5">
                                         <DropdownMenuItem>
                                             <Link to={`editdetails/`} className="flex items-center space-x-2">
                                                 <CalendarCog />
@@ -246,7 +246,7 @@ export function TeacherAssignmentSubmissions() {
                         <Card key={submission.id} className="p-4 border rounded-xl flex justify-between items-center">
                             <div>
                                 <p className="font-medium">{submission.studentLogin}</p>
-                                <p className="text-sm text-muted-foreground">{new Date(submission.submissionDate).toLocaleString()}</p>
+                                <p className="text-sm text-muted-foreground">{formatUtcDate(submission.submissionDate)}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">{submission.rating || "-"} / {getAssignmentFromCache()?.maxPoints ?? '-'} points</p>
@@ -285,7 +285,7 @@ export function TeacherAssignmentSubmissions() {
                                                                             key={logIndex}
                                                                             className="text-sm text-muted-foreground p-1 border-b last:border-0"
                                                                         >
-                                                                            {new Date(log.viewedOn).toLocaleTimeString()}
+                                                                            {formatUtcDate(log.viewedOn)}
                                                                         </div>
                                                                     ))}
                                                                 </div>

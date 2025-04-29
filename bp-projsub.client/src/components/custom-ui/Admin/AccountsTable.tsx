@@ -99,7 +99,7 @@ export function AccountsTable() {
                             <TableHead className="px-4 py-2 text-left">Email</TableHead>
                             <TableHead className="px-4 py-2 text-left">Roles</TableHead>
                             <TableHead className="px-4 py-2 text-left">Status</TableHead>
-                            <TableHead className="px-4 py-2 text-left">Lockout End</TableHead>
+                            {/* <TableHead className="px-4 py-2 text-left">Lockout End</TableHead> */}
                             <TableHead className="px-4 py-2 text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -155,12 +155,12 @@ export function AccountsTable() {
                                         </TableCell>
                                         <TableCell className="px-4 py-2">
                                             <Badge variant={locked ? 'destructive' : 'default'}>
-                                                {locked ? 'Banned' : 'Active'}
+                                                {locked ? 'Blocked' : 'Active'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="px-4 py-2">
+                                        {/* <TableCell className="px-4 py-2">
                                             {user.lockoutEnd ? new Date(user.lockoutEnd).toLocaleString() : 'N/A'}
-                                        </TableCell>
+                                        </TableCell> */}
                                         <TableCell className="px-4 py-2 text-center">
                                             <Button
                                                 size="sm"
@@ -171,9 +171,15 @@ export function AccountsTable() {
                                                 {processingUserId === user.id ? (
                                                     <span>Processing...</span>
                                                 ) : locked ? (
-                                                    <Undo2 />
+                                                    <>
+                                                        <Undo2 />
+                                                        Unblock
+                                                    </>
                                                 ) : (
-                                                    <Ban />
+                                                    <>
+                                                        <Ban />
+                                                        Block
+                                                    </>
                                                 )}
                                             </Button>
                                         </TableCell>

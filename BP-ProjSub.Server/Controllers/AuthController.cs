@@ -149,7 +149,7 @@ namespace BP_ProjSub.Server.Controllers
                 var passwordResult = await _userManager.AddPasswordAsync(user, Password);
                 if (!passwordResult.Succeeded)
                 {
-                    return BadRequest(new { message = "Password could not be set." });
+                    return BadRequest(new { errors = passwordResult.Errors.Select(e => e.Description) });
                 }
 
                 return Ok(new { message = "Account activated successfully." });

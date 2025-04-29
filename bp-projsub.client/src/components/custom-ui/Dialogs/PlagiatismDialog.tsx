@@ -41,7 +41,7 @@ const PlagiarismDialog: React.FC<PlagiarismDialogProps> = ({ assignmentId }) => 
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>Plagiarism Check</DialogTitle>
+                <DialogTitle>Select language of submissions</DialogTitle>
                 <div className="space-y-4 mt-4">
                     <RadioGroup value={selectedLanguage} onValueChange={setSelectedLanguage} className="grid grid-cols-2 gap-4">
                         <div className="flex items-center space-x-2">

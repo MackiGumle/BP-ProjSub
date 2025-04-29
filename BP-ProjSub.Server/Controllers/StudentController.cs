@@ -4,7 +4,6 @@ using BP_ProjSub.Server.Data.Dtos;
 using BP_ProjSub.Server.Models;
 using BP_ProjSub.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,7 +78,14 @@ namespace BP_ProjSub.Server.Controllers
                     return BadRequest(new { message = "Invalid subject ID" });
                 }
 
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
                 var assignments = await _dbContext.Assignments
+                    .Include(a => a.Submissions)
                     .Where(a => a.SubjectId == subjectId && a.DateAssigned <= DateTime.Now)
                     .OrderBy(a => a.DueDate)
                     .Select(a => new AssignmentDto
@@ -89,9 +95,37 @@ namespace BP_ProjSub.Server.Controllers
                         Title = a.Title,
                         DateAssigned = a.DateAssigned,
                         DueDate = a.DueDate,
-                        MaxPoints = a.MaxPoints
+                        MaxPoints = a.MaxPoints,
+                        // IsSubmitted = a.Submissions.Any(s => s.PersonId == userId && s.AssignmentId == a.Id),
                     })
                     .ToListAsync();
+
+                foreach (var assignment in assignments)
+                {
+                    var submissions = await _dbContext.Submissions
+                    .Include(s => s.Ratings)
+                    .Where(s => s.PersonId == userId && s.AssignmentId == assignment.Id).ToListAsync();
+
+                    assignment.IsSubmitted = submissions.Any();
+
+                    if (assignment.IsSubmitted)
+                    {
+                        var latestSubmission = submissions.OrderByDescending(s => s.SubmissionDate).FirstOrDefault();
+                        assignment.Rating = (long?)latestSubmission?.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value;
+                    }
+                }
+
+                // assignments.ForEach(a =>
+                // {
+                //     var submission = _dbContext.Submissions
+                //         .Include(s => s.Ratings)
+                //         .FirstOrDefault(s => s.AssignmentId == a.Id && s.PersonId == userId);
+
+                //     if (submission != null)
+                //     {
+                //         a.Rating = (long?)(submission.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value);
+                //     }
+                // });
 
                 return Ok(assignments);
             }
@@ -194,24 +228,21 @@ namespace BP_ProjSub.Server.Controllers
                 var submissions = await _dbContext.Submissions
                     .Include(s => s.Ratings)
                     .Where(s => s.AssignmentId == assignmentId && s.PersonId == userId)
+                    .OrderByDescending(s => s.SubmissionDate)
                     .ToListAsync();
 
-                if (submissions.Count == 0)
+                var submissionDto = submissions.Select(s => new PartialSubmissionDto
                 {
-                    return Ok();
-                }
+                    Id = s.Id,
+                    SubmissionDate = s.SubmissionDate,
+                    AssignmentId = s.AssignmentId,
+                    PersonId = s.PersonId,
+                    StudentLogin = s.Student.Person.UserName!,
+                    Rating = s.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value,
 
-                var latestSubmission = submissions.OrderByDescending(s => s.SubmissionDate).FirstOrDefault();
+                }).ToList();
 
-                return Ok(new PartialSubmissionDto
-                {
-                    Id = latestSubmission.Id,
-                    SubmissionDate = latestSubmission.SubmissionDate,
-                    AssignmentId = latestSubmission.AssignmentId,
-                    PersonId = latestSubmission.PersonId,
-                    Rating = latestSubmission.Ratings.OrderByDescending(r => r.Time).FirstOrDefault()?.Value,
-                }
-                );
+                return Ok(submissionDto);
             }
             catch (Exception ex)
             {

@@ -1,23 +1,21 @@
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-
 import { useAssignmentQuery } from "@/hooks/useCustomQuery";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import 'katex/dist/katex.min.css'; // Keeps unformated text hidden
 import { MarkdownRenderer } from "../../components/custom-ui/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
-import { Save, Trash } from "lucide-react";
+import { Save, Trash, Undo2 } from "lucide-react";
 import TOCWrapper from "../../components/custom-ui/Teacher/TOCWrapper";
 import { UppyDragDrop } from "../../components/custom-ui/UppyDragDrop";
 import axios from "axios";
 import { toast } from "@/components/ui/use-toast";
-// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmActionDialog } from "@/components/custom-ui/Dialogs/ConfirmActionDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-export function AssignmentDescriptionEditPage() {
+export function AssignmentDescEditPage() {
     const { subjectId, assignmentId } = useParams<{ subjectId: string, assignmentId: string }>()
     const { data: assignment, isLoading: isAssignmentLoading, error: errorAssignment } = useAssignmentQuery({ assignmentId: assignmentId || "", disableRefetch: true });
     const [description, setDescription] = useState("")
@@ -60,35 +58,54 @@ export function AssignmentDescriptionEditPage() {
     return (
         <>
             {isAssignmentLoading ? (
-                <p>Loading...</p>
+                <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+                    <ResizablePanel defaultSize={10} className="">
+                        <Skeleton className="h-10 w-full mb-4 p-2" />
+                        <Skeleton className="h-[calc(100%-40px)] w-full p-2" />
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={45}>
+                        <Skeleton className="h-full w-full" />
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel defaultSize={45}>
+                        <Skeleton className="h-full w-full" />
+                    </ResizablePanel>
+                </ResizablePanelGroup>
             ) : errorAssignment ? (
                 <p className="text-red-500">Failed to load assignment.</p>
             ) : (
                 <>
-                    {/* <div className="flex justify-between items-center"> */}
-
-                    {/* </div> */}
-                    {/* <Separator /> */}
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                        <ResizablePanel defaultSize={10} className="sticky top-0">
-                            <div className="flex flex-col h-auto">
-                                <div className="flex-grow overflow-y-auto">
-                                    <TOCWrapper
-                                        endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
-                                        contextMenu={true}
-                                    />
-                                </div>
-                                <div className="">
-                                    <UppyDragDrop
-                                        endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
-                                        invalidateQueries={[
-                                            ["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
-                                        ]}
-                                    />
+                        <ResizablePanel defaultSize={10} className="">
+                            <div className="flex flex-col items-center justify-between p-2">
+                                <Link to={`..`} className="w-full overflow-hidden p-0">
+                                    <Button variant="secondary" className="w-full p-1 overflow-hidden">
+                                        <Undo2 className="" />
+                                        Go back
+                                    </Button>
+                                </Link>
+                                <div className="flex flex-col w-full h-auto mt-2 space-y-2">
+                                    <div className="flex-grow overflow-y-auto">
+                                        <TOCWrapper
+                                            endpoint={`/api/Upload/GetAssignmentFileTree/${assignmentId}`}
+                                            contextMenu={true}
+                                        />
+                                    </div>
+                                    <div className="">
+                                        <UppyDragDrop
+                                            endpoint={`/api/Upload/UploadAttachmentFiles/${assignmentId}`}
+                                            invalidateQueries={[
+                                                ["fileTree", `/api/Upload/GetAssignmentFileTree/${assignmentId}`]
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </ResizablePanel>
+
                         <ResizableHandle />
+
                         <ResizablePanel defaultSize={45}>
                             <Textarea
                                 // autoFocus

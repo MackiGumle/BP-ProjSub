@@ -343,8 +343,16 @@ namespace BP_ProjSub.Server.Controllers
                 {
                     Id = s.Id,
                     Name = s.Name,
-                    Description = s.Description
+                    Description = s.Description,
                 }).ToList();
+
+                foreach (var subject in subjectDtos)
+                {
+                    var studentCount = await _dbContext.Subjects
+                        .Include(s => s.Students)
+                        .FirstOrDefaultAsync(s => s.Id == subject.Id);
+                    subject.StudentCount = studentCount?.Students.Count ?? 0;
+                }
 
                 return Ok(subjectDtos);
             }
@@ -515,12 +523,13 @@ namespace BP_ProjSub.Server.Controllers
                     Type = model.Type,
                     Title = model.Title,
                     Description = model.Description,
-                    DateAssigned = model.DateAssigned ?? DateTime.Now,
+                    DateAssigned = model.DateAssigned ?? DateTime.UtcNow,
                     DueDate = model.DueDate,
                     MaxPoints = model.MaxPoints,
                     SubjectId = model.SubjectId,
                     PersonId = personId
                 };
+
 
                 await _dbContext.Assignments.AddAsync(assignment);
                 await _dbContext.SaveChangesAsync();
@@ -811,7 +820,7 @@ namespace BP_ProjSub.Server.Controllers
 
                     submission.IsSuspicious = studentLogs.GroupBy(l => l.IpAddress).Count() > 1;
 
-                    if (submission.IsSuspicious)
+                    if (submission.IsSuspicious == true)
                     {
                         submission.AssignmentViewLogs = studentLogs
                         .Select(l => new AssignmentViewLogDto

@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   password: z.string().min(8, {
@@ -23,14 +24,23 @@ const formSchema = z.object({
     message: "Please confirm your password.",
   }),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 export default function ActivateAccountPage() {
-  const { token } = useParams<{ token: string }>();
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
   const navigate = useNavigate();
-  
+
+  if (!token) {
+    console.error("No token provided for account activation");
+    // navigate('/login');
+    return null;
+  }
+
+  console.log(token);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,27 +50,30 @@ export default function ActivateAccountPage() {
   });
 
   const mutation = useMutation({
-  mutationFn: (values: z.infer<typeof formSchema>) => {
-    return axios.post(
-      "/api/Auth/ActivateAccount",
-       values.password,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+    mutationFn: (values: z.infer<typeof formSchema>) => {
+      return axios.post(
+        "/api/Auth/ActivateAccount",
+        values.password,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      }
-    );
-  },
-  onSuccess: () => {
-    navigate('/login');
-  },
-  onError: (error: AxiosError<{ message: string }>) => {
-    const errorMessage = error.response?.data?.message || 
-                       "An error occurred during activation";
-    form.setError('root', { message: errorMessage });
-  },
-});
+      );
+    },
+    onSuccess: () => {
+      navigate('/login');
+    },
+    onError: (error: AxiosError<{ message?: string; errors?: Array<{ code: string; description: string }> }>) => {
+        const errorMessage = error.response?.data?.errors?.map(e => e).join("\n") || error.response?.data?.message || "Failed to activate account";
+      
+        console.log(error);
+      
+      console.error(errorMessage);
+      form.setError('root', { message: errorMessage });
+    }
+  });
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -116,7 +129,8 @@ export default function ActivateAccountPage() {
             className="w-full"
             disabled={mutation.isLoading}
           >
-            {mutation.isLoading ? "Activating..." : "Activate Account"}
+            {mutation.isLoading ? <><Loader2 className="animate-spin h-4 w-4 mr-2" /> "Activating..."</>
+              : "Activate Account"}
           </Button>
         </form>
       </Form>

@@ -18,7 +18,7 @@ public class PartialSubmissionDto
 
     public decimal? Rating { get; set; }
 
-    public bool IsSuspicious { get; set; }
+    public bool? IsSuspicious { get; set; }
 
     public List<AssignmentViewLogDto> AssignmentViewLogs { get; set; } = new List<AssignmentViewLogDto>();
 }

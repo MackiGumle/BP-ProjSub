@@ -12,9 +12,11 @@ import { ManageSubjectPage } from "@/pages/teacher/ManageSubjectPage";
 import { AssignmentSubmissionsPage } from "@/pages/AssignmentSubmissionsPage";
 import { SubmissionBrowser } from "@/components/custom-ui/SubmissionBrowser";
 import { CreateSubjectForm } from "@/components/forms/teacher/CreateSubjectForm";
-import { AssignmentDescriptionEditPage } from "@/pages/teacher/AssignmentDescriptionEditPage";
+import { AssignmentDescEditPage } from "@/pages/teacher/AssignmentDescEditPage";
 import { AssignmentDetailEditPage } from "@/pages/teacher/AssignmentDetailEditPage";
 import AccountPage from "@/pages/AccountPage";
+import { SubjectGrid } from "@/components/custom-ui/SubjectGrid";
+import { AssignmentsGrid } from "@/components/custom-ui/AssingmentsGrid";
 
 
 
@@ -27,23 +29,26 @@ export const router = createBrowserRouter([
             {
                 path: "", element: <ProtectedRoute> <HomePage /> </ProtectedRoute>,
                 children: [
+                    { path: "", element: <SubjectGrid /> },
 
                     {
                         path: "subject/:subjectId", element: <Outlet />,
                         children: [
+                            { path: "", element: <AssignmentsGrid /> },
                             { path: "manage/", element: <ManageSubjectPage /> },
                             {
                                 path: "assignments/:assignmentId", element: <Outlet />,
                                 children: [
                                     { path: "", element: <AssignmentSubmissionsPage /> },
                                     { path: "submission/:submissionId", element: <SubmissionBrowser /> },
-                                    { path: "editdescription/", element: <AssignmentDescriptionEditPage /> },
+                                    { path: "editdescription/", element: <AssignmentDescEditPage /> },
                                     { path: "editdetails/", element: <AssignmentDetailEditPage /> },
                                 ]
                             },
                             // { path: "submission/:submissionId", element: <SubmissionPage /> },
                         ]
                     },
+
                     { path: "createsubject/", element: <CreateSubjectForm /> },
                 ],
             },
@@ -57,7 +62,8 @@ export const router = createBrowserRouter([
             {
                 path: "/auth",
                 children: [
-                    { path: "activateaccount/:token", element: <ActivateAccountPage /> },
+                    // { path: "activateaccount/:token", element: <ActivateAccountPage /> },
+                    { path: "activateaccount/", element: <ActivateAccountPage /> },
                 ],
             },
             { path: "/testing", element: <TestingPage /> },

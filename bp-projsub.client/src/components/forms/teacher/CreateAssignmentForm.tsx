@@ -18,17 +18,19 @@ import { Input } from "@/components/ui/input"
 // import { Textarea } from "@/components/ui/textarea"
 import { DatetimePicker } from "@/components/ui/datetime-picker"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>
 
 
 export function CreateAssignmentForm({
   subjectId,
-}: { subjectId: number }) {
+  assignmentType,
+}: { subjectId: number, assignmentType?: string }) {
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
-      type: "Homework",
+      type: assignmentType ?? "Homework",
       title: "",
       // description: "",
       dateAssigned: new Date(Date.now()).toISOString(),
@@ -73,7 +75,9 @@ export function CreateAssignmentForm({
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={
+                          assignmentType ?? field.value
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select assignment type" />
@@ -187,7 +191,10 @@ export function CreateAssignmentForm({
             </CardContent>
             <CardFooter>
               <Button className="w-full" type="submit" disabled={createAssignment.isLoading}>
-                {createAssignment.isLoading ? "Creating..." : "Create Assignment"}
+                {createAssignment.isLoading ?
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Creating assignment...</> :
+                  "Create Assignment"
+                }
               </Button>
             </CardFooter>
           </form>

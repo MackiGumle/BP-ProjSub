@@ -3,7 +3,7 @@ import TOCWrapper from "@/components/custom-ui/Teacher/TOCWrapper"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "../ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Undo2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { PartialSubmissionDto } from "@/Dtos/SubmissionDto";
@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "../ui/dialog";
 import { toast } from "../ui/use-toast";
 import { Separator } from "../ui/separator";
+import { formatUtcDate } from "@/utils/formatUtcDate";
 
 export function SubmissionBrowser() {
     const [searchParams] = useSearchParams()
@@ -109,11 +110,19 @@ export function SubmissionBrowser() {
                 submissionId ? (
                     <>
                         <div className="flex justify-between items-center p-1 text-muted-foreground">
+                            <div className="text-sm font-semibold">
+                                <Link to={`/subject/${subjectId}/assignments/${assignmentId}`} className="text-muted-foreground hover:text-primary transition-colors">
+                                    <Button variant="secondary" className="">
+                                        <Undo2 className="" />
+                                        Go back
+                                    </Button>
+                                </Link>
+                            </div>
                             <div>
                                 {
                                     isLoadingPartialSubmission ? 'Loading...' :
                                         errorPartialSubmission ? 'Error loading submission' :
-                                            (new Date(partialSubmission?.submissionDate ?? '').toLocaleString())
+                                            (`Submitted on: ${formatUtcDate(partialSubmission?.submissionDate)}`)
                                 }
                             </div>
                             <div className="">
@@ -197,12 +206,13 @@ export function SubmissionBrowser() {
                                                         </Button>
                                                     </Link>
                                                 ) : (
-                                                    <Button variant="ghost" disabled>
-                                                        <ArrowLeft />
-                                                    </Button>
+                                                    <></>
+                                                    // <Button variant="ghost" disabled>
+                                                    //     <ArrowLeft />
+                                                    // </Button>
                                                 )}
                                             </div>
-                                            {partialSubmission?.studentLogin}
+                                            <div className="text-sm">{`version ${submissionIds.length - submissionIds.findIndex(id => id === parseInt(submissionId))}/${submissionIds.length}`}</div>
                                             <div className="flex-1 flex justify-end">
                                                 {cycleSubmission('next') ? (
                                                     <Link to={`/subject/${subjectId}/assignments/${assignmentId}/submission/${cycleSubmission('next')}`}>
@@ -211,9 +221,10 @@ export function SubmissionBrowser() {
                                                         </Button>
                                                     </Link>
                                                 ) : (
-                                                    <Button variant="ghost" disabled>
-                                                        <ArrowRight />
-                                                    </Button>
+                                                    <></>
+                                                    // <Button variant="ghost" disabled>
+                                                    //     <ArrowRight />
+                                                    // </Button>
                                                 )}
                                             </div>
                                         </>

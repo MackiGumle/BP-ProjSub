@@ -15,6 +15,22 @@ interface UppyDragDropProps {
     onUploadComplete?: () => void;
 }
 
+interface UploadSettings {
+    maxFileSize: number;
+    maxTotalSize: number;
+    allowedExtensions: string[] | null;
+    maxFiles: number;
+}
+
+interface UploadErrorResponse {
+    body?: Record<string, any>;
+    status: number;
+    bytesUploaded?: number;
+    response: {
+        message: string;
+    };
+}
+
 
 export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: UppyDragDropProps) {
 
@@ -33,22 +49,70 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
 
                 return modifiedFile
             },
+        }).use(XHR, {
+            endpoint: endpoint,
+            fieldName: 'files',
+            formData: true,
+            bundle: true, // bundle multiple files into a single request https://www.gregoryalexander.com/blog/2024/3/25/ensuring-sequential-uppy-uploads-using-the-bundled-xhr-option
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            responseType: 'json',
+            getResponseData(xhr) {
+                try {
+                    const responseBody = xhr.response;
+                    console.log('Response body:', responseBody);
+
+                    if (!responseBody.url && xhr.status >= 200 && xhr.status < 300) {
+                        responseBody.url = 'uploaded';
+                    }
+
+                    return responseBody;
+                } catch (error) {
+                    console.error('Error processing response:', error);
+                    return { url: 'uploaded', status: xhr.status };
+                }
+            },
         })
-            .use(XHR, {
-                endpoint: endpoint,
-                fieldName: 'files',
-                formData: true,
-                bundle: true, // bundle multiple files into a single request https://www.gregoryalexander.com/blog/2024/3/25/ensuring-sequential-uppy-uploads-using-the-bundled-xhr-option
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            })
 
         uppy.on('complete', () => {
             if (invalidateQueries) {
                 invalidateQueries.forEach(queryKey => {
                     queryClient.invalidateQueries({ queryKey });
                 });
+            }
+        });
+
+        // uppy.on('error', (error, file, response) => {
+        //     if (response) { // undefined for some reason
+        //         response = response as any;
+        //         const res = response as UploadErrorResponse;
+
+        //         error.message = res.response?.message || 'Upload failed';
+        //         error.details = undefined;
+        //         // error.name = "meno";
+        //     }
+        // });
+
+        uppy.on('upload-error', (file, error, response) => {
+            if (response) {
+                response = response as any;
+                const res = response as UploadErrorResponse;
+                error.message = res.response?.message || 'Upload failed';
+                error.details = undefined;
+
+                if (file) {
+                    uppy.setState({
+                        error: res.response?.message || 'Upload failed',
+                        errorFile: file.id,
+                    });
+                    uppy.setFileState(file.id, {
+                        error: res.response?.message || 'Upload failed'
+
+                    });
+                }
+
+                uppy.info(`${res.response.message}`, 'error', 8500)
             }
         });
 
@@ -65,6 +129,9 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
     //     (state) => Object.keys(state.files).length,
     // )
     // const totalProgress = useUppyState(uppy, (state) => state.totalProgress)
+
+
+
     const { theme } = useTheme()
     const queryClient = useQueryClient();
 
@@ -77,35 +144,53 @@ export function UppyDragDrop({ endpoint, invalidateQueries, onUploadComplete }: 
         }
     }, [results, onUploadComplete]);
 
-    React.useEffect(() => {
-        const fetchUploadSettings = async () => {
-            try {
-                const response = await axios.get('/api/upload/GetUploadSettings')
-                const settings = response.data
+    const [uploadSettings, setUploadSettings] = React.useState<UploadSettings>()
 
-                if (settings.allowedExtensions == '*')
-                    settings.allowedExtensions = null
+    const fetchUploadSettings = async () => {
+        try {
+            const response = await axios.get('/api/upload/GetUploadSettings')
+            const settings = response.data as UploadSettings
 
-                uppy.setOptions({
-                    restrictions: {
-                        maxFileSize: settings.maxFileSize,
-                        maxTotalFileSize: settings.maxTotalSize,
-                        allowedFileTypes: settings.allowedExtensions,
-                    },
-                })
-            } catch (error) {
-                console.error('Error fetching upload settings:', error)
+            if (settings.allowedExtensions && settings.allowedExtensions.includes('*')) {
+                settings.allowedExtensions = null
             }
-        }
 
+            setUploadSettings(settings)
+
+            uppy.setOptions({
+                restrictions: {
+                    maxFileSize: settings.maxFileSize,
+                    maxTotalFileSize: settings.maxTotalSize,
+                    allowedFileTypes: settings.allowedExtensions,
+                    maxNumberOfFiles: settings.maxFiles,
+                },
+            })
+
+            // uppy.info(`Allowed file types: ${settings.allowedExtensions ?? 'All'}, Max file size: ${settings.maxFileSize / 1024 / 1024} MB, Max total size: ${settings.maxTotalSize / 1024 / 1024} MB`, 'info',)
+
+        } catch (error) {
+            console.error('Error fetching upload settings:', error)
+        }
+    }
+
+    React.useEffect(() => {
         fetchUploadSettings()
     }, [uppy])
 
+
     return (
         <>
-            {/* <p>File count: {fileCount}</p>
-            <p>Total progress: {totalProgress}</p> */}
-            <Dashboard width="100%" theme={theme === 'system' ? 'auto' : theme} uppy={uppy} />
+            <Dashboard
+                width="100%"
+                theme={theme === 'system' ? 'auto' : theme}
+                uppy={uppy}
+                note={
+                    `${uploadSettings?.maxFileSize ? `file size: ${uploadSettings.maxFileSize / 1024 / 1024} MB, ` : ''}` +
+                    `${uploadSettings?.maxTotalSize ? `total size: ${uploadSettings.maxTotalSize / 1024 / 1024} MB, ` : ''}` +
+                    `${uploadSettings?.maxFiles ? `files: ${uploadSettings.maxFiles}, ` : ''}` +
+                    `${uploadSettings?.allowedExtensions ? `file types: ${uploadSettings.allowedExtensions.join(', ')}` : ''}`
+                }
+            />
         </>
     )
 }

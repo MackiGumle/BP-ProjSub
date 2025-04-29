@@ -1,18 +1,28 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubjectDto } from "@/Dtos/SubjectDto";
 import { useSubjectsQuery } from "@/hooks/useCustomQuery";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { ManageStudents } from "../../components/custom-ui/Teacher/ManageStudents";
 import { EditSubjectForm } from "@/components/forms/teacher/EditSubjectForm";
 import { CreateAssignmentForm } from "@/components/forms/teacher/CreateAssignmentForm";
 
 export function ManageSubjectPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: subjects, isLoading: isSubjectsLoading, error: errorSubjecst } = useSubjectsQuery();
+  const type = searchParams.get("type");
+
+  const currentTab = searchParams.get("tab") || "students";
 
   const currentSubject = subjects?.find(
     (sub: SubjectDto) => sub.id === parseInt(subjectId || "")
   );
+
+  const handleTabChange = (value: string) => {
+    searchParams.set("tab", value);
+    setSearchParams(searchParams);
+  };
+
 
   if (isSubjectsLoading) return <div>Loading subjects...</div>;
 
@@ -24,7 +34,7 @@ export function ManageSubjectPage() {
 
       {currentSubject ? (
         <>
-          <Tabs defaultValue="students" className="w-full">
+          <Tabs defaultValue={currentTab} className="w-full" onValueChange={handleTabChange}>
             <TabsList className="mx-auto flex justify-center w-fit">
               <TabsTrigger value="students">Students</TabsTrigger>
               <TabsTrigger value="assignment">Assignment</TabsTrigger>
@@ -38,7 +48,8 @@ export function ManageSubjectPage() {
             </TabsContent>
 
             <TabsContent value="assignment" className="p-4">
-              <CreateAssignmentForm subjectId={parseInt(subjectId || "")} />
+
+              <CreateAssignmentForm subjectId={parseInt(subjectId || "")} assignmentType={type || undefined} />
             </TabsContent>
 
             <TabsContent value="subject" className="p-4">

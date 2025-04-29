@@ -113,7 +113,18 @@ namespace BP_ProjSub.Server.Controllers
 
                     if (extension == ".zip")
                     {
-                        (int count, long size) = FileValidationHelper.ValidateZipFileSize(file, maxFiles, maxFileSize);
+                        int count;
+                        long size;
+
+                        try
+                        {
+                            (count, size) = FileValidationHelper.ValidateZipFileSize(file, maxFiles, maxFileSize);
+                        }
+                        catch (Exception ex)
+                        {
+                            return BadRequest(new { message = ex.Message });
+                        }
+
                         fileCount += count;
                         if (fileCount > maxFiles)
                         {
@@ -785,7 +796,8 @@ namespace BP_ProjSub.Server.Controllers
             {
                 maxFileSize,
                 maxTotalSize,
-                allowedExtensions
+                allowedExtensions,
+                maxFiles
             });
         }
 
@@ -976,6 +988,30 @@ namespace BP_ProjSub.Server.Controllers
                 var containerClient = _blobServiceClient.GetBlobContainerClient("submissions");
 
                 await FileTreeNode.DownloadSourceCodesAsync(containerClient, assignmentId.ToString(), Path.Combine(_env.ContentRootPath, "plagiatism/"), extensions);
+
+                var csvPath = Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString(), "info.csv");
+                using (var writer = new StreamWriter(csvPath))
+                {
+                    writer.WriteLine("filename,label");
+
+                    var directories = Directory.GetDirectories(Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString()));
+                    // This will be the .zip root
+                    var folderBasePath = Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString());
+
+                    foreach (var directory in directories)
+                    {
+                        var files = Directory.GetFiles(directory);
+                        if (files.Length == 0)
+                        {
+                            Directory.Delete(directory, true);
+                        }
+
+                        foreach (var file in files)
+                        {
+                            writer.WriteLine($"{file.Replace(folderBasePath, "").TrimStart('\\').Replace("\\", "/")},{Path.GetFileName(directory)}");
+                        }
+                    }
+                }
 
                 var folderPath = Path.Combine(_env.ContentRootPath, "plagiatism", assignmentId.ToString());
                 if (!Directory.Exists(folderPath))

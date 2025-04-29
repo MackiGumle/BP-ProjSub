@@ -1,7 +1,8 @@
 import { z } from "zod"
 
 export const assignmentSchema = z.object({
-    type: z.enum(["Homework", "Test", "Project"]),
+    // type: z.enum(["Homework", "Test", "Project"]),
+    type: z.string().min(1, "Type is required"),
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
 
