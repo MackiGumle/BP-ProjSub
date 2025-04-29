@@ -1,34 +1,18 @@
-#### Práce se bude skládat ze 3 projektů: 
-- [ ] React front-end
-- [ ] <strike> ASP .NET CORE (MVC) </strike> / ASP .NET CORE API
-- [x] Azure SQL Database 
-- [ ] Hosting na Azure app service
+#### Prerekvizity
+- Visual Studio 2022 verze 17.11 nebo novější s nainstalovanou úlohou **ASP.NET a vývojem webu**.
+- npm ([`https://www.npmjs.com/`](https://www.npmjs.com/package/npm)), který je součástí Node.js
 ---
+1.  Azure SQL Database -  [Vytvoření DB](https://learn.microsoft.com/cs-cz/azure/azure-sql/database/single-database-create-quickstart?view=azuresql&tabs=azure-portal) (u kroku 14 je nutné **Povolit službám a prostředkům Azure přístup k tomuto serveru** na hodnotu **Ano**)
+2. Azure Blob Storage - [Vytvoření uložiště](https://learn.microsoft.com/cs-cz/azure/storage/common/storage-account-create?tabs=azure-portal)
+3. Azure App Service - [Vytvoření serveru](https://portal.azure.com/#create/Microsoft.WebSite) (nastavte **Continuous deployment** = Enable) poté podle [videa](https://youtu.be/7LkRipTlTzc?si=JvPaiV-Zn0qQRGyr&t=248) pokračujte k nasazení a v záložce **Deployment type** vyberte **CI/CD Using GitHub Actions ...** a tím video končí.
+4. SendGrid - https://sendgrid.com/ získejte API klíč pro posílání e-mailů 
 
-#### TODO:
-- DB 
-  - [x] - Azure SQL DB ( https://learn.microsoft.com/en-us/azure/azure-sql/database/free-offer?view=azuresql )
-  - [x] - Vytvořit tabulky (sql skript)
-  - [x] - Zakomponovat IdentityUser do tabulky Person. -> Entity Framework Scaffolding ( https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli )
-- Front-end
-  - [x] - Nainstalovat Shadcn-ui do Vite ( https://ui.shadcn.com/docs/installation/vite )
-  - [x] - Routing pomocí React Router ( https://reactrouter.com/en/main/start/tutorial )
-  - [x] - Login/Register Formuláře
-  - [x] - Zamezit uživateli přístup na stránky pokud nemá potřebné role
-  - [x] - UI pro uživatele s aktivovaným účtem bez hesla (set password?)
-  - [ ] - Request na nový token ~10min před expirací
-  - [x] - Formulář pro učitele pro přidávání předmětů 
-  - [x] - UI pro učitele na přidávání studentů (rovnou do předmětu?) 
-  - [ ] - UI pro studenty k zobrazování předmětů, zadání a odevzdání 
-- Back-end
-  - Přihlašování
-    - [x] - Zprovoznit .NET Identity 
-    - [x] - API pro přidělení JSON Web Tokenu podle přihlášeného uživatele
-    - [ ] - API pro získání nového tokenu (refresh platnosti)
-    - [ ] - Správa předmětů a zadání: CRUD operace
-    - [ ] - Správa studentů pro učitele: přidávání studentů do předmětu
-
-#### Required env. variables:
+Po těchto krocích je nutné nastavit následující proměnné prostředí v Azure App Service:
 - ApiKeys__SendGrid
+	- získané z kroku 4
+- WebsiteUrl (URL nasazené aplikace)
+- ConnectionStrings__BakalarkaBlob
+	- Access key k Azure Blob Storage (najdete v záložce Security+networking)
 - ConnectionStrings__BakalarkaDB
-- WebsiteUrl
+	- Connection string k Azure SQL DB (najdete v záložce settings -> ADO.NET (SQL authentication), je nutné přepsat heslo v textu)
+Po nastavení proměnných spusťte proces nasazení pomocí GitHub actions. 
