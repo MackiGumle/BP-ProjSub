@@ -1,3 +1,4 @@
+[Text práce](https://dspace.vsb.cz/handle/10084/156767)
 ![](https://github.com/MackiGumle/BP-ProjSub/blob/main/Pictures/Student_assignments.png)
 ![](https://github.com/MackiGumle/BP-ProjSub/blob/main/Pictures/Student_assignment.png)
 ![](https://github.com/MackiGumle/BP-ProjSub/blob/main/Pictures/Student_assignment_wimage.png)
